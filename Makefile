@@ -18,19 +18,19 @@ clean-build:
 
 ## backup the database content to ./bin/database
 backup:
-	docker-compose --profile backup up --build --force-recreate
+	docker compose --profile backup up --build --force-recreate
 
 ## frontend: compile flutter frontend
 frontend:
-	docker-compose --profile frontend up
+	docker compose --profile frontend up
 
 ## api: deploy api container
 api:
-	docker-compose --profile api up -d --force-recreate
+	docker compose --profile api up -d --force-recreate
 
 migrate:
 	migrate -database 'postgres://${USER}:${PASSWORD}@${HOST}:${PORT}/${DB}?sslmode=disable' -path ./backend/database/migrations up
 
 ## worker: deploy worker container
 worker:
-	docker-compose --profile worker up -d --force-recreate
+	docker compose --profile worker up -d --force-recreate
