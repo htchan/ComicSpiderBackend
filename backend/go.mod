@@ -13,7 +13,6 @@ require (
 	github.com/google/uuid v1.3.0
 	github.com/htchan/UserService v0.0.0-20220101064522-c9d57069f9df
 	github.com/htchan/goshutdown v0.0.0-20231003015559-4aa563eafbb1
-	github.com/inhies/go-bytesize v0.0.0-20220417184213-4913239db9cf
 	github.com/lib/pq v1.10.6
 	github.com/mattn/go-sqlite3 v1.14.10
 	github.com/ory/dockertest/v3 v3.9.1

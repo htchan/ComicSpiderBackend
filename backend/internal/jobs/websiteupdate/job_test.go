@@ -8,9 +8,9 @@ import (
 	"github.com/golang/mock/gomock"
 	"github.com/htchan/WebHistory/internal/config"
 	"github.com/htchan/WebHistory/internal/jobs"
+	mockrepo "github.com/htchan/WebHistory/internal/mock/repository"
 	"github.com/htchan/WebHistory/internal/model"
 	"github.com/htchan/WebHistory/internal/repository"
-	"github.com/htchan/WebHistory/internal/repository/mockrepo"
 	"github.com/stretchr/testify/assert"
 )
 

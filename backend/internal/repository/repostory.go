@@ -6,7 +6,7 @@ import (
 	"github.com/htchan/WebHistory/internal/model"
 )
 
-//go:generate mockgen -destination=mockrepo/mockrepo.go -package=mockrepo . Repostory
+//go:generate mockgen -destination=../mock/repository/repository.go -package=mockrepo . Repostory
 type Repostory interface {
 	CreateWebsite(*model.Website) error
 	UpdateWebsite(*model.Website) error
