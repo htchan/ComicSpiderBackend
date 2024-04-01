@@ -148,6 +148,8 @@ func (serv *VendorService) Update(ctx context.Context, web *model.Website) error
 	}
 
 	if serv.isUpdated(ctx, web, body) {
+		web.UpdateTime = time.Now().UTC().Truncate(time.Second)
+
 		repoErr := serv.repo.UpdateWebsite(web)
 		if repoErr != nil {
 			return repoErr

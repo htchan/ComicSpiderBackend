@@ -351,6 +351,7 @@ func TestVendorService_Update(t *testing.T) {
 					URL:        serv.URL + "/success",
 					Title:      "title",
 					RawContent: "content",
+					UpdateTime: time.Now().UTC().Truncate(time.Second),
 					Conf:       &config.WebsiteConfig{Separator: "\n"},
 				}).Return(nil)
 
@@ -364,6 +365,7 @@ func TestVendorService_Update(t *testing.T) {
 				URL:        serv.URL + "/success",
 				Title:      "title",
 				RawContent: "content",
+				UpdateTime: time.Now().UTC().Truncate(time.Second),
 				Conf:       &config.WebsiteConfig{Separator: "\n"},
 			},
 			wantErr: nil,
@@ -417,6 +419,7 @@ func TestVendorService_Update(t *testing.T) {
 					URL:        serv.URL + "/success",
 					Title:      "title",
 					RawContent: "content",
+					UpdateTime: time.Now().UTC().Truncate(time.Second),
 					Conf:       &config.WebsiteConfig{Separator: "\n"},
 				}).Return(testError)
 
@@ -430,6 +433,7 @@ func TestVendorService_Update(t *testing.T) {
 				URL:        serv.URL + "/success",
 				Title:      "title",
 				RawContent: "content",
+				UpdateTime: time.Now().UTC().Truncate(time.Second),
 				Conf:       &config.WebsiteConfig{Separator: "\n"},
 			},
 			wantErr: testError,
