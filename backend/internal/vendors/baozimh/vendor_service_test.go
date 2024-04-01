@@ -196,10 +196,27 @@ func TestVendorService_isUpdated(t *testing.T) {
 				return context.Background()
 			},
 			web:  &model.Website{Conf: &config.WebsiteConfig{Separator: "\n"}},
-			body: `<head><title>some title</title></head>`,
+			body: `<head><title>title</title></head>`,
 			want: true,
 			wantWeb: &model.Website{
-				Title: "some title",
+				Title: "title",
+				Conf:  &config.WebsiteConfig{Separator: "\n"},
+			},
+		},
+		{
+			name: "title not update if it is not empty",
+			serv: &VendorService{},
+			getCtx: func() context.Context {
+				return context.Background()
+			},
+			web: &model.Website{
+				Title: "title",
+				Conf:  &config.WebsiteConfig{Separator: "\n"},
+			},
+			body: `<head><title>new title</title></head>`,
+			want: false,
+			wantWeb: &model.Website{
+				Title: "title",
 				Conf:  &config.WebsiteConfig{Separator: "\n"},
 			},
 		},
