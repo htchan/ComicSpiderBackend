@@ -1,4 +1,4 @@
-package baozimh
+package webtoons
 
 import (
 	"context"

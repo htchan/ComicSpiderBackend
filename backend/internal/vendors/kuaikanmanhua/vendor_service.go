@@ -1,4 +1,4 @@
-package baozimh
+package kuaikanmanhua
 
 import (
 	"context"

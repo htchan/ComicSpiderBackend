@@ -1,4 +1,4 @@
-package baozimh
+package manhuaren
 
 import (
 	"flag"

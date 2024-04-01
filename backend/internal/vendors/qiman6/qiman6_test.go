@@ -1,4 +1,4 @@
-package baozimh
+package qiman6
 
 import (
 	"flag"
