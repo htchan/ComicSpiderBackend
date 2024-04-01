@@ -11,6 +11,7 @@ import (
 	"github.com/htchan/WebHistory/internal/jobs/websiteupdate"
 	"github.com/htchan/WebHistory/internal/repository/sqlc"
 	"github.com/htchan/WebHistory/internal/utils"
+	"github.com/htchan/WebHistory/internal/vendors"
 	shutdown "github.com/htchan/goshutdown"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
@@ -85,8 +86,11 @@ func main() {
 
 	exec := executor.NewExecutor(conf.BinConfig.WorkerExecutorCount)
 
+	//TODO: use loop to init all vendor services
+	services := []vendors.VendorService{}
+
 	// start website update job
-	websiteUpdateScheduler := websiteupdate.Setup(rpo, &conf.BinConfig)
+	websiteUpdateScheduler := websiteupdate.Setup(rpo, &conf.BinConfig, services)
 	exec.Register(websiteUpdateScheduler.Publisher())
 	go websiteUpdateScheduler.Start()
 
