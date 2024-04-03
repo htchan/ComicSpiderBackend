@@ -3,7 +3,7 @@ baozimh.com:
   fetch_interval: 1s
   max_retry: 10
   retry_interval: 1s
-kuakanmanhua.com:
+kuaikanmanhua.com:
   max_concurrency: 1
   fetch_interval: 1s
   max_retry: 10
