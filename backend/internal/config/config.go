@@ -2,9 +2,11 @@ package config
 
 import (
 	"fmt"
+	"os"
 	"time"
 
-	"github.com/caarlos0/env/v6"
+	"github.com/caarlos0/env/v10"
+	"gopkg.in/yaml.v3"
 )
 
 type APIConfig struct {
@@ -24,16 +26,19 @@ type APIBinConfig struct {
 }
 
 type WorkerConfig struct {
-	BinConfig      WorkerBinConfig
-	DatabaseConfig DatabaseConfig
-	TraceConfig    TraceConfig
-	WebsiteConfig  WebsiteConfig
+	BinConfig        WorkerBinConfig
+	DatabaseConfig   DatabaseConfig
+	TraceConfig      TraceConfig
+	WebsiteConfig    WebsiteConfig
+	VendorConfigPath string `env:"VENDOR_CONFIG_PATH" envDefault:"/config/vendors.yaml"`
 }
 
 type WorkerBinConfig struct {
 	WebsiteUpdateSleepInterval time.Duration `env:"WEBSITE_UPDATE_SLEEP_INTERVAL"`
 	WorkerExecutorCount        int           `env:"WORKER_EXECUTOR_COUNT"`
 	ExecAtBeginning            bool          `env:"EXEC_AT_BEGINNING"`
+	ClientTimeout              time.Duration `env:"CLIENT_TIMEOUT" envDefault:"30s"`
+	VendorServiceConfigs       map[string]VendorServiceConfig
 }
 
 type TraceConfig struct {
@@ -90,6 +95,19 @@ func LoadWorkerConfig() (*WorkerConfig, error) {
 		func() error { return env.Parse(&conf.DatabaseConfig) },
 		func() error { return env.Parse(&conf.TraceConfig) },
 		func() error { return env.Parse(&conf.WebsiteConfig) },
+		func() error {
+			contentBytes, err := os.ReadFile(conf.VendorConfigPath)
+			if err != nil {
+				return err
+			}
+
+			yamlErr := yaml.Unmarshal(contentBytes, &conf.BinConfig.VendorServiceConfigs)
+			if yamlErr != nil {
+				return yamlErr
+			}
+
+			return nil
+		},
 	}
 
 	for _, f := range loadConfigFuncs {

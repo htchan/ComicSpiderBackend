@@ -32,7 +32,7 @@ const (
 	contentGoQuery = "div.detail_lst>ul#_listUl>li._episodeItem>a>span.date"
 	fromIndex      = 0
 	toIndex        = 2
-	host           = "webtoons.com"
+	Host           = "webtoons.com"
 )
 
 func NewVendorService(
@@ -55,8 +55,8 @@ func (serv *VendorService) fetchWebsite(ctx context.Context, web *model.Website)
 		serv.lock.Release(1)
 	}()
 
-	url := regexp.MustCompile(fmt.Sprintf("^(http.*?)://.*?%s(.*)$", host)).
-		ReplaceAllString(web.URL, fmt.Sprintf("$1://www.%s$2", host))
+	url := regexp.MustCompile(fmt.Sprintf("^(http.*?)://.*?%s(.*)$", Host)).
+		ReplaceAllString(web.URL, fmt.Sprintf("$1://www.%s$2", Host))
 
 	req, reqErr := http.NewRequest("GET", url, nil)
 	if reqErr != nil {
@@ -138,7 +138,7 @@ func (serv *VendorService) isUpdated(ctx context.Context, web *model.Website, bo
 }
 
 func (serv *VendorService) Support(web *model.Website) bool {
-	return web.Host() == host
+	return web.Host() == Host
 }
 
 func (serv *VendorService) Update(ctx context.Context, web *model.Website) error {

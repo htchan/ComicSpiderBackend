@@ -1,0 +1,35 @@
+baozimh.com:
+  max_concurrency: 1
+  fetch_interval: 1s
+  max_retry: 10
+  retry_interval: 1s
+kuakanmanhua.com:
+  max_concurrency: 1
+  fetch_interval: 1s
+  max_retry: 10
+  retry_interval: 1s
+manhuagui.com:
+  max_concurrency: 1
+  fetch_interval: 1s
+  max_retry: 10
+  retry_interval: 1s
+manhuaren.com:
+  max_concurrency: 1
+  fetch_interval: 1s
+  max_retry: 10
+  retry_interval: 1s
+qiman6.com:
+  max_concurrency: 1
+  fetch_interval: 1s
+  max_retry: 10
+  retry_interval: 1s
+u17.com:
+  max_concurrency: 1
+  fetch_interval: 1s
+  max_retry: 10
+  retry_interval: 1s
+webtoons.com:
+  max_concurrency: 1
+  fetch_interval: 1s
+  max_retry: 10
+  retry_interval: 1s

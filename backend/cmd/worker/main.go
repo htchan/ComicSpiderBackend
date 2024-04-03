@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"net/http"
 	"os"
 	"syscall"
 	"time"
@@ -12,6 +13,13 @@ import (
 	"github.com/htchan/WebHistory/internal/repository/sqlc"
 	"github.com/htchan/WebHistory/internal/utils"
 	"github.com/htchan/WebHistory/internal/vendors"
+	"github.com/htchan/WebHistory/internal/vendors/baozimh"
+	"github.com/htchan/WebHistory/internal/vendors/kuaikanmanhua"
+	"github.com/htchan/WebHistory/internal/vendors/manhuagui"
+	"github.com/htchan/WebHistory/internal/vendors/manhuaren"
+	"github.com/htchan/WebHistory/internal/vendors/qiman6"
+	"github.com/htchan/WebHistory/internal/vendors/u17"
+	"github.com/htchan/WebHistory/internal/vendors/webtoons"
 	shutdown "github.com/htchan/goshutdown"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
@@ -86,8 +94,29 @@ func main() {
 
 	exec := executor.NewExecutor(conf.BinConfig.WorkerExecutorCount)
 
-	//TODO: use loop to init all vendor services
+	cli := &http.Client{Timeout: conf.BinConfig.ClientTimeout}
+
 	services := []vendors.VendorService{}
+	for key, cfg := range conf.BinConfig.VendorServiceConfigs {
+		switch key {
+		case baozimh.Host:
+			services = append(services, baozimh.NewVendorService(cli, rpo, &cfg))
+		case kuaikanmanhua.Host:
+			services = append(services, kuaikanmanhua.NewVendorService(cli, rpo, &cfg))
+		case manhuagui.Host:
+			services = append(services, manhuagui.NewVendorService(cli, rpo, &cfg))
+		case manhuaren.Host:
+			services = append(services, manhuaren.NewVendorService(cli, rpo, &cfg))
+		case qiman6.Host:
+			services = append(services, qiman6.NewVendorService(cli, rpo, &cfg))
+		case u17.Host:
+			services = append(services, u17.NewVendorService(cli, rpo, &cfg))
+		case webtoons.Host:
+			services = append(services, webtoons.NewVendorService(cli, rpo, &cfg))
+		default:
+			log.Error().Str("vendor", key).Msg("unknown vendor")
+		}
+	}
 
 	// start website update job
 	websiteUpdateScheduler := websiteupdate.Setup(rpo, &conf.BinConfig, services)
