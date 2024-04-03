@@ -12,6 +12,7 @@ services:
             - ./bin/database:/database
             - ./bin/logs:/logs
             - ./backend/database/migrations:/migrations
+            - ./backend/data/config/vendor_configs.yml
         networks:
             - router
             - database
@@ -35,6 +36,7 @@ services:
             - ./bin/database:/database
             - ./bin/logs:/logs
             - ./backend/database/migrations:/migrations
+            - ./backend/data/config/vendor_configs.yml
         networks:
             - database
             - trace

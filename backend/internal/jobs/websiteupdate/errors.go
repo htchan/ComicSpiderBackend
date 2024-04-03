@@ -3,5 +3,5 @@ package websiteupdate
 import "errors"
 
 var (
-	ErrInvalidHost = errors.New("invalid host")
+	ErrNotSupportedHost = errors.New("not supported host")
 )

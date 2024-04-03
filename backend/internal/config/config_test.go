@@ -6,6 +6,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/caarlos0/env/v10"
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/goleak"
 )
@@ -142,10 +143,10 @@ func Test_LoadAPIConfig(t *testing.T) {
 
 func Test_LoadWorkerConfig(t *testing.T) {
 	tests := []struct {
-		name         string
-		envMap       map[string]string
-		expectedConf *WorkerConfig
-		expectError  bool
+		name      string
+		envMap    map[string]string
+		want      *WorkerConfig
+		wantError error
 	}{
 		{
 			name: "happy flow with default",
@@ -157,11 +158,22 @@ func Test_LoadWorkerConfig(t *testing.T) {
 				"PSQL_USER":                     "user",
 				"PSQL_PASSWORD":                 "password",
 				"PSQL_NAME":                     "name",
+				"VENDOR_CONFIG_PATH":            "../../data/testing/vendor_configs.yml",
 			},
-			expectedConf: &WorkerConfig{
+			want: &WorkerConfig{
+				VendorConfigPath: "../../data/testing/vendor_configs.yml",
 				BinConfig: WorkerBinConfig{
 					WebsiteUpdateSleepInterval: 10 * time.Second,
 					WorkerExecutorCount:        10,
+					ClientTimeout:              30 * time.Second,
+					VendorServiceConfigs: map[string]VendorServiceConfig{
+						"testing": {
+							MaxConcurrency: 10,
+							FetchInterval:  time.Second,
+							MaxRetry:       10,
+							RetryInterval:  time.Second,
+						},
+					},
 				},
 				DatabaseConfig: DatabaseConfig{
 					Driver:   "postgres",
@@ -176,7 +188,7 @@ func Test_LoadWorkerConfig(t *testing.T) {
 					MaxDateLength: 2,
 				},
 			},
-			expectError: false,
+			wantError: nil,
 		},
 		{
 			name: "happy flow without default",
@@ -184,6 +196,7 @@ func Test_LoadWorkerConfig(t *testing.T) {
 				"WEB_WATCHER_SEPARATOR":         ",",
 				"WEB_WATCHER_DATE_MAX_LENGTH":   "10",
 				"WEBSITE_UPDATE_SLEEP_INTERVAL": "10s",
+				"CLIENT_TIMEOUT":                "1s",
 				"WORKER_EXECUTOR_COUNT":         "10",
 				"TRACE_URL":                     "trace_url",
 				"TRACE_SERVICE_NAME":            "trace_service_name",
@@ -193,11 +206,22 @@ func Test_LoadWorkerConfig(t *testing.T) {
 				"PSQL_USER":                     "user",
 				"PSQL_PASSWORD":                 "password",
 				"PSQL_NAME":                     "name",
+				"VENDOR_CONFIG_PATH":            "../../data/testing/vendor_configs.yml",
 			},
-			expectedConf: &WorkerConfig{
+			want: &WorkerConfig{
+				VendorConfigPath: "../../data/testing/vendor_configs.yml",
 				BinConfig: WorkerBinConfig{
 					WebsiteUpdateSleepInterval: 10 * time.Second,
 					WorkerExecutorCount:        10,
+					ClientTimeout:              1 * time.Second,
+					VendorServiceConfigs: map[string]VendorServiceConfig{
+						"testing": {
+							MaxConcurrency: 10,
+							FetchInterval:  time.Second,
+							MaxRetry:       10,
+							RetryInterval:  time.Second,
+						},
+					},
 				},
 				TraceConfig: TraceConfig{
 					TraceURL:         "trace_url",
@@ -216,13 +240,13 @@ func Test_LoadWorkerConfig(t *testing.T) {
 					MaxDateLength: 10,
 				},
 			},
-			expectError: false,
+			wantError: nil,
 		},
 		{
-			name:         "not providing required error",
-			envMap:       map[string]string{},
-			expectedConf: nil,
-			expectError:  true,
+			name:      "not providing required error",
+			envMap:    map[string]string{},
+			want:      nil,
+			wantError: env.EnvVarIsNotSetError{Key: "PSQL_NAME"},
 		},
 	}
 
@@ -237,8 +261,8 @@ func Test_LoadWorkerConfig(t *testing.T) {
 			}
 
 			conf, err := LoadWorkerConfig()
-			assert.Equal(t, test.expectedConf, conf)
-			assert.Equal(t, test.expectError, (err != nil))
+			assert.Equal(t, test.want, conf)
+			assert.ErrorIs(t, err, test.wantError)
 		})
 	}
 }

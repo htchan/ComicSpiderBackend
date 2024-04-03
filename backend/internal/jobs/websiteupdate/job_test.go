@@ -9,8 +9,10 @@ import (
 	"github.com/htchan/WebHistory/internal/config"
 	"github.com/htchan/WebHistory/internal/jobs"
 	mockrepo "github.com/htchan/WebHistory/internal/mock/repository"
+	mockvendor "github.com/htchan/WebHistory/internal/mock/vendor"
 	"github.com/htchan/WebHistory/internal/model"
 	"github.com/htchan/WebHistory/internal/repository"
+	"github.com/htchan/WebHistory/internal/vendors"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -20,6 +22,7 @@ func TestNewJob(t *testing.T) {
 	type args struct {
 		rpo           repository.Repostory
 		sleepInterval time.Duration
+		services      []vendors.VendorService
 	}
 
 	tests := []struct {
@@ -29,8 +32,8 @@ func TestNewJob(t *testing.T) {
 	}{
 		{
 			name: "happy flow",
-			args: args{rpo: nil, sleepInterval: 5 * time.Second},
-			want: &Job{rpo: nil, sleepInterval: 5 * time.Second},
+			args: args{rpo: nil, sleepInterval: 5 * time.Second, services: nil},
+			want: &Job{rpo: nil, sleepInterval: 5 * time.Second, vendorServices: nil},
 		},
 	}
 
@@ -40,7 +43,7 @@ func TestNewJob(t *testing.T) {
 		t.Run(test.name, func(t *testing.T) {
 			t.Parallel()
 
-			got := NewJob(test.args.rpo, test.args.sleepInterval)
+			got := NewJob(test.args.rpo, test.args.sleepInterval, test.args.services)
 			assert.Equal(t, test.want, got)
 		})
 	}
@@ -51,6 +54,7 @@ func TestJob_Execute(t *testing.T) {
 
 	type jobArgs struct {
 		getRepo       func(*gomock.Controller) repository.Repostory
+		getServices   func(*gomock.Controller) []vendors.VendorService
 		sleepInterval time.Duration
 	}
 
@@ -72,10 +76,21 @@ func TestJob_Execute(t *testing.T) {
 			jobArgs: jobArgs{
 				getRepo: func(c *gomock.Controller) repository.Repostory {
 					rpo := mockrepo.NewMockRepostory(c)
-					rpo.EXPECT().FindWebsiteSetting("google.com").
-						Return(&model.WebsiteSetting{}, nil)
 
 					return rpo
+				},
+				getServices: func(ctrl *gomock.Controller) []vendors.VendorService {
+					service := mockvendor.NewMockVendorService(ctrl)
+					service.EXPECT().Support(&model.Website{
+						UUID: "uuid", URL: "https://google.com",
+						Conf: &config.WebsiteConfig{Separator: ","},
+					}).Return(true)
+					service.EXPECT().Update(gomock.Any(), &model.Website{
+						UUID: "uuid", URL: "https://google.com",
+						Conf: &config.WebsiteConfig{Separator: ","},
+					}).Return(nil)
+
+					return []vendors.VendorService{service}
 				},
 				sleepInterval: 100 * time.Millisecond,
 			},
@@ -102,6 +117,11 @@ func TestJob_Execute(t *testing.T) {
 
 					return rpo
 				},
+				getServices: func(ctrl *gomock.Controller) []vendors.VendorService {
+					services := mockvendor.NewMockVendorService(ctrl)
+
+					return []vendors.VendorService{services}
+				},
 				sleepInterval: 100 * time.Millisecond,
 			},
 			args: args{
@@ -121,7 +141,7 @@ func TestJob_Execute(t *testing.T) {
 			ctrl := gomock.NewController(t)
 			defer ctrl.Finish()
 
-			job := NewJob(test.jobArgs.getRepo(ctrl), test.jobArgs.sleepInterval)
+			job := NewJob(test.jobArgs.getRepo(ctrl), test.jobArgs.sleepInterval, test.jobArgs.getServices(ctrl))
 
 			start := time.Now()
 			err := job.Execute(test.args.getCtx(), test.args.params)

@@ -1,0 +1,5 @@
+testing:
+  max_concurrency: 10
+  fetch_interval: 1s
+  max_retry: 10
+  retry_interval: 1s
