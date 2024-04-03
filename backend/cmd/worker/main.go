@@ -115,6 +115,8 @@ func main() {
 			services = append(services, webtoons.NewVendorService(cli, rpo, &cfg))
 		default:
 			log.Error().Str("vendor", key).Msg("unknown vendor")
+
+			return
 		}
 	}
 
