@@ -15,7 +15,7 @@ group "default" {
 
 target "backend" {
   name = "backend-${service}"
-  context = "./backend"
+  context = "."
   dockerfile = "./build/Dockerfile"
   cache-from = [ "type=gha" ]
   cache-to = [ "type=gha,mode=max" ]
