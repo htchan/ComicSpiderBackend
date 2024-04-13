@@ -11,8 +11,8 @@ services:
         volumes:
             - ./bin/database:/database
             - ./bin/logs:/logs
-            - ./backend/database/migrations:/migrations
-            - ./backend/data/config:/config
+            - ./database/migrations:/migrations
+            - ./data/config:/config
         networks:
             - router
             - database
@@ -23,7 +23,7 @@ services:
         ports:
             - 9105:9105
         env_file:
-            - ./backend/assets/.env.backend
+            - ./data/env/.env.backend
 
     worker:
         image: ghcr.io/htchan/web-history:worker-latest
@@ -35,8 +35,8 @@ services:
         volumes:
             - ./bin/database:/database
             - ./bin/logs:/logs
-            - ./backend/database/migrations:/migrations
-            - ./backend/data/config:/config
+            - ./database/migrations:/migrations
+            - ./data/config:/config
         networks:
             - database
             - trace
@@ -44,7 +44,7 @@ services:
             - all
             - worker
         env_file:
-            - ./backend/assets/.env.worker
+            - ./data/env/.env.worker
 
     backup:
         build:
@@ -59,29 +59,6 @@ services:
             - backup
         env_file:
             - ./.env
-
-    frontend:
-        build:
-            context: ./frontend
-        volumes:
-            - frontend_volume:/build/web
-            - ./frontend/src:/usr/src/app
-        networks:
-            - router
-        profiles:
-            - all
-            - frontend
-            - web
-        env_file:
-            - ./frontend/src/.env
-        # command: sh -c "
-        #     flutter --version ; 
-        #     flutter pub get ; 
-        #     flutter build web  --base-href $WEB_WATCHER_FE_ROUTE_PREFIX/ \
-        #     --dart-define=WEB_WATCHER_API_HOST=$WEB_WATCHER_API_HOST \
-        #     --dart-define=WEB_WATCHER_API_ROUTE_PREFIX=$WEB_WATCHER_API_ROUTE_PREFIX \
-        #     --dart-define=WEB_WATCHER_FE_ROUTE_PREFIX=$WEB_WATCHER_FE_ROUTE_PREFIX"
-        command: sh -c "flutter --version ; flutter pub get ; flutter build web --base-href $WEB_WATCHER_FE_ROUTE_PREFIX/"
 
 volumes:
     frontend_volume:

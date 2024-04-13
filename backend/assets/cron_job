@@ -1,1 +1,0 @@
-00 04 * * 5 make -C /usr/src/app run_batch
