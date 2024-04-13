@@ -31,6 +31,10 @@ migrate:
 worker:
 	docker compose --profile worker up -d --force-recreate
 
+start:
+	docker compose pull api worker
+	docker compose up -d api worker
+
 test:
 	go test ./... --cover --race --leak
 

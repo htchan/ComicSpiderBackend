@@ -16,6 +16,7 @@ services:
         networks:
             - router
             - database
+            - k3d-development
         profiles:
             - all
             - api
@@ -23,7 +24,7 @@ services:
         ports:
             - 9105:9105
         env_file:
-            - ./data/env/.env.backend
+            - ./data/env/.env.backend.docker
 
     worker:
         image: ghcr.io/htchan/web-history:worker-latest
@@ -40,11 +41,12 @@ services:
         networks:
             - database
             - trace
+            - k3d-development
         profiles:
             - all
             - worker
         env_file:
-            - ./data/env/.env.worker
+            - ./data/env/.env.worker.docker
 
     backup:
         build:
@@ -74,3 +76,6 @@ networks:
     trace:
         name: trace
         external: true
+    k3d-development:
+        external: true
+        name: k3d-development
