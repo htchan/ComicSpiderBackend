@@ -1,0 +1,39 @@
+workerVersion: apps/v1
+kind: Deployment
+metadata:
+  name: web-history.worker  # Sets Deployment name
+  labels:
+    app: worker
+    project: web-history
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: worker
+      project: web-history
+  template:
+    metadata:
+      labels:
+        app: worker
+        project: web-history
+    spec:
+      containers:
+        - name: web-history-worker
+          image: ghcr.io/htchan/web-history:worker-v2024.04.03-f9db50c # Sets Image
+          imagePullPolicy: "Never"
+          resources:
+            limits:
+              memory: 50M
+            requests:
+              memory: 10M
+          envFrom:
+            - secretRef:
+                name: web-history.worker.secret
+          volumeMounts:
+            - mountPath: /config
+              name: web-history-worker-config-volume
+      volumes:
+        - name: web-history-worker-config-volume
+          persistentVolumeClaim:
+            claimName: web-history.worker.config-claim
+      restartPolicy: Always

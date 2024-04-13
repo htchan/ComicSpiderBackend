@@ -40,6 +40,10 @@ bench:
 create_migrate:
 	migrate create -ext sql -dir database/migrations $(NAME)
 
+build-secrets:
+	kubectl create secret generic web-history.api.secret --from-env-file ./data/env/.env.backend -o yaml --dry-run=client > deploy/api/secrets.yaml
+	kubectl create secret generic web-history.worker.secret --from-env-file ./data/env/.env.worker -o yaml --dry-run=client > deploy/worker/secrets.yaml
+
 PKG ?= "./..."
 
 coverage:

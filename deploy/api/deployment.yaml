@@ -1,0 +1,32 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: web-history.api  # Sets Deployment name
+  labels:
+    app: api
+    project: web-history
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: api
+      project: web-history
+  template:
+    metadata:
+      labels:
+        app: api
+        project: web-history
+    spec:
+      containers:
+        - name: web-history-api
+          image: ghcr.io/htchan/web-history:api-v2024.04.03-f9db50c # Sets Image
+          imagePullPolicy: "Never"
+          resources:
+            limits:
+              memory: 50M
+            requests:
+              memory: 5M
+          envFrom:
+            - secretRef:
+                name: web-history.api.secret
+      restartPolicy: Always
