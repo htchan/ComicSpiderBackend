@@ -20,7 +20,7 @@ spec:
       containers:
         - name: web-history-api
           image: ghcr.io/htchan/web-history:api-v2024.04.03-f9db50c # Sets Image
-          imagePullPolicy: "Never"
+          imagePullPolicy: "IfNotPresent"
           resources:
             limits:
               memory: 50M
