@@ -1,0 +1,31 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+metadata:
+  name: web-history.api  # Sets Deployment name
+  namespace: default
+  labels:
+    app: api
+    project: web-history
+resources:
+  - ./base/deployment.yml
+  - ./base/service.yml
+  - ./base/ingress.yml
+patches:
+  - target:
+      group: apps
+      version: v1
+      kind: Deployment
+      name: web-history.api
+      labelSelector: "app=api,project=web-history"
+    path: ./patch/deployment.yml
+  - target:
+      group: networking.k8s.io
+      version: v1
+      kind: Ingress
+      name: web-history-api-ingress
+    path: ./patch/ingress.yml
+secretGenerator:
+- name: web-history.api.secret
+  type: Opaque
+  envs:
+  - ./patch/.env
