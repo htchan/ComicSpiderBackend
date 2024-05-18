@@ -31,14 +31,14 @@ spec:
                 name: web-history.worker.secret
           volumeMounts:
             - mountPath: /config
-              name: web-history-worker-config-volume
+              name: web-history-config-volume
             - mountPath: /migrations
               name: web-history-migrations-volume
       volumes:
-        - name: web-history-worker-config-volume
+        - name: web-history-config-volume
           persistentVolumeClaim:
-            claimName: web-history.worker.config-claim
-        - name: web-history-worker-migrations-volume
+            claimName: web-history.config-claim
+        - name: web-history-migrations-volume
           persistentVolumeClaim:
-            claimName: web-history.worker.migrations-claim
+            claimName: web-history.migrations-claim
       restartPolicy: Always

@@ -33,7 +33,7 @@ spec:
             - mountPath: /migrations
               name: web-history-migrations-volume
       volumes:
-        - name: web-history-worker-migrations-volume
+        - name: web-history-migrations-volume
           persistentVolumeClaim:
-            claimName: web-history.worker.migrations-claim
+            claimName: web-history.migrations-claim
       restartPolicy: Always
