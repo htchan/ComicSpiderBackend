@@ -29,4 +29,11 @@ spec:
           envFrom:
             - secretRef:
                 name: web-history.api.secret
+          volumeMounts:
+            - mountPath: /migrations
+              name: web-history-migrations-volume
+      volumes:
+        - name: web-history-worker-migrations-volume
+          persistentVolumeClaim:
+            claimName: web-history.worker.migrations-claim
       restartPolicy: Always

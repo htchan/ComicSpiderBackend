@@ -8,8 +8,6 @@ metadata:
     project: web-history
 resources:
   - ./base/deployment.yml
-  - ./base/pv.yml
-  - ./base/pvc.yml
 patches:
   - target:
       group: apps

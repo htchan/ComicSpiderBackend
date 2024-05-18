@@ -1,0 +1,31 @@
+kind: PersistentVolume
+apiVersion: v1
+metadata:
+  name: web-watcher.migrations-volume
+  labels:
+    label: local
+    project: web-watcher
+spec:
+  storageClassName: manual
+  capacity:
+    storage: 100Mi
+  accessModes:
+    - ReadOnlyMany
+  hostPath:
+    path: /volumes/web-watcher-data/migrations
+---
+kind: PersistentVolume
+apiVersion: v1
+metadata:
+  name: web-watcher.config-volume
+  labels:
+    label: local
+    project: web-watcher
+spec:
+  storageClassName: manual
+  capacity:
+    storage: 1Mi
+  accessModes:
+    - ReadOnlyMany
+  hostPath:
+    path: /volumes/web-watcher-data/config

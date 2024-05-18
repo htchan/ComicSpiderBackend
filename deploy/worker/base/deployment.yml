@@ -32,8 +32,13 @@ spec:
           volumeMounts:
             - mountPath: /config
               name: web-history-worker-config-volume
+            - mountPath: /migrations
+              name: web-history-migrations-volume
       volumes:
         - name: web-history-worker-config-volume
           persistentVolumeClaim:
             claimName: web-history.worker.config-claim
+        - name: web-history-worker-migrations-volume
+          persistentVolumeClaim:
+            claimName: web-history.worker.migrations-claim
       restartPolicy: Always
