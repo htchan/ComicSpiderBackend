@@ -23,6 +23,8 @@ const (
 	ContextKeyWebURL   ContextKey = "web_url"
 	ContextKeyWebsite  ContextKey = "website"
 	ContextKeyGroup    ContextKey = "group"
+
+	HeaderKeyUserUUID string = "X-USER-UUID"
 )
 
 func logRequest() func(next http.Handler) http.Handler {
@@ -56,16 +58,19 @@ func AuthenticateMiddleware(conf *config.UserServiceConfig) func(next http.Handl
 					next.ServeHTTP(res, req)
 					return
 				}
-				token := req.Header.Get("Authorization")
-				userUUID := ""
 
-				if token != "" {
-					userUUID = utils.FindUserByToken(token, conf)
-				}
+				userUUID := req.Header.Get(HeaderKeyUserUUID)
 
-				if userUUID == "" {
-					writeError(res, http.StatusUnauthorized, UnauthorizedError)
-					return
+				if _, err := uuid.Parse(userUUID); err != nil {
+					token := req.Header.Get("Authorization")
+					if token != "" {
+						userUUID = utils.FindUserByToken(token, conf)
+					}
+
+					if userUUID == "" {
+						writeError(res, http.StatusUnauthorized, UnauthorizedError)
+						return
+					}
 				}
 
 				zerolog.Ctx(req.Context()).Debug().
