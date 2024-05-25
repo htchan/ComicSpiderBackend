@@ -29,6 +29,6 @@ jobs:
           HASH: ${{ github.sha }}
           BRANCH: ${{ github.ref_name }}
         with:
-          targets: .
+          targets: ./
           files: ./docker-bake.hcl
 
