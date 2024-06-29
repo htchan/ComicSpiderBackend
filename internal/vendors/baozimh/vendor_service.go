@@ -6,6 +6,7 @@ import (
 	"io"
 	"net/http"
 	"regexp"
+	"strconv"
 	"strings"
 	"time"
 
@@ -27,12 +28,15 @@ type VendorService struct {
 
 var _ vendors.VendorService = (*VendorService)(nil)
 
-const (
-	titleGoQuery   = "head>title"
-	contentGoQuery = "div.comics-detail__info>div.supporting-text>div:nth-child(2)>span>em"
-	fromIndex      = 0
-	toIndex        = 2
-	Host           = "baozimh.com"
+var (
+	titleGoQuery = "head>title"
+	dateGoQuery  = "em[data-v-6191a505='']"
+	// contentGoQuery = "div.comics-detail__info>div.supporting-text>div:nth-child(2)>span>em"
+	// fromIndex      = 0
+	// toIndex        = 2
+	Host              = "baozimh.com"
+	dateFormat        = "2006年01月02日"
+	dateExtractRegexp = regexp.MustCompile(`\((.*) 更新\)`)
 )
 
 func NewVendorService(
@@ -117,20 +121,33 @@ func (serv *VendorService) isUpdated(ctx context.Context, web *model.Website, bo
 		isUpdated = true
 	}
 
-	var content []string
-	doc.Find(contentGoQuery).Each(func(i int, s *goquery.Selection) {
-		content = append(content, strings.TrimSpace(s.Text()))
-	})
+	var (
+		updateTimeStr = dateExtractRegexp.FindStringSubmatch(doc.Find(dateGoQuery).Text())
+		updateTime    time.Time
+	)
 
-	fromN, toN := fromIndex, toIndex
-
-	if len(content) < toIndex {
-		toN = len(content)
+	if len(updateTimeStr) < 2 {
+		return isUpdated
 	}
 
-	content = content[fromN:toN]
-	if strings.Join(content, web.Conf.Separator) != web.RawContent {
-		web.RawContent = strings.Join(content, web.Conf.Separator)
+	if strings.Contains(updateTimeStr[1], "小時前") {
+		hoursAgo, err := strconv.Atoi(strings.Trim(updateTimeStr[1], "小時前"))
+		if err != nil {
+			updateTime = time.Now()
+		} else {
+			updateTime = time.Now().
+				Add(time.Duration(-hoursAgo) * time.Hour)
+		}
+	} else {
+		updateTime, err = time.Parse(dateFormat, updateTimeStr[1])
+		if err != nil {
+			updateTime = time.Now()
+		}
+	}
+
+	updateTime = updateTime.UTC().Truncate(24 * time.Hour)
+	if updateTime.After(web.UpdateTime) {
+		web.UpdateTime = updateTime
 		isUpdated = true
 	}
 
@@ -148,8 +165,6 @@ func (serv *VendorService) Update(ctx context.Context, web *model.Website) error
 	}
 
 	if serv.isUpdated(ctx, web, body) {
-		web.UpdateTime = time.Now().UTC().Truncate(time.Second)
-
 		repoErr := serv.repo.UpdateWebsite(web)
 		if repoErr != nil {
 			return repoErr

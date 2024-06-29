@@ -190,17 +190,23 @@ func TestVendorService_isUpdated(t *testing.T) {
 		wantWeb *model.Website
 	}{
 		{
-			name: "title update from empty to some value",
+			name: "web update by title from empty to some value",
 			serv: &VendorService{},
 			getCtx: func() context.Context {
 				return context.Background()
 			},
-			web:  &model.Website{Conf: &config.WebsiteConfig{Separator: "\n"}},
-			body: `<head><title>title</title></head>`,
+			web: &model.Website{Conf: &config.WebsiteConfig{Separator: "\n"}},
+			body: `<head>
+				<title>title</title>
+				<em data-v-6191a505="">
+                    (2021年07月30日 更新)
+                  </em>
+			</head>`,
 			want: true,
 			wantWeb: &model.Website{
-				Title: "title",
-				Conf:  &config.WebsiteConfig{Separator: "\n"},
+				Title:      "title",
+				UpdateTime: time.Date(2021, 7, 30, 0, 0, 0, 0, time.UTC),
+				Conf:       &config.WebsiteConfig{Separator: "\n"},
 			},
 		},
 		{
@@ -210,54 +216,58 @@ func TestVendorService_isUpdated(t *testing.T) {
 				return context.Background()
 			},
 			web: &model.Website{
-				Title: "title",
-				Conf:  &config.WebsiteConfig{Separator: "\n"},
+				Title:      "title",
+				UpdateTime: time.Date(2021, 7, 30, 0, 0, 0, 0, time.UTC),
+				Conf:       &config.WebsiteConfig{Separator: "\n"},
 			},
-			body: `<head><title>new title</title></head>`,
+			body: `<head>
+				<title>new title</title>
+				<em data-v-6191a505="">
+                    (2021年07月30日 更新)
+                  </em>
+			</head>`,
 			want: false,
 			wantWeb: &model.Website{
-				Title: "title",
-				Conf:  &config.WebsiteConfig{Separator: "\n"},
+				Title:      "title",
+				UpdateTime: time.Date(2021, 7, 30, 0, 0, 0, 0, time.UTC),
+				Conf:       &config.WebsiteConfig{Separator: "\n"},
 			},
 		},
 		{
-			name: "content update from empty to some value",
+			name: "date updated by a specific date",
 			serv: &VendorService{},
 			getCtx: func() context.Context {
 				return context.Background()
 			},
 			web: &model.Website{Conf: &config.WebsiteConfig{Separator: "\n"}},
-			body: `<html><body><div class="comics-detail__info">
-				<div class="supporting-text">
-					<div></div>
-					<div><span><em>content 2</em></span></div>
-				</div>
-			</div></body></html>`,
+			body: `<html>
+				<em data-v-6191a505="">
+					(2021年07月30日 更新)
+				</em>
+			</html>`,
 			want: true,
 			wantWeb: &model.Website{
-				RawContent: "content 2",
+				UpdateTime: time.Date(2021, 7, 30, 0, 0, 0, 0, time.UTC),
 				Conf:       &config.WebsiteConfig{Separator: "\n"},
 			},
 		},
 		{
-			name: "content update from one value to another",
+			name: "date updated by a related date",
 			serv: &VendorService{},
 			getCtx: func() context.Context {
 				return context.Background()
 			},
 			web: &model.Website{
-				RawContent: "content 1",
-				Conf:       &config.WebsiteConfig{Separator: "\n"},
+				Conf: &config.WebsiteConfig{Separator: "\n"},
 			},
-			body: `<html><body><div class="comics-detail__info">
-				<div class="supporting-text">
-					<div></div>
-					<div><span><em>content 2</em></span></div>
-				</div>
-			</div></body></html>`,
+			body: `<html>
+				<em style="color:var(--link-hover-color);" data-v-6191a505="">
+					(5小時前 更新)
+				</em>
+		</html>`,
 			want: true,
 			wantWeb: &model.Website{
-				RawContent: "content 2",
+				UpdateTime: time.Now().Add(-5 * time.Hour).UTC().Truncate(24 * time.Hour),
 				Conf:       &config.WebsiteConfig{Separator: "\n"},
 			},
 		},
@@ -327,12 +337,11 @@ func TestVendorService_Update(t *testing.T) {
 		} else if r.URL.Path == "/success" {
 			w.Write([]byte(`<html>
 			<head><title>title</title></head>
-			<body><div class="comics-detail__info">
-				<div class="supporting-text">
-					<div></div>
-					<div><span><em>content</em></span></div>
-				</div>
-			</div></body>
+			<body>
+				<em data-v-6191a505="">
+					(2021年07月30日 更新)
+				</em>
+			</body>
 		</html>`))
 		} else {
 			w.WriteHeader(http.StatusNotFound)
@@ -367,8 +376,7 @@ func TestVendorService_Update(t *testing.T) {
 				repo.EXPECT().UpdateWebsite(&model.Website{
 					URL:        serv.URL + "/success",
 					Title:      "title",
-					RawContent: "content",
-					UpdateTime: time.Now().UTC().Truncate(time.Second),
+					UpdateTime: time.Date(2021, 07, 30, 0, 0, 0, 0, time.UTC),
 					Conf:       &config.WebsiteConfig{Separator: "\n"},
 				}).Return(nil)
 
@@ -381,8 +389,7 @@ func TestVendorService_Update(t *testing.T) {
 			wantWeb: &model.Website{
 				URL:        serv.URL + "/success",
 				Title:      "title",
-				RawContent: "content",
-				UpdateTime: time.Now().UTC().Truncate(time.Second),
+				UpdateTime: time.Date(2021, 07, 30, 0, 0, 0, 0, time.UTC),
 				Conf:       &config.WebsiteConfig{Separator: "\n"},
 			},
 			wantErr: nil,
@@ -406,13 +413,13 @@ func TestVendorService_Update(t *testing.T) {
 			web: &model.Website{
 				URL:        serv.URL + "/success",
 				Title:      "title",
-				RawContent: "content",
+				UpdateTime: time.Date(2021, 07, 30, 0, 0, 0, 0, time.UTC),
 				Conf:       &config.WebsiteConfig{Separator: "\n"},
 			},
 			wantWeb: &model.Website{
 				URL:        serv.URL + "/success",
 				Title:      "title",
-				RawContent: "content",
+				UpdateTime: time.Date(2021, 07, 30, 0, 0, 0, 0, time.UTC),
 				Conf:       &config.WebsiteConfig{Separator: "\n"},
 			},
 			wantErr: nil,
@@ -435,8 +442,7 @@ func TestVendorService_Update(t *testing.T) {
 				repo.EXPECT().UpdateWebsite(&model.Website{
 					URL:        serv.URL + "/success",
 					Title:      "title",
-					RawContent: "content",
-					UpdateTime: time.Now().UTC().Truncate(time.Second),
+					UpdateTime: time.Date(2021, 07, 30, 0, 0, 0, 0, time.UTC),
 					Conf:       &config.WebsiteConfig{Separator: "\n"},
 				}).Return(testError)
 
@@ -449,8 +455,7 @@ func TestVendorService_Update(t *testing.T) {
 			wantWeb: &model.Website{
 				URL:        serv.URL + "/success",
 				Title:      "title",
-				RawContent: "content",
-				UpdateTime: time.Now().UTC().Truncate(time.Second),
+				UpdateTime: time.Date(2021, 07, 30, 0, 0, 0, 0, time.UTC),
 				Conf:       &config.WebsiteConfig{Separator: "\n"},
 			},
 			wantErr: testError,
