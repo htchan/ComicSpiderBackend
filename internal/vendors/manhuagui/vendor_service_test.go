@@ -190,17 +190,21 @@ func TestVendorService_isUpdated(t *testing.T) {
 		wantWeb *model.Website
 	}{
 		{
-			name: "title update from empty to some value",
+			name: "web update by title from empty to some value",
 			serv: &VendorService{},
 			getCtx: func() context.Context {
 				return context.Background()
 			},
-			web:  &model.Website{Conf: &config.WebsiteConfig{Separator: "\n"}},
-			body: `<head><title>title</title></head>`,
+			web: &model.Website{Conf: &config.WebsiteConfig{Separator: "\n"}},
+			body: `<html>
+				<head><title>title</title></head>
+				<li class="status"><span><span class="red">2021-07-30</span></span></li>
+			</html>`,
 			want: true,
 			wantWeb: &model.Website{
-				Title: "title",
-				Conf:  &config.WebsiteConfig{Separator: "\n"},
+				Title:      "title",
+				UpdateTime: time.Date(2021, 7, 30, 0, 0, 0, 0, time.UTC),
+				Conf:       &config.WebsiteConfig{Separator: "\n"},
 			},
 		},
 		{
@@ -210,31 +214,34 @@ func TestVendorService_isUpdated(t *testing.T) {
 				return context.Background()
 			},
 			web: &model.Website{
-				Title: "title",
-				Conf:  &config.WebsiteConfig{Separator: "\n"},
+				Title:      "title",
+				UpdateTime: time.Date(2021, 7, 30, 0, 0, 0, 0, time.UTC),
+				Conf:       &config.WebsiteConfig{Separator: "\n"},
 			},
-			body: `<head><title>new title</title></head>`,
+			body: `<html>
+				<head><title>new title</title></head>
+				<li class="status"><span><span class="red">2021-07-30</span></span></li>
+			</html>`,
 			want: false,
 			wantWeb: &model.Website{
-				Title: "title",
-				Conf:  &config.WebsiteConfig{Separator: "\n"},
+				Title:      "title",
+				UpdateTime: time.Date(2021, 7, 30, 0, 0, 0, 0, time.UTC),
+				Conf:       &config.WebsiteConfig{Separator: "\n"},
 			},
 		},
 		{
-			name: "content update from empty to some value",
+			name: "date update from empty to some value",
 			serv: &VendorService{},
 			getCtx: func() context.Context {
 				return context.Background()
 			},
 			web: &model.Website{Conf: &config.WebsiteConfig{Separator: "\n"}},
 			body: `<html><body>
-				<li class="status"><span><span class="red">content 1</span></span></li>
-				<li class="status"><span><span class="red">content 2</span></span></li>
-				<li class="status"><span><span class="red">content 3</span></span></li>
+				<li class="status"><span><span class="red">2021-07-30</span></span></li>
 			</body></html>`,
 			want: true,
 			wantWeb: &model.Website{
-				RawContent: "content 1\ncontent 2",
+				UpdateTime: time.Date(2021, 7, 30, 0, 0, 0, 0, time.UTC),
 				Conf:       &config.WebsiteConfig{Separator: "\n"},
 			},
 		},
@@ -245,17 +252,15 @@ func TestVendorService_isUpdated(t *testing.T) {
 				return context.Background()
 			},
 			web: &model.Website{
-				RawContent: "content 1",
+				UpdateTime: time.Date(2021, 7, 29, 0, 0, 0, 0, time.UTC),
 				Conf:       &config.WebsiteConfig{Separator: "\n"},
 			},
 			body: `<html><body>
-				<li class="status"><span><span class="red">content 1</span></span></li>
-				<li class="status"><span><span class="red">content 2</span></span></li>
-				<li class="status"><span><span class="red">content 3</span></span></li>
+				<li class="status"><span><span class="red">2021-07-30</span></span></li>
 			</body></html>`,
 			want: true,
 			wantWeb: &model.Website{
-				RawContent: "content 1\ncontent 2",
+				UpdateTime: time.Date(2021, 7, 30, 0, 0, 0, 0, time.UTC),
 				Conf:       &config.WebsiteConfig{Separator: "\n"},
 			},
 		},
@@ -338,9 +343,7 @@ func TestVendorService_Update(t *testing.T) {
 			w.Write([]byte(`<html>
 			<head><title>title</title></head>
 			<body>
-				<li class="status"><span><span class="red">content 1</span></span></li>
-				<li class="status"><span><span class="red">content 2</span></span></li>
-				<li class="status"><span><span class="red">content 3</span></span></li>
+				<li class="status"><span><span class="red">2021-07-30</span></span></li>
 			</body>
 		</html>`))
 		} else {
@@ -376,8 +379,7 @@ func TestVendorService_Update(t *testing.T) {
 				repo.EXPECT().UpdateWebsite(&model.Website{
 					URL:        serv.URL + "/success",
 					Title:      "title",
-					RawContent: "content 1\ncontent 2",
-					UpdateTime: time.Now().UTC().Truncate(time.Second),
+					UpdateTime: time.Date(2021, 7, 30, 0, 0, 0, 0, time.UTC),
 					Conf:       &config.WebsiteConfig{Separator: "\n"},
 				}).Return(nil)
 
@@ -390,8 +392,7 @@ func TestVendorService_Update(t *testing.T) {
 			wantWeb: &model.Website{
 				URL:        serv.URL + "/success",
 				Title:      "title",
-				RawContent: "content 1\ncontent 2",
-				UpdateTime: time.Now().UTC().Truncate(time.Second),
+				UpdateTime: time.Date(2021, 7, 30, 0, 0, 0, 0, time.UTC),
 				Conf:       &config.WebsiteConfig{Separator: "\n"},
 			},
 			wantErr: nil,
@@ -415,13 +416,13 @@ func TestVendorService_Update(t *testing.T) {
 			web: &model.Website{
 				URL:        serv.URL + "/success",
 				Title:      "title",
-				RawContent: "content 1\ncontent 2",
+				UpdateTime: time.Date(2021, 7, 30, 0, 0, 0, 0, time.UTC),
 				Conf:       &config.WebsiteConfig{Separator: "\n"},
 			},
 			wantWeb: &model.Website{
 				URL:        serv.URL + "/success",
 				Title:      "title",
-				RawContent: "content 1\ncontent 2",
+				UpdateTime: time.Date(2021, 7, 30, 0, 0, 0, 0, time.UTC),
 				Conf:       &config.WebsiteConfig{Separator: "\n"},
 			},
 			wantErr: nil,
@@ -444,8 +445,7 @@ func TestVendorService_Update(t *testing.T) {
 				repo.EXPECT().UpdateWebsite(&model.Website{
 					URL:        serv.URL + "/success",
 					Title:      "title",
-					RawContent: "content 1\ncontent 2",
-					UpdateTime: time.Now().UTC().Truncate(time.Second),
+					UpdateTime: time.Date(2021, 7, 30, 0, 0, 0, 0, time.UTC),
 					Conf:       &config.WebsiteConfig{Separator: "\n"},
 				}).Return(testError)
 
@@ -458,8 +458,7 @@ func TestVendorService_Update(t *testing.T) {
 			wantWeb: &model.Website{
 				URL:        serv.URL + "/success",
 				Title:      "title",
-				RawContent: "content 1\ncontent 2",
-				UpdateTime: time.Now().UTC().Truncate(time.Second),
+				UpdateTime: time.Date(2021, 7, 30, 0, 0, 0, 0, time.UTC),
 				Conf:       &config.WebsiteConfig{Separator: "\n"},
 			},
 			wantErr: testError,
