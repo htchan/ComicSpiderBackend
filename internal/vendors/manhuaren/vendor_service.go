@@ -28,11 +28,14 @@ type VendorService struct {
 var _ vendors.VendorService = (*VendorService)(nil)
 
 const (
-	titleGoQuery   = "head>title"
-	contentGoQuery = "div.detail-list-title>span.detail-list-title-3"
-	fromIndex      = 0
-	toIndex        = 2
-	Host           = "manhuaren.com"
+	titleGoQuery       = "head>title"
+	dateGoQuery        = "span.detail-list-title-3"
+	contentGoQuery     = "div.detail-list-title>span.detail-list-title-3"
+	fromIndex          = 0
+	toIndex            = 2
+	Host               = "manhuaren.com"
+	dateFormat         = "2006-01-02"
+	sameYearDateFormat = "2006-01月02号"
 )
 
 func NewVendorService(
@@ -117,20 +120,26 @@ func (serv *VendorService) isUpdated(ctx context.Context, web *model.Website, bo
 		isUpdated = true
 	}
 
-	var content []string
-	doc.Find(contentGoQuery).Each(func(i int, s *goquery.Selection) {
-		content = append(content, strings.TrimSpace(s.Text()))
-	})
+	var (
+		updateTimeStr = strings.TrimSpace(doc.Find(dateGoQuery).Text())
+		updateTime    time.Time
+	)
 
-	fromN, toN := fromIndex, toIndex
-
-	if len(content) < toIndex {
-		toN = len(content)
+	if strings.Contains(updateTimeStr, "月") {
+		updateTime, err = time.Parse(sameYearDateFormat, fmt.Sprintf("%d-%s", time.Now().Year(), updateTimeStr))
+		if err != nil {
+			updateTime = time.Now()
+		}
+	} else {
+		updateTime, err = time.Parse(dateFormat, updateTimeStr)
+		if err != nil {
+			updateTime = time.Now()
+		}
 	}
 
-	content = content[fromN:toN]
-	if strings.Join(content, web.Conf.Separator) != web.RawContent {
-		web.RawContent = strings.Join(content, web.Conf.Separator)
+	updateTime = updateTime.UTC().Truncate(24 * time.Hour)
+	if updateTime.After(web.UpdateTime) {
+		web.UpdateTime = updateTime
 		isUpdated = true
 	}
 
@@ -148,8 +157,6 @@ func (serv *VendorService) Update(ctx context.Context, web *model.Website) error
 	}
 
 	if serv.isUpdated(ctx, web, body) {
-		web.UpdateTime = time.Now().UTC().Truncate(time.Second)
-
 		repoErr := serv.repo.UpdateWebsite(web)
 		if repoErr != nil {
 			return repoErr
