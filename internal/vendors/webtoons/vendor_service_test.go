@@ -195,12 +195,20 @@ func TestVendorService_isUpdated(t *testing.T) {
 			getCtx: func() context.Context {
 				return context.Background()
 			},
-			web:  &model.Website{Conf: &config.WebsiteConfig{Separator: "\n"}},
-			body: `<head><title>title</title></head>`,
+			web: &model.Website{Conf: &config.WebsiteConfig{Separator: "\n"}},
+			body: `<html>
+				<title>title</title>
+				<body><div class="detail_lst"><ul id="_listUl">
+					<li class="_episodeItem"><a><span class="date">2021年07月30日</span></a></li>
+					<li class="_episodeItem"><a><span class="date">2021年07月23日</span></a></li>
+					<li class="_episodeItem"><a><span class="date">2021年07月17日</span></a></li>
+				</ul></div></body>
+			</html>`,
 			want: true,
 			wantWeb: &model.Website{
-				Title: "title",
-				Conf:  &config.WebsiteConfig{Separator: "\n"},
+				Title:      "title",
+				UpdateTime: time.Date(2021, 07, 30, 0, 0, 0, 0, time.UTC),
+				Conf:       &config.WebsiteConfig{Separator: "\n"},
 			},
 		},
 		{
@@ -210,52 +218,65 @@ func TestVendorService_isUpdated(t *testing.T) {
 				return context.Background()
 			},
 			web: &model.Website{
-				Title: "title",
-				Conf:  &config.WebsiteConfig{Separator: "\n"},
+				Title:      "title",
+				UpdateTime: time.Date(2021, 07, 30, 0, 0, 0, 0, time.UTC),
+				Conf:       &config.WebsiteConfig{Separator: "\n"},
 			},
-			body: `<head><title>new title</title></head>`,
+			body: `<html>
+				<title>title</title>
+				<body><div class="detail_lst"><ul id="_listUl">
+					<li class="_episodeItem"><a><span class="date">2021年07月30日</span></a></li>
+					<li class="_episodeItem"><a><span class="date">2021年07月23日</span></a></li>
+					<li class="_episodeItem"><a><span class="date">2021年07月17日</span></a></li>
+				</ul></div></body>
+			</html>`,
 			want: false,
 			wantWeb: &model.Website{
-				Title: "title",
-				Conf:  &config.WebsiteConfig{Separator: "\n"},
+				Title:      "title",
+				UpdateTime: time.Date(2021, 07, 30, 0, 0, 0, 0, time.UTC),
+				Conf:       &config.WebsiteConfig{Separator: "\n"},
 			},
 		},
 		{
-			name: "content update from empty to some value",
+			name: "date update from empty to some value",
 			serv: &VendorService{},
 			getCtx: func() context.Context {
 				return context.Background()
 			},
 			web: &model.Website{Conf: &config.WebsiteConfig{Separator: "\n"}},
-			body: `<html><body><div class="detail_lst"><ul id="_listUl">
-				<li class="_episodeItem"><a><span class="date">content 1</span></a></li>
-				<li class="_episodeItem"><a><span class="date">content 2</span></a></li>
-				<li class="_episodeItem"><a><span class="date">content 3</span></a></li>
-			</ul></div></body></html>`,
+			body: `<html>
+				<body><div class="detail_lst"><ul id="_listUl">
+					<li class="_episodeItem"><a><span class="date">2021年07月30日</span></a></li>
+					<li class="_episodeItem"><a><span class="date">2021年07月23日</span></a></li>
+					<li class="_episodeItem"><a><span class="date">2021年07月17日</span></a></li>
+				</ul></div></body>
+			</html>`,
 			want: true,
 			wantWeb: &model.Website{
-				RawContent: "content 1\ncontent 2",
+				UpdateTime: time.Date(2021, 07, 30, 0, 0, 0, 0, time.UTC),
 				Conf:       &config.WebsiteConfig{Separator: "\n"},
 			},
 		},
 		{
-			name: "content update from one value to another",
+			name: "date update from one value to another",
 			serv: &VendorService{},
 			getCtx: func() context.Context {
 				return context.Background()
 			},
 			web: &model.Website{
-				RawContent: "content 1",
+				UpdateTime: time.Date(2021, 07, 29, 0, 0, 0, 0, time.UTC),
 				Conf:       &config.WebsiteConfig{Separator: "\n"},
 			},
-			body: `<html><body><div class="detail_lst"><ul id="_listUl">
-				<li class="_episodeItem"><a><span class="date">content 1</span></a></li>
-				<li class="_episodeItem"><a><span class="date">content 2</span></a></li>
-				<li class="_episodeItem"><a><span class="date">content 3</span></a></li>
-			</ul></div></body></html>`,
+			body: `<html>
+				<body><div class="detail_lst"><ul id="_listUl">
+					<li class="_episodeItem"><a><span class="date">2021年07月30日</span></a></li>
+					<li class="_episodeItem"><a><span class="date">2021年07月23日</span></a></li>
+					<li class="_episodeItem"><a><span class="date">2021年07月17日</span></a></li>
+				</ul></div></body>
+			</html>`,
 			want: true,
 			wantWeb: &model.Website{
-				RawContent: "content 1\ncontent 2",
+				UpdateTime: time.Date(2021, 07, 30, 0, 0, 0, 0, time.UTC),
 				Conf:       &config.WebsiteConfig{Separator: "\n"},
 			},
 		},
@@ -330,11 +351,11 @@ func TestVendorService_Update(t *testing.T) {
 			w.WriteHeader(http.StatusBadRequest)
 		} else if r.URL.Path == "/success" {
 			w.Write([]byte(`<html>
-				<head><title>title</title></head>
+				<title>title</title>
 				<body><div class="detail_lst"><ul id="_listUl">
-					<li class="_episodeItem"><a><span class="date">content 1</span></a></li>
-					<li class="_episodeItem"><a><span class="date">content 2</span></a></li>
-					<li class="_episodeItem"><a><span class="date">content 3</span></a></li>
+					<li class="_episodeItem"><a><span class="date">2021年07月30日</span></a></li>
+					<li class="_episodeItem"><a><span class="date">2021年07月23日</span></a></li>
+					<li class="_episodeItem"><a><span class="date">2021年07月17日</span></a></li>
 				</ul></div></body>
 			</html>`))
 		} else {
@@ -370,8 +391,7 @@ func TestVendorService_Update(t *testing.T) {
 				repo.EXPECT().UpdateWebsite(&model.Website{
 					URL:        serv.URL + "/success",
 					Title:      "title",
-					RawContent: "content 1\ncontent 2",
-					UpdateTime: time.Now().UTC().Truncate(time.Second),
+					UpdateTime: time.Date(2021, 07, 30, 0, 0, 0, 0, time.UTC),
 					Conf:       &config.WebsiteConfig{Separator: "\n"},
 				}).Return(nil)
 
@@ -384,8 +404,7 @@ func TestVendorService_Update(t *testing.T) {
 			wantWeb: &model.Website{
 				URL:        serv.URL + "/success",
 				Title:      "title",
-				RawContent: "content 1\ncontent 2",
-				UpdateTime: time.Now().UTC().Truncate(time.Second),
+				UpdateTime: time.Date(2021, 07, 30, 0, 0, 0, 0, time.UTC),
 				Conf:       &config.WebsiteConfig{Separator: "\n"},
 			},
 			wantErr: nil,
@@ -409,13 +428,13 @@ func TestVendorService_Update(t *testing.T) {
 			web: &model.Website{
 				URL:        serv.URL + "/success",
 				Title:      "title",
-				RawContent: "content 1\ncontent 2",
+				UpdateTime: time.Date(2021, 07, 30, 0, 0, 0, 0, time.UTC),
 				Conf:       &config.WebsiteConfig{Separator: "\n"},
 			},
 			wantWeb: &model.Website{
 				URL:        serv.URL + "/success",
 				Title:      "title",
-				RawContent: "content 1\ncontent 2",
+				UpdateTime: time.Date(2021, 07, 30, 0, 0, 0, 0, time.UTC),
 				Conf:       &config.WebsiteConfig{Separator: "\n"},
 			},
 			wantErr: nil,
@@ -438,8 +457,7 @@ func TestVendorService_Update(t *testing.T) {
 				repo.EXPECT().UpdateWebsite(&model.Website{
 					URL:        serv.URL + "/success",
 					Title:      "title",
-					RawContent: "content 1\ncontent 2",
-					UpdateTime: time.Now().UTC().Truncate(time.Second),
+					UpdateTime: time.Date(2021, 07, 30, 0, 0, 0, 0, time.UTC),
 					Conf:       &config.WebsiteConfig{Separator: "\n"},
 				}).Return(testError)
 
@@ -452,8 +470,7 @@ func TestVendorService_Update(t *testing.T) {
 			wantWeb: &model.Website{
 				URL:        serv.URL + "/success",
 				Title:      "title",
-				RawContent: "content 1\ncontent 2",
-				UpdateTime: time.Now().UTC().Truncate(time.Second),
+				UpdateTime: time.Date(2021, 07, 30, 0, 0, 0, 0, time.UTC),
 				Conf:       &config.WebsiteConfig{Separator: "\n"},
 			},
 			wantErr: testError,
