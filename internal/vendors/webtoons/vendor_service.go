@@ -29,10 +29,12 @@ var _ vendors.VendorService = (*VendorService)(nil)
 
 const (
 	titleGoQuery   = "head>title"
+	dateGoQuery    = "div.detail_lst>ul#_listUl>li._episodeItem>a>span.date"
 	contentGoQuery = "div.detail_lst>ul#_listUl>li._episodeItem>a>span.date"
 	fromIndex      = 0
 	toIndex        = 2
 	Host           = "webtoons.com"
+	dateFormat     = "2006年01月02日"
 )
 
 func NewVendorService(
@@ -117,20 +119,16 @@ func (serv *VendorService) isUpdated(ctx context.Context, web *model.Website, bo
 		isUpdated = true
 	}
 
-	var content []string
-	doc.Find(contentGoQuery).Each(func(i int, s *goquery.Selection) {
-		content = append(content, strings.TrimSpace(s.Text()))
-	})
+	updateTimeStr := strings.TrimSpace(doc.Find(dateGoQuery).First().Text())
 
-	fromN, toN := fromIndex, toIndex
-
-	if len(content) < toIndex {
-		toN = len(content)
+	updateTime, err := time.Parse(dateFormat, updateTimeStr)
+	if err != nil {
+		updateTime = time.Now()
 	}
 
-	content = content[fromN:toN]
-	if strings.Join(content, web.Conf.Separator) != web.RawContent {
-		web.RawContent = strings.Join(content, web.Conf.Separator)
+	updateTime = updateTime.UTC().Truncate(24 * time.Hour)
+	if updateTime.After(web.UpdateTime) {
+		web.UpdateTime = updateTime
 		isUpdated = true
 	}
 
@@ -148,7 +146,6 @@ func (serv *VendorService) Update(ctx context.Context, web *model.Website) error
 	}
 
 	if serv.isUpdated(ctx, web, body) {
-		web.UpdateTime = time.Now().UTC().Truncate(time.Second)
 
 		repoErr := serv.repo.UpdateWebsite(web)
 		if repoErr != nil {
