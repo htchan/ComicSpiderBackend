@@ -15,6 +15,7 @@ import (
 	"github.com/htchan/WebHistory/internal/repository"
 	"github.com/htchan/WebHistory/internal/vendors"
 	"github.com/rs/zerolog"
+	"go.opentelemetry.io/otel"
 	"golang.org/x/sync/semaphore"
 )
 
@@ -142,16 +143,28 @@ func (serv *VendorService) Support(web *model.Website) bool {
 }
 
 func (serv *VendorService) Update(ctx context.Context, web *model.Website) error {
+	tr := otel.Tracer("htchan/WebHistory/vendors/qiman6")
+
+	_, fetchWebSpan := tr.Start(ctx, "fetch website")
 	body, fetchErr := serv.fetchWebsite(ctx, web)
+	fetchWebSpan.End()
+
 	if fetchErr != nil {
+		fetchWebSpan.RecordError(fetchErr)
+
 		return fetchErr
 	}
 
 	if serv.isUpdated(ctx, web, body) {
 		web.UpdateTime = time.Now().UTC().Truncate(time.Second)
 
+		_, repoSpan := tr.Start(ctx, "update db record")
 		repoErr := serv.repo.UpdateWebsite(web)
+		repoSpan.End()
+
 		if repoErr != nil {
+			repoSpan.RecordError(repoErr)
+
 			return repoErr
 		}
 	}

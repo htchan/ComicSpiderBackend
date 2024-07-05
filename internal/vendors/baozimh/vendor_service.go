@@ -16,6 +16,7 @@ import (
 	"github.com/htchan/WebHistory/internal/repository"
 	"github.com/htchan/WebHistory/internal/vendors"
 	"github.com/rs/zerolog"
+	"go.opentelemetry.io/otel"
 	"golang.org/x/sync/semaphore"
 )
 
@@ -133,6 +134,7 @@ func (serv *VendorService) isUpdated(ctx context.Context, web *model.Website, bo
 	if strings.Contains(updateTimeStr[1], "小時前") {
 		hoursAgo, err := strconv.Atoi(strings.Trim(updateTimeStr[1], "小時前"))
 		if err != nil {
+			zerolog.Ctx(ctx).Error().Err(err).Str("date", updateTimeStr[1]).Msg("Failed to parse update time")
 			updateTime = time.Now()
 		} else {
 			updateTime = time.Now().
@@ -141,6 +143,7 @@ func (serv *VendorService) isUpdated(ctx context.Context, web *model.Website, bo
 	} else {
 		updateTime, err = time.Parse(dateFormat, updateTimeStr[1])
 		if err != nil {
+			zerolog.Ctx(ctx).Error().Err(err).Str("date", updateTimeStr[1]).Msg("Failed to parse update time")
 			updateTime = time.Now()
 		}
 	}
@@ -159,14 +162,26 @@ func (serv *VendorService) Support(web *model.Website) bool {
 }
 
 func (serv *VendorService) Update(ctx context.Context, web *model.Website) error {
+	tr := otel.Tracer("htchan/WebHistory/vendors/baozimh")
+
+	_, fetchWebSpan := tr.Start(ctx, "fetch website")
 	body, fetchErr := serv.fetchWebsite(ctx, web)
+	fetchWebSpan.End()
+
 	if fetchErr != nil {
+		fetchWebSpan.RecordError(fetchErr)
+
 		return fetchErr
 	}
 
 	if serv.isUpdated(ctx, web, body) {
+		_, repoSpan := tr.Start(ctx, "update db record")
 		repoErr := serv.repo.UpdateWebsite(web)
+		repoSpan.End()
+
 		if repoErr != nil {
+			repoSpan.RecordError(repoErr)
+
 			return repoErr
 		}
 	}

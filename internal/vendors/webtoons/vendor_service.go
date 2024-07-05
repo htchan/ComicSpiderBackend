@@ -15,6 +15,7 @@ import (
 	"github.com/htchan/WebHistory/internal/repository"
 	"github.com/htchan/WebHistory/internal/vendors"
 	"github.com/rs/zerolog"
+	"go.opentelemetry.io/otel"
 	"golang.org/x/sync/semaphore"
 )
 
@@ -28,13 +29,13 @@ type VendorService struct {
 var _ vendors.VendorService = (*VendorService)(nil)
 
 const (
-	titleGoQuery   = "head>title"
-	dateGoQuery    = "div.detail_lst>ul#_listUl>li._episodeItem>a>span.date"
-	contentGoQuery = "div.detail_lst>ul#_listUl>li._episodeItem>a>span.date"
-	fromIndex      = 0
-	toIndex        = 2
-	Host           = "webtoons.com"
-	dateFormat     = "2006年01月02日"
+	titleGoQuery = "head>title"
+	dateGoQuery  = "div.detail_lst>ul#_listUl>li._episodeItem>a>span.date"
+	// contentGoQuery = "div.detail_lst>ul#_listUl>li._episodeItem>a>span.date"
+	// fromIndex      = 0
+	// toIndex        = 2
+	Host       = "webtoons.com"
+	dateFormat = "2006年01月02日"
 )
 
 func NewVendorService(
@@ -123,6 +124,7 @@ func (serv *VendorService) isUpdated(ctx context.Context, web *model.Website, bo
 
 	updateTime, err := time.Parse(dateFormat, updateTimeStr)
 	if err != nil {
+		zerolog.Ctx(ctx).Error().Err(err).Str("date", updateTimeStr).Msg("Failed to parse update time")
 		updateTime = time.Now()
 	}
 
@@ -140,15 +142,26 @@ func (serv *VendorService) Support(web *model.Website) bool {
 }
 
 func (serv *VendorService) Update(ctx context.Context, web *model.Website) error {
+	tr := otel.Tracer("htchan/WebHistory/vendors/webtoons")
+
+	_, fetchWebSpan := tr.Start(ctx, "fetch website")
 	body, fetchErr := serv.fetchWebsite(ctx, web)
+	fetchWebSpan.End()
+
 	if fetchErr != nil {
+		fetchWebSpan.RecordError(fetchErr)
+
 		return fetchErr
 	}
 
 	if serv.isUpdated(ctx, web, body) {
-
+		_, repoSpan := tr.Start(ctx, "update db record")
 		repoErr := serv.repo.UpdateWebsite(web)
+		repoSpan.End()
+
 		if repoErr != nil {
+			repoSpan.RecordError(repoErr)
+
 			return repoErr
 		}
 	}
