@@ -53,6 +53,15 @@ func (web Website) MarshalJSON() ([]byte, error) {
 	})
 }
 
+func (web Website) FullHost() string {
+	u, err := url.Parse(web.URL)
+	if err != nil || web.URL == "" {
+		return ""
+	}
+
+	return u.Hostname()
+}
+
 func (web Website) Host() string {
 	u, err := url.Parse(web.URL)
 	if err != nil || web.URL == "" {

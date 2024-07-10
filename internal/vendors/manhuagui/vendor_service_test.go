@@ -230,7 +230,7 @@ func TestVendorService_isUpdated(t *testing.T) {
 			},
 		},
 		{
-			name: "date update from empty to some value",
+			name: "[web] date update from empty to some value",
 			serv: &VendorService{},
 			getCtx: func() context.Context {
 				return context.Background()
@@ -246,7 +246,27 @@ func TestVendorService_isUpdated(t *testing.T) {
 			},
 		},
 		{
-			name: "content update from one value to another",
+			name: "[mobile] date update from empty to some value",
+			serv: &VendorService{},
+			getCtx: func() context.Context {
+				return context.Background()
+			},
+			web: &model.Website{Conf: &config.WebsiteConfig{Separator: "\n"}, URL: "http://m.manhuagui.com/"},
+			body: `<html><body>
+				<div class="cont-list">
+					<div class="thumb"></div><dl></dl>
+					<dl><dd>dummy</dd><dd>2021-07-30</dd></dl>
+				</div>
+			</body></html>`,
+			want: true,
+			wantWeb: &model.Website{
+				UpdateTime: time.Date(2021, 7, 30, 0, 0, 0, 0, time.UTC),
+				Conf:       &config.WebsiteConfig{Separator: "\n"},
+				URL:        "http://m.manhuagui.com/",
+			},
+		},
+		{
+			name: "[web] content update from one value to another",
 			serv: &VendorService{},
 			getCtx: func() context.Context {
 				return context.Background()
@@ -262,6 +282,30 @@ func TestVendorService_isUpdated(t *testing.T) {
 			wantWeb: &model.Website{
 				UpdateTime: time.Date(2021, 7, 30, 0, 0, 0, 0, time.UTC),
 				Conf:       &config.WebsiteConfig{Separator: "\n"},
+			},
+		},
+		{
+			name: "[mobile] content update from one value to another",
+			serv: &VendorService{},
+			getCtx: func() context.Context {
+				return context.Background()
+			},
+			web: &model.Website{
+				UpdateTime: time.Date(2021, 7, 29, 0, 0, 0, 0, time.UTC),
+				Conf:       &config.WebsiteConfig{Separator: "\n"},
+				URL:        "http://m.manhuagui.com/",
+			},
+			body: `<html><body>
+				<div class="cont-list">
+					<div class="thumb"></div><dl></dl>
+					<dl><dd>dummy</dd><dd>2021-07-30</dd></dl>
+				</div>
+			</body></html>`,
+			want: true,
+			wantWeb: &model.Website{
+				UpdateTime: time.Date(2021, 7, 30, 0, 0, 0, 0, time.UTC),
+				Conf:       &config.WebsiteConfig{Separator: "\n"},
+				URL:        "http://m.manhuagui.com/",
 			},
 		},
 	}

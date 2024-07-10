@@ -8,6 +8,7 @@ import (
 
 	"github.com/google/go-cmp/cmp"
 	"github.com/htchan/WebHistory/internal/config"
+	"github.com/stretchr/testify/assert"
 )
 
 func Test_NewWebsite(t *testing.T) {
@@ -120,6 +121,38 @@ func TestWebsite_MarshalJSON(t *testing.T) {
 				t.Error(string(result))
 				t.Error(test.expect)
 			}
+		})
+	}
+}
+
+func TestWebsite_FullHost(t *testing.T) {
+	tests := []struct {
+		name   string
+		web    Website
+		expect string
+	}{
+		{
+			name:   "happy flow with www",
+			web:    Website{URL: "http://www.example.com"},
+			expect: "www.example.com",
+		},
+		{
+			name:   "happy flow with m",
+			web:    Website{URL: "http://m.example.com"},
+			expect: "m.example.com",
+		},
+		{
+			name:   "fail flow",
+			web:    Website{URL: ""},
+			expect: "",
+		},
+	}
+
+	for _, test := range tests {
+		test := test
+		t.Run(test.name, func(t *testing.T) {
+			result := test.web.FullHost()
+			assert.Equal(t, test.expect, result)
 		})
 	}
 }
