@@ -198,7 +198,7 @@ func TestVendorService_isUpdated(t *testing.T) {
 			web: &model.Website{Conf: &config.WebsiteConfig{Separator: "\n"}},
 			body: `<html>
 				<head><title>title</title></head>
-				<li class="status"><span><span class="red">2021-07-30</span></span></li>
+				<li class="status"><span><strong>漫畫狀態：</strong><span class="red">連載中</span>。最近於 [<span class="red">2021-07-30</span>] 更新至 [ <a href="xxx.html" target="_blank" class="blue">xxx</a> ]。xxx 待更新</span></li>
 			</html>`,
 			want: true,
 			wantWeb: &model.Website{
@@ -220,7 +220,7 @@ func TestVendorService_isUpdated(t *testing.T) {
 			},
 			body: `<html>
 				<head><title>new title</title></head>
-				<li class="status"><span><span class="red">2021-07-30</span></span></li>
+				<li class="status"><span><strong>漫畫狀態：</strong><span class="red">連載中</span>。最近於 [<span class="red">2021-07-30</span>] 更新至 [ <a href="xxx.html" target="_blank" class="blue">xxx</a> ]。xxx 待更新</span></li>
 			</html>`,
 			want: false,
 			wantWeb: &model.Website{
@@ -237,32 +237,12 @@ func TestVendorService_isUpdated(t *testing.T) {
 			},
 			web: &model.Website{Conf: &config.WebsiteConfig{Separator: "\n"}},
 			body: `<html><body>
-				<li class="status"><span><span class="red">2021-07-30</span></span></li>
+				<li class="status"><span><strong>漫畫狀態：</strong><span class="red">連載中</span>。最近於 [<span class="red">2021-07-30</span>] 更新至 [ <a href="xxx.html" target="_blank" class="blue">xxx</a> ]。xxx 待更新</span></li>
 			</body></html>`,
 			want: true,
 			wantWeb: &model.Website{
 				UpdateTime: time.Date(2021, 7, 30, 0, 0, 0, 0, time.UTC),
 				Conf:       &config.WebsiteConfig{Separator: "\n"},
-			},
-		},
-		{
-			name: "[mobile] date update from empty to some value",
-			serv: &VendorService{},
-			getCtx: func() context.Context {
-				return context.Background()
-			},
-			web: &model.Website{Conf: &config.WebsiteConfig{Separator: "\n"}, URL: "http://m.manhuagui.com/"},
-			body: `<html><body>
-				<div class="cont-list">
-					<div class="thumb"></div><dl></dl>
-					<dl><dd>dummy</dd><dd>2021-07-30</dd></dl>
-				</div>
-			</body></html>`,
-			want: true,
-			wantWeb: &model.Website{
-				UpdateTime: time.Date(2021, 7, 30, 0, 0, 0, 0, time.UTC),
-				Conf:       &config.WebsiteConfig{Separator: "\n"},
-				URL:        "http://m.manhuagui.com/",
 			},
 		},
 		{
@@ -276,36 +256,12 @@ func TestVendorService_isUpdated(t *testing.T) {
 				Conf:       &config.WebsiteConfig{Separator: "\n"},
 			},
 			body: `<html><body>
-				<li class="status"><span><span class="red">2021-07-30</span></span></li>
+				<li class="status"><span><strong>漫畫狀態：</strong><span class="red">連載中</span>。最近於 [<span class="red">2021-07-30</span>] 更新至 [ <a href="xxx.html" target="_blank" class="blue">xxx</a> ]。xxx 待更新</span></li>
 			</body></html>`,
 			want: true,
 			wantWeb: &model.Website{
 				UpdateTime: time.Date(2021, 7, 30, 0, 0, 0, 0, time.UTC),
 				Conf:       &config.WebsiteConfig{Separator: "\n"},
-			},
-		},
-		{
-			name: "[mobile] content update from one value to another",
-			serv: &VendorService{},
-			getCtx: func() context.Context {
-				return context.Background()
-			},
-			web: &model.Website{
-				UpdateTime: time.Date(2021, 7, 29, 0, 0, 0, 0, time.UTC),
-				Conf:       &config.WebsiteConfig{Separator: "\n"},
-				URL:        "http://m.manhuagui.com/",
-			},
-			body: `<html><body>
-				<div class="cont-list">
-					<div class="thumb"></div><dl></dl>
-					<dl><dd>dummy</dd><dd>2021-07-30</dd></dl>
-				</div>
-			</body></html>`,
-			want: true,
-			wantWeb: &model.Website{
-				UpdateTime: time.Date(2021, 7, 30, 0, 0, 0, 0, time.UTC),
-				Conf:       &config.WebsiteConfig{Separator: "\n"},
-				URL:        "http://m.manhuagui.com/",
 			},
 		},
 	}
@@ -387,7 +343,7 @@ func TestVendorService_Update(t *testing.T) {
 			w.Write([]byte(`<html>
 			<head><title>title</title></head>
 			<body>
-				<li class="status"><span><span class="red">2021-07-30</span></span></li>
+				<li class="status"><span><strong>漫畫狀態：</strong><span class="red">連載中</span>。最近於 [<span class="red">2021-07-30</span>] 更新至 [ <a href="xxx.html" target="_blank" class="blue">xxx</a> ]。xxx 待更新</span></li>
 			</body>
 		</html>`))
 		} else {

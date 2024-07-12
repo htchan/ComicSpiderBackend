@@ -35,7 +35,7 @@ const (
 	// fromIndex      = 0
 	// toIndex        = 2
 	Host       = "webtoons.com"
-	dateFormat = "2006年01月02日"
+	dateFormat = "2006年1月2日"
 )
 
 func NewVendorService(
