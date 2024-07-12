@@ -135,7 +135,6 @@ func (serv *VendorService) isUpdated(ctx context.Context, web *model.Website, bo
 		hoursAgo, err := strconv.Atoi(strings.Trim(updateTimeStr[1], "小時前"))
 		if err != nil {
 			zerolog.Ctx(ctx).Error().Err(err).Str("date", updateTimeStr[1]).Msg("Failed to parse update time")
-			updateTime = time.Now()
 		} else {
 			updateTime = time.Now().
 				Add(time.Duration(-hoursAgo) * time.Hour)
@@ -144,7 +143,6 @@ func (serv *VendorService) isUpdated(ctx context.Context, web *model.Website, bo
 		updateTime, err = time.Parse(dateFormat, updateTimeStr[1])
 		if err != nil {
 			zerolog.Ctx(ctx).Error().Err(err).Str("date", updateTimeStr[1]).Msg("Failed to parse update time")
-			updateTime = time.Now()
 		}
 	}
 

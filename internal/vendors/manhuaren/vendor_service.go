@@ -130,13 +130,11 @@ func (serv *VendorService) isUpdated(ctx context.Context, web *model.Website, bo
 		updateTime, err = time.Parse(sameYearDateFormat, fmt.Sprintf("%d-%s", time.Now().Year(), updateTimeStr))
 		if err != nil {
 			zerolog.Ctx(ctx).Error().Err(err).Str("date", updateTimeStr).Msg("Failed to parse update time")
-			updateTime = time.Now()
 		}
 	} else {
 		updateTime, err = time.Parse(dateFormat, updateTimeStr)
 		if err != nil {
 			zerolog.Ctx(ctx).Error().Err(err).Str("date", updateTimeStr).Msg("Failed to parse update time")
-			updateTime = time.Now()
 		}
 	}
 
