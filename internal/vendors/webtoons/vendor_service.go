@@ -35,7 +35,7 @@ const (
 	// fromIndex      = 0
 	// toIndex        = 2
 	Host       = "webtoons.com"
-	dateFormat = "2006年01月02日"
+	dateFormat = "2006年1月2日"
 )
 
 func NewVendorService(
@@ -125,7 +125,6 @@ func (serv *VendorService) isUpdated(ctx context.Context, web *model.Website, bo
 	updateTime, err := time.Parse(dateFormat, updateTimeStr)
 	if err != nil {
 		zerolog.Ctx(ctx).Error().Err(err).Str("date", updateTimeStr).Msg("Failed to parse update time")
-		updateTime = time.Now()
 	}
 
 	updateTime = updateTime.UTC().Truncate(24 * time.Hour)

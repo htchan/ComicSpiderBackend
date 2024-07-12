@@ -29,10 +29,8 @@ type VendorService struct {
 var _ vendors.VendorService = (*VendorService)(nil)
 
 const (
-	titleGoQuery      = "head>title"
-	hostMobile        = "m.manhuagui.com"
-	dateGoQuery       = "li.status>span>span.red"
-	dateGoQueryMobile = "div.cont-list>dl:nth-child(3)>dd:nth-child(2)"
+	titleGoQuery = "head>title"
+	dateGoQuery  = "li.status>span>span.red:nth-child(3)"
 	// contentGoQuery = "li.status>span>span.red"
 	// fromIndex      = 0
 	// toIndex        = 2
@@ -122,17 +120,11 @@ func (serv *VendorService) isUpdated(ctx context.Context, web *model.Website, bo
 		isUpdated = true
 	}
 
-	var updateTimeStr string
-	if web.FullHost() == hostMobile {
-		updateTimeStr = doc.Find(dateGoQueryMobile).Text()
-	} else {
-		updateTimeStr = doc.Find(dateGoQuery).Text()
-	}
+	updateTimeStr := doc.Find(dateGoQuery).Text()
 
 	updateTime, err := time.Parse(dateFormat, updateTimeStr)
 	if err != nil {
 		zerolog.Ctx(ctx).Error().Err(err).Str("date", updateTimeStr).Msg("Failed to parse update time")
-		updateTime = time.Now()
 	}
 
 	updateTime = updateTime.UTC().Truncate(24 * time.Hour)
