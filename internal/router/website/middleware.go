@@ -114,7 +114,7 @@ func WebsiteParams(next http.Handler) http.Handler {
 	)
 }
 
-func QueryWebsite(r repository.Repostory) func(http.Handler) http.Handler {
+func QueryUserWebsite(r repository.Repostory) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(
 			func(res http.ResponseWriter, req *http.Request) {

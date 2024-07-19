@@ -1,6 +1,7 @@
 package website
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
 	"net/http"
@@ -18,7 +19,7 @@ var RecordNotFoundError = errors.New("record not found")
 
 func writeError(res http.ResponseWriter, statusCode int, err error) {
 	res.WriteHeader(statusCode)
-	fmt.Fprintln(res, fmt.Sprintf(`{ "error": "%v" }`, err))
+	json.NewEncoder(res).Encode(errResp{err.Error()})
 }
 
 func redirectLogin(res http.ResponseWriter, req *http.Request) {
@@ -52,8 +53,8 @@ func AddRoutes(router chi.Router, r repository.Repostory, conf *config.APIConfig
 
 			router.With(WebsiteParams).Post("/", createWebsiteHandler(r, &conf.WebsiteConfig))
 
-			router.With(QueryWebsite(r)).Route("/{webUUID}", func(router chi.Router) {
-				router.Get("/", getWebsiteHandler(r))
+			router.With(QueryUserWebsite(r)).Route("/{webUUID}", func(router chi.Router) {
+				router.Get("/", getUserWebsiteHandler())
 				router.Delete("/", deleteWebsiteHandler(r))
 				router.Put("/refresh", refreshWebsiteHandler(r))
 				router.With(GroupNameParams).Put("/change-group", changeWebsiteGroupHandler(r))

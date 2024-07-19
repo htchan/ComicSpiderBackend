@@ -18,6 +18,15 @@ import (
 	"github.com/htchan/WebHistory/internal/service"
 )
 
+// @Summary		Get website group
+// @description	get website group
+// @Tags			web-history
+// @Accept			json
+// @Produce		json
+// @Param			X-USER-UUID	header		string	true	"user uuid"
+// @Success		200			{object}	listAllWebsiteGroupsResp
+// @Failure		400			{object}	errResp
+// @Router			/api/web-watcher/websites/groups [get]
 func getAllWebsiteGroupsHandler(r repository.Repostory) http.HandlerFunc {
 	return func(res http.ResponseWriter, req *http.Request) {
 		userUUID := req.Context().Value(ContextKeyUserUUID).(string)
@@ -28,12 +37,20 @@ func getAllWebsiteGroupsHandler(r repository.Repostory) http.HandlerFunc {
 			return
 		}
 
-		json.NewEncoder(res).Encode(map[string]interface{}{
-			"website_groups": webs.WebsiteGroups(),
-		})
+		json.NewEncoder(res).Encode(listAllWebsiteGroupsResp{webs.WebsiteGroups()})
 	}
 }
 
+// @Summary		Get website group
+// @description	get website group
+// @Tags			web-history
+// @Accept			json
+// @Produce		json
+// @Param			X-USER-UUID	header		string	true	"user uuid"
+// @Param			groupName	path		string	true	"group name"
+// @Success		200			{object}	getWebsiteGroupResp
+// @Failure		400			{object}	errResp
+// @Router			/api/web-watcher/websites/groups/{groupName} [get]
 func getWebsiteGroupHandler(r repository.Repostory) http.HandlerFunc {
 	return func(res http.ResponseWriter, req *http.Request) {
 		userUUID := req.Context().Value(ContextKeyUserUUID).(string)
@@ -45,12 +62,20 @@ func getWebsiteGroupHandler(r repository.Repostory) http.HandlerFunc {
 			return
 		}
 
-		json.NewEncoder(res).Encode(
-			map[string]interface{}{"website_group": webs},
-		)
+		json.NewEncoder(res).Encode(getWebsiteGroupResp{webs})
 	}
 }
 
+// @Summary		Create website
+// @description	create website
+// @Tags			web-history
+// @Accept			json
+// @Produce		json
+// @Param			X-USER-UUID	header		string	true	"user uuid"
+// @Param			url	formData		string	true	"url"
+// @Success		200			{object}	createWebsiteResp
+// @Failure		400			{object}	errResp
+// @Router			/api/web-watcher/websites [post]
 func createWebsiteHandler(r repository.Repostory, conf *config.WebsiteConfig) http.HandlerFunc {
 	return func(res http.ResponseWriter, req *http.Request) {
 		// userUUID, err := UserUUID(req)
@@ -75,22 +100,38 @@ func createWebsiteHandler(r repository.Repostory, conf *config.WebsiteConfig) ht
 			return
 		}
 
-		json.NewEncoder(res).Encode(map[string]interface{}{
-			"message": fmt.Sprintf("website <%v> inserted", web.Title),
-		})
+		json.NewEncoder(res).Encode(createWebsiteResp{fmt.Sprintf("website <%v> inserted", web.Title)})
 	}
 }
 
-func getWebsiteHandler(r repository.Repostory) http.HandlerFunc {
+// @Summary		Get user website
+// @description	get user website
+// @Tags			web-history
+// @Accept			json
+// @Produce		json
+// @Param			X-USER-UUID	header		string	true	"user uuid"
+// @Param			websiteUUID	path		string	true	"website uuid"
+// @Success		200			{object}	getUserWebsiteResp
+// @Failure		400			{object}	errResp
+// @Router			/api/web-watcher/websites/{websiteUUID} [get]
+func getUserWebsiteHandler() http.HandlerFunc {
 	return func(res http.ResponseWriter, req *http.Request) {
 		web := req.Context().Value(ContextKeyWebsite).(model.UserWebsite)
 
-		json.NewEncoder(res).Encode(map[string]interface{}{
-			"website": web,
-		})
+		json.NewEncoder(res).Encode(getUserWebsiteResp{web})
 	}
 }
 
+// @Summary		Update user website
+// @description	update user website
+// @Tags			web-history
+// @Accept			json
+// @Produce		json
+// @Param			X-USER-UUID	header		string	true	"user uuid"
+// @Param			websiteUUID	path		string	true	"website uuid"
+// @Success		200			{object}	refreshWebsiteResp
+// @Failure		400			{object}	errResp
+// @Router			/api/web-watcher/websites/{websiteUUID}/refresh [put]
 func refreshWebsiteHandler(r repository.Repostory) http.HandlerFunc {
 	return func(res http.ResponseWriter, req *http.Request) {
 		web := req.Context().Value(ContextKeyWebsite).(model.UserWebsite)
@@ -103,12 +144,22 @@ func refreshWebsiteHandler(r repository.Repostory) http.HandlerFunc {
 			return
 		}
 
-		json.NewEncoder(res).Encode(map[string]interface{}{
-			"website": web,
-		})
+		json.NewEncoder(res).Encode(refreshWebsiteResp{web})
 	}
 }
 
+// write swagger docs
+//
+//	@Summary		Delete user website
+//	@description	delete user website
+//	@Tags			web-history
+//	@Accept			json
+//	@Produce		json
+//	@Param			X-USER-UUID	header		string	true	"user uuid"
+//	@Param			websiteUUID	path		string	true	"website uuid"
+//	@Success		200			{object}	deleteWebsiteResp
+//	@Failure		400			{object}	errResp
+//	@Router			/api/web-watcher/websites/{websiteUUID} [delete]
 func deleteWebsiteHandler(r repository.Repostory) http.HandlerFunc {
 	return func(res http.ResponseWriter, req *http.Request) {
 		web := req.Context().Value(ContextKeyWebsite).(model.UserWebsite)
@@ -120,9 +171,7 @@ func deleteWebsiteHandler(r repository.Repostory) http.HandlerFunc {
 			return
 		}
 
-		json.NewEncoder(res).Encode(map[string]interface{}{
-			"message": fmt.Sprintf("website <%v> deleted", web.Website.Title),
-		})
+		json.NewEncoder(res).Encode(deleteWebsiteResp{fmt.Sprintf("website <%v> deleted", web.Website.Title)})
 	}
 }
 
@@ -135,6 +184,19 @@ func validGroupName(web model.UserWebsite, groupName string) bool {
 	return false
 }
 
+// write swagger docs
+//
+//	@Summary		Change website group
+//	@description	change website group
+//	@Tags			web-history
+//	@Accept			json
+//	@Produce		json
+//	@Param			X-USER-UUID	header		string	true	"user uuid"
+//	@Param			websiteUUID	path		string	true	"website uuid"
+//	@Param			group_name	formData		string	true	"group name"
+//	@Success		200			{object}	changeWebsiteGroupResp
+//	@Failure		400			{object}	errResp
+//	@Router			/api/web-watcher/websites/{websiteUUID}/change-group [put]
 func changeWebsiteGroupHandler(r repository.Repostory) http.HandlerFunc {
 	return func(res http.ResponseWriter, req *http.Request) {
 		web := req.Context().Value(ContextKeyWebsite).(model.UserWebsite)
@@ -143,15 +205,15 @@ func changeWebsiteGroupHandler(r repository.Repostory) http.HandlerFunc {
 			writeError(res, http.StatusBadRequest, errors.New("invalid group name"))
 			return
 		}
+
 		web.GroupName = groupName
 		err := r.UpdateUserWebsite(&web)
 		if err != nil {
 			writeError(res, http.StatusBadRequest, err)
 			return
 		}
-		json.NewEncoder(res).Encode(map[string]interface{}{
-			"website": web,
-		})
+
+		json.NewEncoder(res).Encode(changeWebsiteGroupResp{web})
 	}
 }
 

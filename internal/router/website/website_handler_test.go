@@ -18,6 +18,7 @@ import (
 	"github.com/htchan/WebHistory/internal/config"
 	"github.com/htchan/WebHistory/internal/model"
 	"github.com/htchan/WebHistory/internal/repository"
+	"github.com/stretchr/testify/assert"
 )
 
 func Test_getAllWebsiteGroupsHandler(t *testing.T) {
@@ -74,7 +75,7 @@ func Test_getAllWebsiteGroupsHandler(t *testing.T) {
 			r:            repository.NewInMemRepo(nil, nil, nil, errors.New("some error")),
 			userUUID:     "unknown",
 			expectStatus: 400,
-			expectRes:    `{ "error": "record not found" }`,
+			expectRes:    `{"error":"record not found"}`,
 		},
 	}
 
@@ -92,17 +93,8 @@ func Test_getAllWebsiteGroupsHandler(t *testing.T) {
 			rr := httptest.NewRecorder()
 			getAllWebsiteGroupsHandler(test.r).ServeHTTP(rr, req)
 
-			if rr.Code != test.expectStatus {
-				t.Error("got different code as expect")
-				t.Error(rr.Code)
-				t.Error(test.expectStatus)
-			}
-
-			if strings.Trim(rr.Body.String(), "\n") != test.expectRes {
-				t.Error("got different response as expect")
-				t.Error(rr.Body.String())
-				t.Error(test.expectRes)
-			}
+			assert.Equal(t, test.expectStatus, rr.Code)
+			assert.Equal(t, test.expectRes, strings.Trim(rr.Body.String(), "\n"))
 		})
 	}
 }
@@ -154,7 +146,7 @@ func Test_getWebsiteGroupHandler(t *testing.T) {
 			userUUID:     "unknown",
 			group:        "group 1",
 			expectStatus: 400,
-			expectRes:    `{ "error": "record not found" }`,
+			expectRes:    `{"error":"record not found"}`,
 		},
 		{
 			name:         "return error if group not exist",
@@ -162,7 +154,7 @@ func Test_getWebsiteGroupHandler(t *testing.T) {
 			userUUID:     "abc",
 			group:        "group not exist",
 			expectStatus: 400,
-			expectRes:    `{ "error": "record not found" }`,
+			expectRes:    `{"error":"record not found"}`,
 		},
 	}
 
@@ -183,17 +175,8 @@ func Test_getWebsiteGroupHandler(t *testing.T) {
 			rr := httptest.NewRecorder()
 			getWebsiteGroupHandler(test.r).ServeHTTP(rr, req)
 
-			if rr.Code != test.expectStatus {
-				t.Error("got different code as expect")
-				t.Error(rr.Code)
-				t.Error(test.expectStatus)
-			}
-
-			if strings.Trim(rr.Body.String(), "\n") != test.expectRes {
-				t.Error("got different response as expect")
-				t.Error(rr.Body.String())
-				t.Error(test.expectRes)
-			}
+			assert.Equal(t, test.expectStatus, rr.Code)
+			assert.Equal(t, test.expectRes, strings.Trim(rr.Body.String(), "\n"))
 		})
 	}
 }
@@ -226,6 +209,7 @@ func Test_createWebsiteHandler(t *testing.T) {
 					{
 						UUID: "30303030-3030-4030-b030-303030303030", URL: "https://example.com/",
 						UpdateTime: time.Now().UTC().Truncate(time.Second),
+						Conf:       &config.WebsiteConfig{},
 					},
 				},
 				[]model.UserWebsite{
@@ -237,6 +221,7 @@ func Test_createWebsiteHandler(t *testing.T) {
 							UUID:       "30303030-3030-4030-b030-303030303030",
 							URL:        "https://example.com/",
 							UpdateTime: time.Now().UTC().Truncate(time.Second),
+							Conf:       &config.WebsiteConfig{},
 						},
 					},
 				},
@@ -250,7 +235,7 @@ func Test_createWebsiteHandler(t *testing.T) {
 			userUUID:     "unknown",
 			url:          "https://example.com/",
 			expectStatus: 400,
-			expectRes:    `{ "error": "some error" }`,
+			expectRes:    `{"error":"some error"}`,
 			expectRepo:   repository.NewInMemRepo(nil, nil, nil, errors.New("some error")),
 		},
 	}
@@ -269,17 +254,8 @@ func Test_createWebsiteHandler(t *testing.T) {
 			rr := httptest.NewRecorder()
 			createWebsiteHandler(test.r, test.conf).ServeHTTP(rr, req)
 
-			if rr.Code != test.expectStatus {
-				t.Error("got different code as expect")
-				t.Error(rr.Code)
-				t.Error(test.expectStatus)
-			}
-
-			if strings.Trim(rr.Body.String(), "\n") != test.expectRes {
-				t.Error("got different response as expect")
-				t.Error(rr.Body.String())
-				t.Error(test.expectRes)
-			}
+			assert.Equal(t, test.expectStatus, rr.Code)
+			assert.Equal(t, test.expectRes, strings.Trim(rr.Body.String(), "\n"))
 
 			if !cmp.Equal(test.r, test.expectRepo) {
 				t.Error("got different repo as expect")
@@ -294,14 +270,12 @@ func Test_getWebsiteHandler(t *testing.T) {
 	t.Parallel()
 	tests := []struct {
 		name         string
-		r            repository.Repostory
 		web          model.UserWebsite
 		expectStatus int
 		expectRes    string
 	}{
 		{
 			name: "return website with correct format",
-			r:    nil,
 			web: model.UserWebsite{
 				WebsiteUUID: "web_uuid",
 				UserUUID:    "user_uuid",
@@ -332,19 +306,10 @@ func Test_getWebsiteHandler(t *testing.T) {
 			ctx = context.WithValue(ctx, ContextKeyWebsite, test.web)
 			req = req.WithContext(ctx)
 			rr := httptest.NewRecorder()
-			getWebsiteHandler(test.r).ServeHTTP(rr, req)
+			getUserWebsiteHandler().ServeHTTP(rr, req)
 
-			if rr.Code != test.expectStatus {
-				t.Error("got different code as expect")
-				t.Error(rr.Code)
-				t.Error(test.expectStatus)
-			}
-
-			if strings.Trim(rr.Body.String(), "\n") != test.expectRes {
-				t.Error("got different response as expect")
-				t.Error(rr.Body.String())
-				t.Error(test.expectRes)
-			}
+			assert.Equal(t, test.expectStatus, rr.Code)
+			assert.Equal(t, test.expectRes, strings.Trim(rr.Body.String(), "\n"))
 		})
 	}
 }
@@ -427,24 +392,15 @@ func Test_refreshWebsiteHandler(t *testing.T) {
 			rr := httptest.NewRecorder()
 			refreshWebsiteHandler(test.r).ServeHTTP(rr, req)
 
-			if rr.Code != test.expectStatus {
-				t.Error("got different code as expect")
-				t.Error(rr.Code)
-				t.Error(test.expectStatus)
-			}
+			assert.Equal(t, test.expectStatus, rr.Code)
 
 			// test.web.AccessTime = time.Now().UTC().Truncate(time.Second)
 
-			expectResp, err := json.Marshal(map[string]model.UserWebsite{
+			expectResp, _ := json.Marshal(map[string]model.UserWebsite{
 				"website": test.web,
 			})
 
-			if strings.Trim(rr.Body.String(), "\n") != string(expectResp) {
-				t.Error("got different response as expect")
-				t.Error(rr.Body.String())
-				t.Error(string(expectResp))
-			}
-
+			assert.Equal(t, string(expectResp), strings.Trim(rr.Body.String(), "\n"))
 			if !cmp.Equal(test.r, test.expectRepo) {
 				t.Error("got different repo as expect")
 				t.Error(test.r)
@@ -521,18 +477,8 @@ func Test_deleteWebsiteHandler(t *testing.T) {
 			rr := httptest.NewRecorder()
 			deleteWebsiteHandler(test.r).ServeHTTP(rr, req)
 
-			if rr.Code != test.expectStatus {
-				t.Error("got different code as expect")
-				t.Error(rr.Code)
-				t.Error(test.expectStatus)
-			}
-
-			if strings.Trim(rr.Body.String(), "\n") != test.expectResp {
-				t.Error("got different response as expect")
-				t.Error(rr.Body.String())
-				t.Error(test.expectResp)
-			}
-
+			assert.Equal(t, test.expectStatus, rr.Code)
+			assert.Equal(t, test.expectResp, strings.Trim(rr.Body.String(), "\n"))
 			if !cmp.Equal(test.r, test.expectRepo) {
 				t.Error("got different repo as expect")
 				t.Error(test.r)
@@ -625,18 +571,8 @@ func Test_changeWebsiteGroupHandler(t *testing.T) {
 			rr := httptest.NewRecorder()
 			changeWebsiteGroupHandler(test.r).ServeHTTP(rr, req)
 
-			if rr.Code != test.expectStatus {
-				t.Error("got different code as expect")
-				t.Error(rr.Code)
-				t.Error(test.expectStatus)
-			}
-
-			if strings.Trim(rr.Body.String(), "\n") != test.expectResp {
-				t.Error("got different response as expect")
-				t.Error(rr.Body.String())
-				t.Error(test.expectResp)
-			}
-
+			assert.Equal(t, test.expectStatus, rr.Code)
+			assert.Equal(t, test.expectResp, strings.Trim(rr.Body.String(), "\n"))
 			if !cmp.Equal(test.r, test.expectRepo) {
 				t.Error("got different repo as expect")
 				t.Error(test.r)
