@@ -32,8 +32,8 @@ target "backend" {
   ]
 
   tags = [
-    "ghcr.io/htchan/web-history:${service}-v${DATE}-${substr(HASH,0,7)}",
-    "ghcr.io/htchan/web-history:${service}-${IMAGE_TAG}"
+    "ghcr.io/htchan/web-history-${service}:v${DATE}-${substr(HASH,0,7)}",
+    "ghcr.io/htchan/web-history-${service}:${IMAGE_TAG}"
   ]
   platforms = equal(BAKE_CI, "true") ? ["linux/amd64","linux/arm64"] : []
   output     = [equal(BAKE_CI, "true") ? "type=registry": "type=docker"]
