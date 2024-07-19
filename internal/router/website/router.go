@@ -65,5 +65,5 @@ func AddRoutes(router chi.Router, r repository.Repostory, conf *config.APIConfig
 		router.Get("/db-stats", dbStatsHandler(r))
 	})
 
-	router.Get("docs/swagger", httpSwagger.WrapHandler)
+	router.Get("/docs/swagger", httpSwagger.WrapHandler)
 }
