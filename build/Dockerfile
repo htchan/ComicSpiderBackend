@@ -13,6 +13,7 @@ RUN --mount=type=bind,source=go.mod,target=go.mod \
 RUN --mount=type=bind,source=go.mod,target=go.mod \
     --mount=type=bind,source=go.sum,target=go.sum \
     --mount=type=bind,source=internal,target=internal \
+    --mount=type=bind,source=docs,target=docs \
     --mount=type=bind,source=cmd,target=cmd \
     --mount=type=cache,target=/root/.cache/go-build \
     go build -v ./cmd/$SERVICE
