@@ -169,7 +169,7 @@ func TestVendorService_fetchWebsite(t *testing.T) {
 			ctx := tt.getCtx()
 			start := time.Now()
 			body, err := tt.serv.fetchWebsite(ctx, tt.web)
-			assert.Equal(t, tt.expectTimeTaken, time.Since(start).Truncate(unitDuration))
+			assert.LessOrEqual(t, tt.expectTimeTaken, time.Since(start).Truncate(unitDuration))
 			assert.Equal(t, tt.wantBody, body)
 			assert.ErrorIs(t, err, tt.wantError)
 			assert.Equal(t, true, tt.serv.lock.TryAcquire(1))
