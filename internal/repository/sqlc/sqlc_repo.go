@@ -174,7 +174,7 @@ func (r *SqlcRepo) CreateWebsite(web *model.Website) error {
 
 	web.UUID = webModel.Uuid.String
 	web.Title, web.RawContent = webModel.Title.String, webModel.Content.String
-	web.UpdateTime = webModel.UpdateTime.Time
+	web.UpdateTime = webModel.UpdateTime.Time.UTC().Truncate(time.Second)
 	web.Conf = r.conf
 
 	return nil
@@ -237,7 +237,7 @@ func (r *SqlcRepo) CreateUserWebsite(web *model.UserWebsite) error {
 	}
 
 	web.GroupName = userWebModel.GroupName.String
-	web.AccessTime = userWebModel.AccessTime.Time
+	web.AccessTime = userWebModel.AccessTime.Time.UTC().Truncate(time.Second)
 	tempWeb, err := r.FindWebsite(web.WebsiteUUID)
 	if err != nil {
 		return fmt.Errorf("assign website fail: %w", err)

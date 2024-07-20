@@ -6,7 +6,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/google/go-cmp/cmp"
 	"github.com/htchan/WebHistory/internal/config"
 	"github.com/stretchr/testify/assert"
 )
@@ -35,21 +34,12 @@ func Test_NewWebsite(t *testing.T) {
 		t.Run(test.name, func(t *testing.T) {
 			t.Parallel()
 			web := NewWebsite(test.url, test.conf)
-			if web.UUID == "" {
-				t.Errorf("empty uuid")
-			}
-			if web.URL != test.url {
-				t.Errorf("wrong url: %s; want: %s", web.URL, test.url)
-			}
-			if web.Title != test.expectedTitle {
-				t.Errorf("wrong title: %s; want: %s", web.Title, test.expectedTitle)
-			}
-			if web.RawContent != test.expectedRawContent {
-				t.Errorf("wrong RawContent: %s; want: %s", web.RawContent, test.expectedRawContent)
-			}
-			if web.UpdateTime.Second() != test.expectedUpdateTime.Second() {
-				t.Errorf("wrong UpdateTime: %s; want: %s", web.UpdateTime, test.expectedUpdateTime)
-			}
+			assert.NotEmptyf(t, web.UUID, "web uuid")
+			assert.Equalf(t, test.url, web.URL, "web url")
+			assert.Equalf(t, test.expectedTitle, web.Title, "web title")
+			assert.Equalf(t, test.expectedRawContent, web.RawContent, "web RawContent")
+			assert.Equal(t, test.expectedUpdateTime, web.UpdateTime, "web UpdateTime")
+
 		})
 	}
 }
@@ -81,11 +71,7 @@ func TestWebsite_Map(t *testing.T) {
 		test := test
 		t.Run(test.name, func(t *testing.T) {
 			result := test.web.Map()
-			if !cmp.Equal(result, test.expect) {
-				t.Errorf("got unexpected map")
-				t.Error(result)
-				t.Error(test.expect)
-			}
+			assert.Equal(t, test.expect, result)
 		})
 	}
 }
@@ -112,15 +98,8 @@ func TestWebsite_MarshalJSON(t *testing.T) {
 		test := test
 		t.Run(test.name, func(t *testing.T) {
 			result, err := json.Marshal(test.web)
-			if err != nil {
-				t.Errorf("got error: %v", err)
-				return
-			}
-			if !cmp.Equal(string(result), test.expect) {
-				t.Errorf("got unexpected json")
-				t.Error(string(result))
-				t.Error(test.expect)
-			}
+			assert.NoError(t, err)
+			assert.Equal(t, test.expect, string(result))
 		})
 	}
 }
@@ -179,11 +158,7 @@ func TestWebsite_Host(t *testing.T) {
 		test := test
 		t.Run(test.name, func(t *testing.T) {
 			result := test.web.Host()
-			if !cmp.Equal(string(result), test.expect) {
-				t.Errorf("got unexpected host")
-				t.Error(string(result))
-				t.Error(test.expect)
-			}
+			assert.Equal(t, test.expect, result)
 		})
 	}
 }
@@ -208,11 +183,7 @@ func TestWebsite_Content(t *testing.T) {
 		test := test
 		t.Run(test.name, func(t *testing.T) {
 			result := test.web.Content()
-			if !cmp.Equal(result, test.expect) {
-				t.Errorf("got unexpected host")
-				t.Error(result)
-				t.Error(test.expect)
-			}
+			assert.Equal(t, test.expect, result)
 		})
 	}
 }

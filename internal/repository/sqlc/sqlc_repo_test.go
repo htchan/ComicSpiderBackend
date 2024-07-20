@@ -6,11 +6,10 @@ import (
 	"time"
 
 	_ "github.com/golang-migrate/migrate/v4/source/file"
-	"github.com/google/go-cmp/cmp"
 	"github.com/htchan/WebHistory/internal/config"
 	"github.com/htchan/WebHistory/internal/model"
 	_ "github.com/lib/pq"
-	"gotest.tools/assert"
+	"github.com/stretchr/testify/assert"
 )
 
 func TestNewRepo(t *testing.T) {
@@ -65,14 +64,15 @@ func TestSqlcRepo_CreateWebsite(t *testing.T) {
 	})
 
 	uuid := "create-website-uuid"
+	userUUID := "create-website-user-uuid"
 	title := "create website"
-	populateData(db, uuid, title)
+	populateData(db, uuid, title, userUUID)
 
 	tests := []struct {
-		name      string
-		web       model.Website
-		expect    model.Website
-		expectErr bool
+		name        string
+		web         model.Website
+		expect      model.Website
+		expectError error
 	}{
 		{
 			name: "create a new website",
@@ -89,8 +89,9 @@ func TestSqlcRepo_CreateWebsite(t *testing.T) {
 				Title:      "unknown",
 				RawContent: "",
 				UpdateTime: time.Date(2020, 1, 1, 0, 0, 0, 0, time.UTC),
+				Conf:       &config.WebsiteConfig{},
 			},
-			expectErr: false,
+			expectError: nil,
 		},
 		{
 			name: "create an existing website",
@@ -107,8 +108,9 @@ func TestSqlcRepo_CreateWebsite(t *testing.T) {
 				Title:      title,
 				RawContent: "content",
 				UpdateTime: time.Date(2020, 1, 2, 3, 4, 5, 0, time.UTC),
+				Conf:       &config.WebsiteConfig{},
 			},
-			expectErr: false,
+			expectError: nil,
 		},
 	}
 
@@ -118,13 +120,8 @@ func TestSqlcRepo_CreateWebsite(t *testing.T) {
 			t.Parallel()
 
 			err := r.CreateWebsite(&test.web)
-			if (err != nil) != test.expectErr {
-				t.Errorf("got error: %v; want error: %v", err, test.expectErr)
-			}
-			if !cmp.Equal(test.web, test.expect) {
-				t.Errorf("result web different from expect web")
-				t.Error(cmp.Diff(test.expect, test.web))
-			}
+			assert.ErrorIs(t, err, test.expectError)
+			assert.Equal(t, test.expect, test.web)
 		})
 	}
 }
@@ -140,8 +137,9 @@ func TestSqlcRepo_UpdateWebsite(t *testing.T) {
 	r := NewRepo(db, &config.WebsiteConfig{})
 
 	uuid := "update-website-uuid"
+	userUUID := "update-website-user-uuid"
 	title := "update website"
-	populateData(db, uuid, title)
+	populateData(db, uuid, title, userUUID)
 
 	t.Cleanup(func() {
 		db.Exec("delete from websites where uuid=$1", title)
@@ -150,10 +148,10 @@ func TestSqlcRepo_UpdateWebsite(t *testing.T) {
 	})
 
 	tests := []struct {
-		name      string
-		web       model.Website
-		expect    *model.Website
-		expectErr bool
+		name        string
+		web         model.Website
+		expect      *model.Website
+		expectError error
 	}{
 		{
 			name: "update successfully",
@@ -170,8 +168,9 @@ func TestSqlcRepo_UpdateWebsite(t *testing.T) {
 				Title:      title,
 				RawContent: "content new",
 				UpdateTime: time.Date(2020, 1, 1, 0, 0, 0, 0, time.UTC),
+				Conf:       &config.WebsiteConfig{},
 			},
-			expectErr: false,
+			expectError: nil,
 		},
 		{
 			name: "update not exist website",
@@ -182,8 +181,8 @@ func TestSqlcRepo_UpdateWebsite(t *testing.T) {
 				RawContent: "",
 				UpdateTime: time.Date(2020, 1, 1, 0, 0, 0, 0, time.UTC),
 			},
-			expect:    nil,
-			expectErr: true,
+			expect:      nil,
+			expectError: sql.ErrNoRows,
 		},
 	}
 
@@ -193,15 +192,10 @@ func TestSqlcRepo_UpdateWebsite(t *testing.T) {
 			t.Parallel()
 
 			err := r.UpdateWebsite(&test.web)
-			if (err != nil) != test.expectErr {
-				t.Errorf("got error: %v; want error: %v", err, test.expectErr)
-			}
+			assert.ErrorIs(t, err, test.expectError)
+
 			web, _ := r.FindWebsite(test.web.UUID)
-			if !cmp.Equal(web, test.expect) {
-				t.Errorf("web in database different from expected")
-				t.Error(web)
-				t.Error(test.expect)
-			}
+			assert.Equal(t, test.expect, web)
 		})
 	}
 }
@@ -217,8 +211,9 @@ func TestSqlcRepo_DeleteWebsite(t *testing.T) {
 	r := NewRepo(db, &config.WebsiteConfig{})
 
 	uuid := "delete-website-uuid"
+	userUUID := "delete-website-user-uuid"
 	title := "delete website"
-	populateData(db, uuid, title)
+	populateData(db, uuid, title, userUUID)
 	t.Cleanup(func() {
 		db.Exec("delete from websites where uuid=$1", uuid)
 		db.Exec("delete from user_websites where website_uuid=$1", uuid)
@@ -226,19 +221,19 @@ func TestSqlcRepo_DeleteWebsite(t *testing.T) {
 	})
 
 	tests := []struct {
-		name      string
-		webUUID   string
-		expectErr bool
+		name        string
+		webUUID     string
+		expectError error
 	}{
 		{
-			name:      "delete successfully",
-			webUUID:   uuid,
-			expectErr: false,
+			name:        "delete successfully",
+			webUUID:     uuid,
+			expectError: nil,
 		},
 		{
-			name:      "delete not exist",
-			webUUID:   "uuid-that-not-exist",
-			expectErr: false,
+			name:        "delete not exist",
+			webUUID:     "uuid-that-not-exist",
+			expectError: nil,
 		},
 	}
 
@@ -248,14 +243,11 @@ func TestSqlcRepo_DeleteWebsite(t *testing.T) {
 			t.Parallel()
 
 			err := r.DeleteWebsite(&model.Website{UUID: test.webUUID})
-			if (err != nil) != test.expectErr {
-				t.Errorf("got error: %v; want error: %v", err, test.expectErr)
-			}
+			assert.ErrorIs(t, err, test.expectError)
+
 			web, err := r.FindWebsite(test.webUUID)
-			if err == nil || web != nil {
-				t.Errorf("got error: %v", err)
-				t.Errorf("find website: %v", web)
-			}
+			assert.ErrorIs(t, err, sql.ErrNoRows)
+			assert.Nil(t, web)
 		})
 	}
 }
@@ -271,8 +263,9 @@ func TestSqlcRepo_FindWebsites(t *testing.T) {
 	r := NewRepo(db, &config.WebsiteConfig{})
 
 	uuid := "find-websites-uuid"
+	userUUID := "find-websites-user-uuid"
 	title := "find websites"
-	populateData(db, uuid, title)
+	populateData(db, uuid, title, userUUID)
 	t.Cleanup(func() {
 		db.Exec("delete from websites where uuid=$1", uuid)
 		db.Exec("delete from user_websites where website_uuid=$1", uuid)
@@ -280,9 +273,9 @@ func TestSqlcRepo_FindWebsites(t *testing.T) {
 	})
 
 	tests := []struct {
-		name      string
-		expect    model.Website
-		expectErr bool
+		name        string
+		expect      model.Website
+		expectError error
 	}{
 		{
 			name: "happy flow",
@@ -292,8 +285,9 @@ func TestSqlcRepo_FindWebsites(t *testing.T) {
 				Title:      title,
 				RawContent: "content",
 				UpdateTime: time.Date(2020, 1, 2, 3, 4, 5, 0, time.UTC),
+				Conf:       &config.WebsiteConfig{},
 			},
-			expectErr: false,
+			expectError: nil,
 		},
 	}
 
@@ -303,17 +297,8 @@ func TestSqlcRepo_FindWebsites(t *testing.T) {
 			t.Parallel()
 
 			result, err := r.FindWebsites()
-			if (err != nil) != test.expectErr {
-				t.Errorf("got error: %v; want error: %v", err, test.expectErr)
-			}
-			for _, web := range result {
-				if cmp.Equal(web, test.expect) {
-					return
-				}
-			}
-			t.Errorf("result not contains expected")
-			t.Error(result)
-			t.Error(test.expect)
+			assert.ErrorIs(t, err, test.expectError)
+			assert.Contains(t, result, test.expect)
 		})
 	}
 }
@@ -329,8 +314,9 @@ func TestSqlcRepo_FindWebsite(t *testing.T) {
 	r := NewRepo(db, &config.WebsiteConfig{})
 
 	uuid := "find-website-uuid"
+	userUUID := "find-website-user-uuid"
 	title := "find website"
-	populateData(db, uuid, title)
+	populateData(db, uuid, title, userUUID)
 	t.Cleanup(func() {
 		db.Exec("delete from websites where uuid=$1", uuid)
 		db.Exec("delete from user_websites where website_uuid=$1", uuid)
@@ -338,10 +324,10 @@ func TestSqlcRepo_FindWebsite(t *testing.T) {
 	})
 
 	tests := []struct {
-		name      string
-		webUUID   string
-		expect    *model.Website
-		expectErr bool
+		name        string
+		webUUID     string
+		expect      *model.Website
+		expectError error
 	}{
 		{
 			name:    "find exist website",
@@ -352,14 +338,15 @@ func TestSqlcRepo_FindWebsite(t *testing.T) {
 				Title:      title,
 				RawContent: "content",
 				UpdateTime: time.Date(2020, 1, 2, 3, 4, 5, 0, time.UTC),
+				Conf:       &config.WebsiteConfig{},
 			},
-			expectErr: false,
+			expectError: nil,
 		},
 		{
-			name:      "find not exist website",
-			webUUID:   "uuid-that-not-exist",
-			expect:    nil,
-			expectErr: true,
+			name:        "find not exist website",
+			webUUID:     "uuid-that-not-exist",
+			expect:      nil,
+			expectError: sql.ErrNoRows,
 		},
 	}
 
@@ -369,14 +356,8 @@ func TestSqlcRepo_FindWebsite(t *testing.T) {
 			t.Parallel()
 
 			result, err := r.FindWebsite(test.webUUID)
-			if (err != nil) != test.expectErr {
-				t.Errorf("got error: %v; want error: %v", err, test.expectErr)
-			}
-			if !cmp.Equal(result, test.expect) {
-				t.Errorf("result different from expected")
-				t.Error(result)
-				t.Error(test.expect)
-			}
+			assert.ErrorIs(t, err, test.expectError)
+			assert.Equal(t, test.expect, result)
 		})
 	}
 }
@@ -392,31 +373,32 @@ func TestSqlcRepo_CreateUserWebsite(t *testing.T) {
 	r := NewRepo(db, &config.WebsiteConfig{})
 
 	uuid := "create-user-website-uuid"
+	userUUID := "create-user-website-user-uuid"
 	title := "create user website"
-	populateData(db, uuid, title)
+	populateData(db, uuid, title, userUUID)
 	t.Cleanup(func() {
-		// db.Exec("delete from websites where uuid=$1", uuid)
-		// db.Exec("delete from user_websites where website_uuid=$1", uuid)
+		db.Exec("delete from websites where uuid=$1", uuid)
+		db.Exec("delete from user_websites where website_uuid=$1", uuid)
 		db.Close()
 	})
 
 	tests := []struct {
-		name      string
-		web       model.UserWebsite
-		expect    model.UserWebsite
-		expectErr bool
+		name        string
+		web         model.UserWebsite
+		expect      model.UserWebsite
+		expectError error
 	}{
 		{
 			name: "create new user website",
 			web: model.UserWebsite{
 				WebsiteUUID: uuid,
-				UserUUID:    "new-user-website-uuid",
+				UserUUID:    "other-user-uuid",
 				GroupName:   "title",
 				AccessTime:  time.Date(2020, 1, 1, 0, 0, 0, 0, time.UTC),
 			},
 			expect: model.UserWebsite{
 				WebsiteUUID: uuid,
-				UserUUID:    "new-user-website-uuid",
+				UserUUID:    "other-user-uuid",
 				GroupName:   "title",
 				AccessTime:  time.Date(2020, 1, 1, 0, 0, 0, 0, time.UTC),
 				Website: model.Website{
@@ -424,19 +406,21 @@ func TestSqlcRepo_CreateUserWebsite(t *testing.T) {
 					URL:        "http://example.com/" + title,
 					Title:      title,
 					UpdateTime: time.Date(2020, 1, 2, 3, 4, 5, 0, time.UTC),
+					RawContent: "content",
+					Conf:       &config.WebsiteConfig{},
 				},
 			},
-			expectErr: false,
+			expectError: nil,
 		},
 		{
 			name: "create existing user website",
 			web: model.UserWebsite{
 				WebsiteUUID: uuid,
-				UserUUID:    "def",
+				UserUUID:    userUUID,
 			},
 			expect: model.UserWebsite{
 				WebsiteUUID: uuid,
-				UserUUID:    "def",
+				UserUUID:    userUUID,
 				GroupName:   title,
 				AccessTime:  time.Date(2020, 1, 2, 3, 4, 5, 0, time.UTC),
 				Website: model.Website{
@@ -444,9 +428,11 @@ func TestSqlcRepo_CreateUserWebsite(t *testing.T) {
 					URL:        "http://example.com/" + title,
 					Title:      title,
 					UpdateTime: time.Date(2020, 1, 2, 3, 4, 5, 0, time.UTC),
+					RawContent: "content",
+					Conf:       &config.WebsiteConfig{},
 				},
 			},
-			expectErr: false,
+			expectError: nil,
 		},
 		{
 			name: "create new user website link to not exist website",
@@ -462,7 +448,7 @@ func TestSqlcRepo_CreateUserWebsite(t *testing.T) {
 				GroupName:   "title",
 				AccessTime:  time.Date(2020, 1, 1, 0, 0, 0, 0, time.UTC),
 			},
-			expectErr: true,
+			expectError: sql.ErrNoRows,
 		},
 	}
 
@@ -472,19 +458,13 @@ func TestSqlcRepo_CreateUserWebsite(t *testing.T) {
 			t.Parallel()
 
 			err := r.CreateUserWebsite(&test.web)
-			if (err != nil) != test.expectErr {
-				t.Errorf("got error: %v; want error: %v", err, test.expectErr)
-			}
-			if !cmp.Equal(test.web, test.expect) {
-				t.Errorf("result different from expect")
-				t.Error(test.web)
-				t.Error(test.expect)
-			}
+			assert.ErrorIs(t, err, test.expectError)
+			assert.Equal(t, test.expect, test.web)
 		})
 	}
 }
 
-func TestSqlcRepo_UpdteUserWebsite(t *testing.T) {
+func TestSqlcRepo_UpdateUserWebsite(t *testing.T) {
 	t.Parallel()
 
 	db, err := sql.Open("postgres", connString)
@@ -495,8 +475,9 @@ func TestSqlcRepo_UpdteUserWebsite(t *testing.T) {
 	r := NewRepo(db, &config.WebsiteConfig{})
 
 	uuid := "update-user-website-uuid"
+	userUUID := "update-user-website-user-uuid"
 	title := "update user website"
-	populateData(db, uuid, title)
+	populateData(db, uuid, title, userUUID)
 	t.Cleanup(func() {
 		db.Exec("delete from websites where uuid=$1", uuid)
 		db.Exec("delete from user_websites where website_uuid=$1", uuid)
@@ -504,33 +485,33 @@ func TestSqlcRepo_UpdteUserWebsite(t *testing.T) {
 	})
 
 	tests := []struct {
-		name      string
-		web       model.UserWebsite
-		expect    *model.UserWebsite
-		expectErr bool
+		name        string
+		web         model.UserWebsite
+		expect      *model.UserWebsite
+		expectError error
 	}{
 		{
 			name: "update existing website",
 			web: model.UserWebsite{
 				WebsiteUUID: uuid,
-				UserUUID:    "def",
+				UserUUID:    userUUID,
 				GroupName:   title,
 				AccessTime:  time.Date(2020, 1, 1, 0, 0, 0, 0, time.UTC),
 			},
 			expect: &model.UserWebsite{
 				WebsiteUUID: uuid,
-				UserUUID:    "def",
+				UserUUID:    userUUID,
 				GroupName:   title,
 				AccessTime:  time.Date(2020, 1, 1, 0, 0, 0, 0, time.UTC),
 				Website: model.Website{
 					UUID:       uuid,
 					URL:        "http://example.com/" + title,
 					Title:      title,
-					RawContent: "content",
 					UpdateTime: time.Date(2020, 1, 2, 3, 4, 5, 0, time.UTC),
+					Conf:       &config.WebsiteConfig{},
 				},
 			},
-			expectErr: false,
+			expectError: nil,
 		},
 		{
 			name: "update not exist user website",
@@ -538,8 +519,8 @@ func TestSqlcRepo_UpdteUserWebsite(t *testing.T) {
 				WebsiteUUID: "not-exist-website-uuid",
 				UserUUID:    "not-exist-user-uuid",
 			},
-			expect:    nil,
-			expectErr: true,
+			expect:      nil,
+			expectError: sql.ErrNoRows,
 		},
 	}
 
@@ -547,15 +528,10 @@ func TestSqlcRepo_UpdteUserWebsite(t *testing.T) {
 		test := test
 		t.Run(test.name, func(t *testing.T) {
 			err := r.UpdateUserWebsite(&test.web)
-			if (err != nil) != test.expectErr {
-				t.Errorf("got error: %v; want error: %v", err, test.expectErr)
-			}
+			assert.ErrorIs(t, err, test.expectError)
+
 			web, _ := r.FindUserWebsite(test.web.UserUUID, test.web.WebsiteUUID)
-			if !cmp.Equal(web, test.expect) {
-				t.Errorf("web in database different from expected")
-				t.Error(web)
-				t.Error(test.expect)
-			}
+			assert.Equal(t, test.expect, web)
 		})
 	}
 }
@@ -571,8 +547,9 @@ func TestSqlcRepo_DeleteUserWebsite(t *testing.T) {
 	r := NewRepo(db, &config.WebsiteConfig{})
 
 	uuid := "delete-user-website-uuid"
+	userUUID := "delete-user-website-user-uuid"
 	title := "delete user website"
-	populateData(db, uuid, title)
+	populateData(db, uuid, title, userUUID)
 	t.Cleanup(func() {
 		db.Exec("delete from websites where uuid=$1", uuid)
 		db.Exec("delete from user_websites where website_uuid=$1", uuid)
@@ -580,22 +557,22 @@ func TestSqlcRepo_DeleteUserWebsite(t *testing.T) {
 	})
 
 	tests := []struct {
-		name      string
-		userUUID  string
-		webUUID   string
-		expectErr bool
+		name        string
+		userUUID    string
+		webUUID     string
+		expectError error
 	}{
 		{
-			name:      "delete successfully",
-			webUUID:   uuid,
-			userUUID:  "def",
-			expectErr: false,
+			name:        "delete successfully",
+			webUUID:     uuid,
+			userUUID:    userUUID,
+			expectError: nil,
 		},
 		{
-			name:      "delete not exist",
-			webUUID:   "not exist",
-			userUUID:  "not exist",
-			expectErr: false,
+			name:        "delete not exist",
+			webUUID:     "not exist",
+			userUUID:    "not exist",
+			expectError: nil,
 		},
 	}
 
@@ -606,14 +583,11 @@ func TestSqlcRepo_DeleteUserWebsite(t *testing.T) {
 				UserUUID:    test.userUUID,
 				WebsiteUUID: test.webUUID,
 			})
-			if (err != nil) != test.expectErr {
-				t.Errorf("got error: %v; want error: %v", err, test.expectErr)
-			}
+			assert.ErrorIs(t, err, test.expectError)
+
 			web, err := r.FindUserWebsite(test.userUUID, test.webUUID)
-			if err == nil || web != nil {
-				t.Errorf("got error: %v", err)
-				t.Errorf("find website: %v", web)
-			}
+			assert.ErrorIs(t, err, sql.ErrNoRows)
+			assert.Nil(t, web)
 		})
 	}
 }
@@ -629,8 +603,9 @@ func TestSqlcRepo_FindUserWebsites(t *testing.T) {
 	r := NewRepo(db, &config.WebsiteConfig{})
 
 	uuid := "find-user-websites-uuid"
+	userUUID := "find-user-websites-user-uuid"
 	title := "find user websites"
-	populateData(db, uuid, title)
+	populateData(db, uuid, title, userUUID)
 	t.Cleanup(func() {
 		db.Exec("delete from websites where uuid=$1", uuid)
 		db.Exec("delete from user_websites where website_uuid=$1", uuid)
@@ -638,52 +613,45 @@ func TestSqlcRepo_FindUserWebsites(t *testing.T) {
 	})
 
 	tests := []struct {
-		name      string
-		userUUID  string
-		expect    model.UserWebsite
-		expectErr bool
+		name        string
+		userUUID    string
+		expect      model.UserWebsites
+		expectError error
 	}{
 		{
 			name:     "find web of existing user",
-			userUUID: "def",
-			expect: model.UserWebsite{
-				UserUUID:    "def",
-				WebsiteUUID: uuid,
-				GroupName:   title,
-				AccessTime:  time.Date(2020, 1, 2, 3, 4, 5, 0, time.UTC),
-				Website: model.Website{
-					UUID:       uuid,
-					URL:        "http://example.com/" + title,
-					Title:      title,
-					UpdateTime: time.Date(2020, 1, 2, 3, 4, 5, 0, time.UTC),
+			userUUID: userUUID,
+			expect: model.UserWebsites{
+				{
+					UserUUID:    userUUID,
+					WebsiteUUID: uuid,
+					GroupName:   title,
+					AccessTime:  time.Date(2020, 1, 2, 3, 4, 5, 0, time.UTC),
+					Website: model.Website{
+						UUID:       uuid,
+						URL:        "http://example.com/" + title,
+						Title:      title,
+						UpdateTime: time.Date(2020, 1, 2, 3, 4, 5, 0, time.UTC),
+						Conf:       &config.WebsiteConfig{},
+					},
 				},
 			},
-			expectErr: false,
+			expectError: nil,
 		},
-		// {
-		// 	name:      "find web of not existing user",
-		// 	userUUID:  "not exist",
-		// 	expect:    nil,
-		// 	expectErr: false,
-		// },
+		{
+			name:        "find web of not existing user",
+			userUUID:    "not exist",
+			expect:      model.UserWebsites{},
+			expectError: nil,
+		},
 	}
 
 	for _, test := range tests {
 		test := test
 		t.Run(test.name, func(t *testing.T) {
 			result, err := r.FindUserWebsites(test.userUUID)
-
-			if (err != nil) != test.expectErr {
-				t.Errorf("got error: %v; want error: %v", err, test.expectErr)
-			}
-			for _, userWeb := range result {
-				if cmp.Equal(userWeb, test.expect) {
-					return
-				}
-			}
-			t.Errorf("result different from expected")
-			t.Error(result)
-			t.Error(test.expect)
+			assert.ErrorIs(t, err, test.expectError)
+			assert.Equal(t, test.expect, result)
 		})
 	}
 }
@@ -699,8 +667,9 @@ func TestSqlcRepo_FindUserWebsitesByGroup(t *testing.T) {
 	r := NewRepo(db, &config.WebsiteConfig{})
 
 	uuid := "find-user-websites-group-uuid"
+	userUUID := "find-user-websites-group-user-uuid"
 	title := "find user websites group"
-	populateData(db, uuid, title)
+	populateData(db, uuid, title, userUUID)
 	t.Cleanup(func() {
 		db.Exec("delete from websites where uuid=$1", uuid)
 		db.Exec("delete from user_websites where website_uuid=$1", uuid)
@@ -708,19 +677,19 @@ func TestSqlcRepo_FindUserWebsitesByGroup(t *testing.T) {
 	})
 
 	tests := []struct {
-		name      string
-		userUUID  string
-		group     string
-		expect    model.WebsiteGroup
-		expectErr bool
+		name        string
+		userUUID    string
+		group       string
+		expect      model.WebsiteGroup
+		expectError error
 	}{
 		{
 			name:     "find web of existing group and user",
-			userUUID: "def",
+			userUUID: userUUID,
 			group:    title,
 			expect: model.WebsiteGroup{
 				{
-					UserUUID:    "def",
+					UserUUID:    userUUID,
 					WebsiteUUID: uuid,
 					GroupName:   title,
 					AccessTime:  time.Date(2020, 1, 2, 3, 4, 5, 0, time.UTC),
@@ -729,24 +698,25 @@ func TestSqlcRepo_FindUserWebsitesByGroup(t *testing.T) {
 						URL:        "http://example.com/" + title,
 						Title:      title,
 						UpdateTime: time.Date(2020, 1, 2, 3, 4, 5, 0, time.UTC),
+						Conf:       &config.WebsiteConfig{},
 					},
 				},
 			},
-			expectErr: false,
+			expectError: nil,
 		},
 		{
-			name:      "find web of not existing group",
-			userUUID:  "def",
-			group:     "not exist",
-			expect:    nil,
-			expectErr: false,
+			name:        "find web of not existing group",
+			userUUID:    userUUID,
+			group:       "not exist",
+			expect:      model.WebsiteGroup{},
+			expectError: nil,
 		},
 		{
-			name:      "find web of not existing user",
-			userUUID:  "not exist",
-			group:     title,
-			expect:    nil,
-			expectErr: false,
+			name:        "find web of not existing user",
+			userUUID:    "not exist",
+			group:       title,
+			expect:      model.WebsiteGroup{},
+			expectError: nil,
 		},
 	}
 
@@ -754,16 +724,8 @@ func TestSqlcRepo_FindUserWebsitesByGroup(t *testing.T) {
 		test := test
 		t.Run(test.name, func(t *testing.T) {
 			result, err := r.FindUserWebsitesByGroup(test.userUUID, test.group)
-
-			if (err != nil) != test.expectErr {
-				t.Errorf("got error: %v; want error: %v", err, test.expectErr)
-			}
-			if !cmp.Equal(result, test.expect) &&
-				(len(test.expect) != 0 || len(result) != 0) {
-				t.Errorf("result different from expected")
-				t.Error(result)
-				t.Error(test.expect)
-			}
+			assert.ErrorIs(t, err, test.expectError)
+			assert.Equal(t, test.expect, result)
 		})
 	}
 }
@@ -779,8 +741,9 @@ func TestSqlcRepo_FindUserWebsite(t *testing.T) {
 	r := NewRepo(db, &config.WebsiteConfig{})
 
 	uuid := "find-user-website-uuid"
+	userUUID := "find-user-website-user-uuid"
 	title := "find user website"
-	populateData(db, uuid, title)
+	populateData(db, uuid, title, userUUID)
 	t.Cleanup(func() {
 		db.Exec("delete from websites where uuid=$1", uuid)
 		db.Exec("delete from user_websites where website_uuid=$1", uuid)
@@ -788,18 +751,18 @@ func TestSqlcRepo_FindUserWebsite(t *testing.T) {
 	})
 
 	tests := []struct {
-		name      string
-		userUUID  string
-		webUUID   string
-		expect    *model.UserWebsite
-		expectErr bool
+		name        string
+		userUUID    string
+		webUUID     string
+		expect      *model.UserWebsite
+		expectError error
 	}{
 		{
 			name:     "find web of existing group and user",
-			userUUID: "def",
+			userUUID: userUUID,
 			webUUID:  uuid,
 			expect: &model.UserWebsite{
-				UserUUID:    "def",
+				UserUUID:    userUUID,
 				WebsiteUUID: uuid,
 				GroupName:   title,
 				AccessTime:  time.Date(2020, 1, 2, 3, 4, 5, 0, time.UTC),
@@ -808,23 +771,24 @@ func TestSqlcRepo_FindUserWebsite(t *testing.T) {
 					URL:        "http://example.com/" + title,
 					Title:      title,
 					UpdateTime: time.Date(2020, 1, 2, 3, 4, 5, 0, time.UTC),
+					Conf:       &config.WebsiteConfig{},
 				},
 			},
-			expectErr: false,
+			expectError: nil,
 		},
 		{
-			name:      "find web of not existing web uuid",
-			userUUID:  "def",
-			webUUID:   "not exist",
-			expect:    nil,
-			expectErr: true,
+			name:        "find web of not existing web uuid",
+			userUUID:    userUUID,
+			webUUID:     "not exist",
+			expect:      nil,
+			expectError: sql.ErrNoRows,
 		},
 		{
-			name:      "find web of not existing user",
-			userUUID:  "not exist",
-			webUUID:   uuid,
-			expect:    nil,
-			expectErr: true,
+			name:        "find web of not existing user",
+			userUUID:    "not exist",
+			webUUID:     uuid,
+			expect:      nil,
+			expectError: sql.ErrNoRows,
 		},
 	}
 
@@ -832,15 +796,8 @@ func TestSqlcRepo_FindUserWebsite(t *testing.T) {
 		test := test
 		t.Run(test.name, func(t *testing.T) {
 			result, err := r.FindUserWebsite(test.userUUID, test.webUUID)
-
-			if (err != nil) != test.expectErr {
-				t.Errorf("got error: %v; want error: %v", err, test.expectErr)
-			}
-			if !cmp.Equal(result, test.expect) {
-				t.Errorf("result different from expected")
-				t.Error(result)
-				t.Error(test.expect)
-			}
+			assert.ErrorIs(t, err, test.expectError)
+			assert.Equal(t, test.expect, result)
 		})
 	}
 }

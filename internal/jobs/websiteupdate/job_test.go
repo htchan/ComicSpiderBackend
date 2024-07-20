@@ -92,7 +92,7 @@ func TestJob_Execute(t *testing.T) {
 
 					return []vendors.VendorService{service}
 				},
-				sleepInterval: 100 * time.Millisecond,
+				sleepInterval: 10 * time.Millisecond,
 			},
 			args: args{
 				getCtx: func() context.Context {
@@ -106,7 +106,7 @@ func TestJob_Execute(t *testing.T) {
 					Cleanup: func() {},
 				},
 			},
-			wantSleep: 100 * time.Millisecond,
+			wantSleep: 10 * time.Millisecond,
 			wantError: nil,
 		},
 		{
@@ -122,12 +122,13 @@ func TestJob_Execute(t *testing.T) {
 
 					return []vendors.VendorService{services}
 				},
-				sleepInterval: 100 * time.Millisecond,
+				sleepInterval: 10 * time.Millisecond,
 			},
 			args: args{
 				getCtx: func() context.Context { return context.Background() },
 				params: "1",
 			},
+			wantSleep: 2 * time.Nanosecond,
 			wantError: jobs.ErrInvalidParams,
 		},
 	}

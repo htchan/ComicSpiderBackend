@@ -3,8 +3,8 @@ package website
 import (
 	"bytes"
 	"context"
-	"encoding/json"
 	"errors"
+	"fmt"
 	"io"
 	"net/http"
 	"net/http/httptest"
@@ -13,9 +13,11 @@ import (
 	"time"
 
 	"github.com/go-chi/chi/v5"
+	"github.com/golang/mock/gomock"
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/uuid"
 	"github.com/htchan/WebHistory/internal/config"
+	mockrepo "github.com/htchan/WebHistory/internal/mock/repository"
 	"github.com/htchan/WebHistory/internal/model"
 	"github.com/htchan/WebHistory/internal/repository"
 	"github.com/stretchr/testify/assert"
@@ -84,9 +86,8 @@ func Test_getAllWebsiteGroupsHandler(t *testing.T) {
 		t.Run(test.name, func(t *testing.T) {
 			t.Parallel()
 			req, err := http.NewRequest("GET", "/websites/groups/", nil)
-			if err != nil {
-				t.Fatal(err)
-			}
+			assert.NoError(t, err, "create request")
+
 			ctx := req.Context()
 			ctx = context.WithValue(ctx, ContextKeyUserUUID, test.userUUID)
 			req = req.WithContext(ctx)
@@ -163,9 +164,8 @@ func Test_getWebsiteGroupHandler(t *testing.T) {
 		t.Run(test.name, func(t *testing.T) {
 			t.Parallel()
 			req, err := http.NewRequest("GET", "/websites/groups/{groupName}", nil)
-			if err != nil {
-				t.Fatal(err)
-			}
+			assert.NoError(t, err, "create request")
+
 			ctx := req.Context()
 			rctx := chi.NewRouteContext()
 			rctx.URLParams.Add("groupName", test.group)
@@ -188,32 +188,28 @@ func Test_createWebsiteHandler(t *testing.T) {
 	))))
 	tests := []struct {
 		name         string
-		r            repository.Repostory
 		conf         *config.WebsiteConfig
+		mockRepo     func(*gomock.Controller) repository.Repostory
 		userUUID     string
 		url          string
 		expectStatus int
 		expectRes    string
-		expectRepo   repository.Repostory
 	}{
 		{
-			name:         "get user websites of existing user and group",
-			r:            repository.NewInMemRepo(nil, nil, nil, nil),
-			conf:         &config.WebsiteConfig{},
-			userUUID:     "abc",
-			url:          "https://example.com/",
-			expectStatus: 200,
-			expectRes:    `{"message":"website \u003c\u003e inserted"}`,
-			expectRepo: repository.NewInMemRepo(
-				[]model.Website{
-					{
-						UUID: "30303030-3030-4030-b030-303030303030", URL: "https://example.com/",
+			name: "get user websites of existing user and group",
+			mockRepo: func(ctrl *gomock.Controller) repository.Repostory {
+				rpo := mockrepo.NewMockRepostory(ctrl)
+				rpo.EXPECT().CreateWebsite(
+					&model.Website{
+						UUID:       "30303030-3030-4030-b030-303030303030",
+						URL:        "https://example.com/",
 						UpdateTime: time.Now().UTC().Truncate(time.Second),
 						Conf:       &config.WebsiteConfig{},
 					},
-				},
-				[]model.UserWebsite{
-					{
+				).Return(nil)
+
+				rpo.EXPECT().CreateUserWebsite(
+					&model.UserWebsite{
 						WebsiteUUID: "30303030-3030-4030-b030-303030303030",
 						UserUUID:    "abc",
 						AccessTime:  time.Now().UTC().Truncate(time.Second),
@@ -224,44 +220,57 @@ func Test_createWebsiteHandler(t *testing.T) {
 							Conf:       &config.WebsiteConfig{},
 						},
 					},
-				},
-				nil, nil,
-			),
+				).Return(nil)
+
+				return rpo
+			},
+			conf:         &config.WebsiteConfig{},
+			userUUID:     "abc",
+			url:          "https://example.com/",
+			expectStatus: 200,
+			expectRes:    `{"message":"website \u003c\u003e inserted"}`,
 		},
 		{
-			name:         "return error if repo return error",
-			r:            repository.NewInMemRepo(nil, nil, nil, errors.New("some error")),
+			name: "return error if repo return error",
+			mockRepo: func(ctrl *gomock.Controller) repository.Repostory {
+				rpo := mockrepo.NewMockRepostory(ctrl)
+				rpo.EXPECT().CreateWebsite(
+					&model.Website{
+						UUID:       "30303030-3030-4030-b030-303030303030",
+						URL:        "https://example.com/",
+						UpdateTime: time.Now().UTC().Truncate(time.Second),
+						Conf:       &config.WebsiteConfig{},
+					},
+				).Return(errors.New("some error"))
+
+				return rpo
+			},
 			conf:         &config.WebsiteConfig{},
 			userUUID:     "unknown",
 			url:          "https://example.com/",
 			expectStatus: 400,
 			expectRes:    `{"error":"some error"}`,
-			expectRepo:   repository.NewInMemRepo(nil, nil, nil, errors.New("some error")),
 		},
 	}
 
 	for _, test := range tests {
 		test := test
 		t.Run(test.name, func(t *testing.T) {
+			ctrl := gomock.NewController(t)
+			defer ctrl.Finish()
+
 			req, err := http.NewRequest("POST", "/websites/", nil)
-			if err != nil {
-				t.Fatal(err)
-			}
+			assert.NoError(t, err, "create request")
+
 			ctx := req.Context()
 			ctx = context.WithValue(ctx, ContextKeyUserUUID, test.userUUID)
 			ctx = context.WithValue(ctx, ContextKeyWebURL, test.url)
 			req = req.WithContext(ctx)
 			rr := httptest.NewRecorder()
-			createWebsiteHandler(test.r, test.conf).ServeHTTP(rr, req)
+			createWebsiteHandler(test.mockRepo(ctrl), test.conf).ServeHTTP(rr, req)
 
 			assert.Equal(t, test.expectStatus, rr.Code)
 			assert.Equal(t, test.expectRes, strings.Trim(rr.Body.String(), "\n"))
-
-			if !cmp.Equal(test.r, test.expectRepo) {
-				t.Error("got different repo as expect")
-				t.Error(test.r)
-				t.Error(test.expectRepo)
-			}
 		})
 	}
 }
@@ -299,9 +308,8 @@ func Test_getWebsiteHandler(t *testing.T) {
 			t.Parallel()
 
 			req, err := http.NewRequest("GET", "/websites/{webUUID}", nil)
-			if err != nil {
-				t.Fatal(err)
-			}
+			assert.NoError(t, err, "create request")
+
 			ctx := req.Context()
 			ctx = context.WithValue(ctx, ContextKeyWebsite, test.web)
 			req = req.WithContext(ctx)
@@ -318,47 +326,17 @@ func Test_refreshWebsiteHandler(t *testing.T) {
 	t.Parallel()
 	tests := []struct {
 		name         string
-		r            repository.Repostory
+		mockRepo     func(*gomock.Controller) repository.Repostory
 		web          model.UserWebsite
-		expectRepo   repository.Repostory
 		expectStatus int
+		expectResp   string
 	}{
 		{
 			name: "return website with updated AccessTime",
-			r: repository.NewInMemRepo(
-				nil,
-				[]model.UserWebsite{
-					{
-						WebsiteUUID: "web_uuid",
-						UserUUID:    "user_uuid",
-						GroupName:   "name",
-						AccessTime:  time.Date(2000, 1, 1, 0, 0, 0, 0, time.UTC),
-						Website: model.Website{
-							UUID:       "web_uuid",
-							Title:      "title",
-							URL:        "http://example.com/",
-							UpdateTime: time.Date(2000, 1, 1, 0, 0, 0, 0, time.UTC),
-						},
-					},
-				},
-				nil, nil,
-			),
-			web: model.UserWebsite{
-				WebsiteUUID: "web_uuid",
-				UserUUID:    "user_uuid",
-				GroupName:   "name",
-				AccessTime:  time.Now().UTC().Truncate(time.Second),
-				Website: model.Website{
-					UUID:       "web_uuid",
-					Title:      "title",
-					URL:        "http://example.com/",
-					UpdateTime: time.Date(2000, 1, 1, 0, 0, 0, 0, time.UTC),
-				},
-			},
-			expectRepo: repository.NewInMemRepo(
-				nil,
-				[]model.UserWebsite{
-					{
+			mockRepo: func(ctrl *gomock.Controller) repository.Repostory {
+				rpo := mockrepo.NewMockRepostory(ctrl)
+				rpo.EXPECT().UpdateUserWebsite(
+					&model.UserWebsite{
 						WebsiteUUID: "web_uuid",
 						UserUUID:    "user_uuid",
 						GroupName:   "name",
@@ -370,76 +348,10 @@ func Test_refreshWebsiteHandler(t *testing.T) {
 							UpdateTime: time.Date(2000, 1, 1, 0, 0, 0, 0, time.UTC),
 						},
 					},
-				},
-				nil, nil,
-			),
-			expectStatus: 200,
-		},
-	}
+				).Return(nil)
 
-	for _, test := range tests {
-		test := test
-		t.Run(test.name, func(t *testing.T) {
-			t.Parallel()
-
-			req, err := http.NewRequest("GET", "/websites/{webUUID}/refresh", nil)
-			if err != nil {
-				t.Fatal(err)
-			}
-			ctx := req.Context()
-			ctx = context.WithValue(ctx, ContextKeyWebsite, test.web)
-			req = req.WithContext(ctx)
-			rr := httptest.NewRecorder()
-			refreshWebsiteHandler(test.r).ServeHTTP(rr, req)
-
-			assert.Equal(t, test.expectStatus, rr.Code)
-
-			// test.web.AccessTime = time.Now().UTC().Truncate(time.Second)
-
-			expectResp, _ := json.Marshal(map[string]model.UserWebsite{
-				"website": test.web,
-			})
-
-			assert.Equal(t, string(expectResp), strings.Trim(rr.Body.String(), "\n"))
-			if !cmp.Equal(test.r, test.expectRepo) {
-				t.Error("got different repo as expect")
-				t.Error(test.r)
-				t.Error(test.expectRepo)
-			}
-		})
-	}
-}
-
-func Test_deleteWebsiteHandler(t *testing.T) {
-	t.Parallel()
-	tests := []struct {
-		name         string
-		r            repository.Repostory
-		web          model.UserWebsite
-		expectRepo   repository.Repostory
-		expectStatus int
-		expectResp   string
-	}{
-		{
-			name: "return website of deleted content",
-			r: repository.NewInMemRepo(
-				nil,
-				[]model.UserWebsite{
-					{
-						WebsiteUUID: "web_uuid",
-						UserUUID:    "user_uuid",
-						GroupName:   "name",
-						AccessTime:  time.Date(2000, 1, 1, 0, 0, 0, 0, time.UTC),
-						Website: model.Website{
-							UUID:       "web_uuid",
-							Title:      "title",
-							URL:        "http://example.com/",
-							UpdateTime: time.Date(2000, 1, 1, 0, 0, 0, 0, time.UTC),
-						},
-					},
-				},
-				nil, nil,
-			),
+				return rpo
+			},
 			web: model.UserWebsite{
 				WebsiteUUID: "web_uuid",
 				UserUUID:    "user_uuid",
@@ -452,11 +364,75 @@ func Test_deleteWebsiteHandler(t *testing.T) {
 					UpdateTime: time.Date(2000, 1, 1, 0, 0, 0, 0, time.UTC),
 				},
 			},
-			expectRepo: repository.NewInMemRepo(
-				nil,
-				nil,
-				nil, nil,
-			),
+			expectStatus: 200,
+			expectResp:   fmt.Sprintf(`{"website":{"uuid":"web_uuid","user_uuid":"user_uuid","url":"http://example.com/","title":"title","group_name":"name","update_time":"2000-01-01T00:00:00 UTC","access_time":"%s"}}`, time.Now().UTC().Truncate(time.Second).Format("2006-01-02T15:04:05 MST")),
+		},
+	}
+
+	for _, test := range tests {
+		test := test
+		t.Run(test.name, func(t *testing.T) {
+			t.Parallel()
+
+			ctrl := gomock.NewController(t)
+			defer ctrl.Finish()
+
+			req, err := http.NewRequest("GET", "/websites/{webUUID}/refresh", nil)
+			assert.NoError(t, err, "create request")
+
+			ctx := req.Context()
+			ctx = context.WithValue(ctx, ContextKeyWebsite, test.web)
+			req = req.WithContext(ctx)
+			rr := httptest.NewRecorder()
+			refreshWebsiteHandler(test.mockRepo(ctrl)).ServeHTTP(rr, req)
+			assert.Equal(t, test.expectStatus, rr.Code)
+			assert.Equal(t, test.expectResp, strings.Trim(rr.Body.String(), "\n"))
+		})
+	}
+}
+
+func Test_deleteWebsiteHandler(t *testing.T) {
+	t.Parallel()
+	tests := []struct {
+		name         string
+		mockRepo     func(*gomock.Controller) repository.Repostory
+		web          model.UserWebsite
+		expectStatus int
+		expectResp   string
+	}{
+		{
+			name: "return website of deleted content",
+			mockRepo: func(ctrl *gomock.Controller) repository.Repostory {
+				rpo := mockrepo.NewMockRepostory(ctrl)
+				rpo.EXPECT().DeleteUserWebsite(
+					&model.UserWebsite{
+						WebsiteUUID: "web_uuid",
+						UserUUID:    "user_uuid",
+						GroupName:   "name",
+						AccessTime:  time.Date(2000, 1, 1, 0, 0, 0, 0, time.UTC),
+						Website: model.Website{
+							UUID:       "web_uuid",
+							Title:      "title",
+							URL:        "http://example.com/",
+							UpdateTime: time.Date(2000, 1, 1, 0, 0, 0, 0, time.UTC),
+						},
+					},
+				).Return(nil)
+
+				return rpo
+			},
+			web: model.UserWebsite{
+				WebsiteUUID: "web_uuid",
+				UserUUID:    "user_uuid",
+				GroupName:   "name",
+				AccessTime:  time.Date(2000, 1, 1, 0, 0, 0, 0, time.UTC),
+				Website: model.Website{
+					UUID:       "web_uuid",
+					Title:      "title",
+					URL:        "http://example.com/",
+					UpdateTime: time.Date(2000, 1, 1, 0, 0, 0, 0, time.UTC),
+				},
+			},
 			expectStatus: 200,
 			expectResp:   `{"message":"website \u003ctitle\u003e deleted"}`,
 		},
@@ -467,23 +443,20 @@ func Test_deleteWebsiteHandler(t *testing.T) {
 		t.Run(test.name, func(t *testing.T) {
 			t.Parallel()
 
+			ctrl := gomock.NewController(t)
+			defer ctrl.Finish()
+
 			req, err := http.NewRequest("GET", "/websites/{webUUID}/refresh", nil)
-			if err != nil {
-				t.Fatal(err)
-			}
+			assert.NoError(t, err, "create request")
+
 			ctx := req.Context()
 			ctx = context.WithValue(ctx, ContextKeyWebsite, test.web)
 			req = req.WithContext(ctx)
 			rr := httptest.NewRecorder()
-			deleteWebsiteHandler(test.r).ServeHTTP(rr, req)
+			deleteWebsiteHandler(test.mockRepo(ctrl)).ServeHTTP(rr, req)
 
 			assert.Equal(t, test.expectStatus, rr.Code)
 			assert.Equal(t, test.expectResp, strings.Trim(rr.Body.String(), "\n"))
-			if !cmp.Equal(test.r, test.expectRepo) {
-				t.Error("got different repo as expect")
-				t.Error(test.r)
-				t.Error(test.expectRepo)
-			}
 		})
 	}
 }
@@ -561,9 +534,8 @@ func Test_changeWebsiteGroupHandler(t *testing.T) {
 			t.Parallel()
 
 			req, err := http.NewRequest("GET", "/websites/{webUUID}/refresh", nil)
-			if err != nil {
-				t.Fatal(err)
-			}
+			assert.NoError(t, err, "create request")
+
 			ctx := req.Context()
 			ctx = context.WithValue(ctx, ContextKeyWebsite, test.web)
 			ctx = context.WithValue(ctx, ContextKeyGroup, test.group)
