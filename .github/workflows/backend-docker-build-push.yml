@@ -8,7 +8,7 @@ jobs:
   Build-Push-Backend-Image:
     if: contains('["htchan"]', github.actor)
     runs-on: ubuntu-latest
-    timeout-minutes: 60
+    timeout-minutes: 20
     steps:
       - name: Check out repository code
         uses: actions/checkout@v4
