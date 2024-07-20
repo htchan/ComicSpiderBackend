@@ -1,7 +1,6 @@
 package website
 
 import (
-	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -15,7 +14,6 @@ import (
 	"github.com/htchan/WebHistory/internal/config"
 	"github.com/htchan/WebHistory/internal/model"
 	"github.com/htchan/WebHistory/internal/repository"
-	"github.com/htchan/WebHistory/internal/service"
 )
 
 // @Summary		Get website group
@@ -83,7 +81,8 @@ func createWebsiteHandler(r repository.Repostory, conf *config.WebsiteConfig) ht
 		url := req.Context().Value(ContextKeyWebURL).(string)
 
 		web := model.NewWebsite(url, conf)
-		service.Update(context.Background(), r, &web)
+		// TODO: update website in worker
+		// service.Update(context.Background(), r, &web)
 
 		err := r.CreateWebsite(&web)
 		if err != nil {

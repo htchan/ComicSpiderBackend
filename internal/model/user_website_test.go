@@ -5,7 +5,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/google/go-cmp/cmp"
+	"github.com/stretchr/testify/assert"
 )
 
 func Test_NewUserWebsite(t *testing.T) {
@@ -30,19 +30,12 @@ func Test_NewUserWebsite(t *testing.T) {
 		test := test
 		t.Run(test.name, func(t *testing.T) {
 			t.Parallel()
+
 			userWeb := NewUserWebsite(test.web, test.userUUID)
-			if userWeb.WebsiteUUID != test.web.UUID {
-				t.Errorf("empty uuid")
-			}
-			if userWeb.UserUUID != test.userUUID {
-				t.Errorf("wrong url: %s; want: %s", userWeb.UserUUID, test.userUUID)
-			}
-			if userWeb.GroupName != test.expectedGroupName {
-				t.Errorf("wrong title: %s; want: %s", userWeb.GroupName, test.expectedGroupName)
-			}
-			if userWeb.AccessTime.Second() != test.expectedAccessTime.Second() {
-				t.Errorf("wrong UpdateTime: %s; want: %s", userWeb.AccessTime, test.expectedAccessTime)
-			}
+			assert.Equal(t, test.web.UUID, userWeb.WebsiteUUID)
+			assert.Equal(t, test.userUUID, userWeb.UserUUID)
+			assert.Equal(t, test.expectedGroupName, userWeb.GroupName)
+			assert.Equal(t, test.expectedAccessTime, userWeb.AccessTime)
 		})
 	}
 }
@@ -74,15 +67,8 @@ func TestUserWebsite_MarshalJSON(t *testing.T) {
 		test := test
 		t.Run(test.name, func(t *testing.T) {
 			result, err := json.Marshal(test.web)
-			if err != nil {
-				t.Errorf("got error: %v", err)
-				return
-			}
-			if !cmp.Equal(string(result), test.expect) {
-				t.Errorf("got unexpected json")
-				t.Error(string(result))
-				t.Error(test.expect)
-			}
+			assert.NoError(t, err, nil)
+			assert.Equal(t, test.expect, string(result))
 		})
 	}
 }
@@ -116,11 +102,7 @@ func TestUserWebsites_WebsiteGroups(t *testing.T) {
 		test := test
 		t.Run(test.name, func(t *testing.T) {
 			groups := test.webs.WebsiteGroups()
-			if !cmp.Equal(groups, test.expectGroups) {
-				t.Errorf("got wrong group")
-				t.Error(groups)
-				t.Error(test.expectGroups)
-			}
+			assert.Equal(t, test.expectGroups, groups)
 		})
 	}
 }
