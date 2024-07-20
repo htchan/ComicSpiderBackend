@@ -5,6 +5,7 @@ on:
     branches:
       - master
     paths:
+      - 'docs/**'
       - 'internal/**'
       - 'cmd/**'
       - 'data/testing/**'
