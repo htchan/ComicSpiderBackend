@@ -1,4 +1,4 @@
-.PHONY: backend frontend local_test backup test generate sqlc
+.PHONY: backend frontend local_test backup test generate sqlc build
 
 service ?= all
 
@@ -9,7 +9,7 @@ help:
 
 ## build service=<service>: build docker image of specified service (default all)
 build:
-	docker buildx bake backend
+	docker buildx bake backend -f docker-bake.hcl --check
 
 clean-build:
 	docker images --format "{{.Repository}}:{{.Tag}}" | \

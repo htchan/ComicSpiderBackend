@@ -1,4 +1,4 @@
-FROM golang:1.21.1-alpine as builder
+FROM golang:1.21.1-alpine AS builder
 
 ARG SERVICE
 
@@ -28,4 +28,4 @@ WORKDIR /usr/src/app
 
 COPY --from=builder /go/src/github.com/htchan/WebHistory/$SERVICE .
 
-CMD "/usr/src/app/${SERVICE}"
+CMD ["/usr/src/app/${SERVICE}"]
