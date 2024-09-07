@@ -5,7 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
-	_ "net/http/pprof"
+	"net/http/pprof"
 	"os"
 
 	"github.com/go-chi/chi/v5"
@@ -67,4 +67,12 @@ func AddRoutes(router chi.Router, r repository.Repostory, conf *config.APIConfig
 	})
 
 	router.Get("/docs/swagger/*", httpSwagger.Handler())
+
+	router.Route("/debug/pprof", func(router chi.Router) {
+		router.Get("/", pprof.Index)
+		router.Get("/cmdline", pprof.Cmdline)
+		router.Get("/profile", pprof.Profile)
+		router.Get("/symbol", pprof.Symbol)
+		router.Get("/trace", pprof.Trace)
+	})
 }
