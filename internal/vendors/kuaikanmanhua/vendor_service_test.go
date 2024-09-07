@@ -199,8 +199,9 @@ func TestVendorService_isUpdated(t *testing.T) {
 			body: `<head><title>title</title></head>`,
 			want: true,
 			wantWeb: &model.Website{
-				Title: "title",
-				Conf:  &config.WebsiteConfig{Separator: "\n"},
+				Title:      "title",
+				Conf:       &config.WebsiteConfig{Separator: "\n"},
+				UpdateTime: time.Now().UTC().Truncate(time.Second),
 			},
 		},
 		{
@@ -242,6 +243,7 @@ func TestVendorService_isUpdated(t *testing.T) {
 			wantWeb: &model.Website{
 				RawContent: "content 1\ncontent 2\ncontent 3\ncontent 4\ncontent 5",
 				Conf:       &config.WebsiteConfig{Separator: "\n"},
+				UpdateTime: time.Now().UTC().Truncate(time.Second),
 			},
 		},
 		{
@@ -269,6 +271,7 @@ func TestVendorService_isUpdated(t *testing.T) {
 			wantWeb: &model.Website{
 				RawContent: "content 1\ncontent 2\ncontent 3\ncontent 4\ncontent 5",
 				Conf:       &config.WebsiteConfig{Separator: "\n"},
+				UpdateTime: time.Now().UTC().Truncate(time.Second),
 			},
 		},
 	}
