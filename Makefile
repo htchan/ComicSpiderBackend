@@ -9,7 +9,7 @@ help:
 
 ## build service=<service>: build docker image of specified service (default all)
 build:
-	docker buildx bake backend -f docker-bake.hcl --check
+	docker buildx bake backend -f docker-bake.hcl
 
 clean-build:
 	docker images --format "{{.Repository}}:{{.Tag}}" | \

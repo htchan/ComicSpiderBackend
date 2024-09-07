@@ -28,4 +28,4 @@ WORKDIR /usr/src/app
 
 COPY --from=builder /go/src/github.com/htchan/WebHistory/$SERVICE .
 
-CMD ["/usr/src/app/$SERVICE"]
+CMD ["/bin/sh", "-c", "exec /usr/src/app/$SERVICE"]
