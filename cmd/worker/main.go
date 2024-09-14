@@ -11,6 +11,7 @@ import (
 	"github.com/htchan/WebHistory/internal/executor"
 	"github.com/htchan/WebHistory/internal/jobs/websiteupdate"
 	"github.com/htchan/WebHistory/internal/repository/sqlc"
+	websitebatchupdate "github.com/htchan/WebHistory/internal/tasks/website_batch_update"
 	"github.com/htchan/WebHistory/internal/utils"
 	"github.com/htchan/WebHistory/internal/vendors"
 	"github.com/htchan/WebHistory/internal/vendors/baozimh"
@@ -21,6 +22,8 @@ import (
 	"github.com/htchan/WebHistory/internal/vendors/u17"
 	"github.com/htchan/WebHistory/internal/vendors/webtoons"
 	shutdown "github.com/htchan/goshutdown"
+	worker "github.com/htchan/goworkers"
+	"github.com/redis/rueidis"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 	"go.opentelemetry.io/otel"
@@ -119,6 +122,34 @@ func main() {
 			return
 		}
 	}
+
+	ctx := context.Background()
+
+	pool := worker.NewWorkerPool(worker.Config{MaxThreads: 10})
+	redisClient, err := rueidis.NewClient(rueidis.ClientOption{
+		InitAddress: []string{conf.RedisStreamConfig.Addr},
+	})
+	if err != nil {
+		log.Fatal().Err(err).Msg("failed to create redis client")
+	}
+
+	// TODO: register new task to worker
+	// for _, service := range services {
+	// 	pool.Register(websiteupdate.NewTask(service))
+	// }
+	err = pool.Register(ctx, websitebatchupdate.NewTask(redisClient))
+	if err != nil {
+		log.Fatal().Err(err).Msg("failed to register task")
+	}
+
+	go func() {
+		err := pool.Start(ctx)
+		if err != nil {
+			log.Fatal().Err(err).Msg("failed to start worker pool")
+		}
+	}()
+
+	shutdownHandler.Register("worker pool", pool.Stop)
 
 	// start website update job
 	websiteUpdateScheduler := websiteupdate.Setup(rpo, &conf.BinConfig, services)
