@@ -1,0 +1,23 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+metadata:
+  name: web-history.worker  # Sets Deployment name
+  namespace: default
+  labels:
+    app: worker
+    project: web-history
+resources:
+  - ./base/deployment.yml
+patches:
+  - target:
+      group: apps
+      version: v1
+      kind: Deployment
+      name: web-history.worker
+      labelSelector: "app=worker,project=web-history"
+    path: ./patch/deployment.yml
+secretGenerator:
+- name: web-history.worker.secret
+  type: Opaque
+  envs:
+  - ./patch/.env

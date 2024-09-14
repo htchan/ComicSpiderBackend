@@ -1,9 +1,9 @@
 apiVersion: v1
 kind: Service
 metadata:
-  name: web-history-backend-service
+  name: web-history-api-service
   labels:
-    app: backend
+    app: api
     project: web-history
 spec:
   ports:
@@ -11,5 +11,6 @@ spec:
       port: 8000
       targetPort: 8000
   selector:
-    app: backend
+    app: api
     project: web-history
+

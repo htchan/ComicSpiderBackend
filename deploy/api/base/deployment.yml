@@ -19,8 +19,8 @@ spec:
     spec:
       containers:
         - name: web-history-api
-          image: ghcr.io/htchan/web-history:api-v2024.04.03-f9db50c # Sets Image
-          imagePullPolicy: "Never"
+          image: ghcr.io/htchan/web-history-api:latest # Sets Image
+          imagePullPolicy: "IfNotPresent"
           resources:
             limits:
               memory: 50M
@@ -29,4 +29,11 @@ spec:
           envFrom:
             - secretRef:
                 name: web-history.api.secret
+          volumeMounts:
+            - mountPath: /migrations
+              name: web-history-migrations-volume
+      volumes:
+        - name: web-history-migrations-volume
+          persistentVolumeClaim:
+            claimName: web-history.migrations-claim
       restartPolicy: Always

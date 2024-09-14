@@ -1,0 +1,30 @@
+
+apiVersion: v1
+kind: PersistentVolumeClaim # Create PVC
+metadata:
+  name: web-history.migrations-claim # Sets name of PV
+  labels:
+    project: web-history
+spec:
+  storageClassName: manual
+  accessModes:
+    - ReadOnlyMany # Sets read and write access
+  resources:
+    requests:
+      storage: 100Mi # Sets volume size
+  volumeName: web-history.migrations-volume
+---
+apiVersion: v1
+kind: PersistentVolumeClaim # Create PVC
+metadata:
+  name: web-history.config-claim # Sets name of PV
+  labels:
+    project: web-history
+spec:
+  storageClassName: manual
+  accessModes:
+    - ReadOnlyMany # Sets read and write access
+  resources:
+    requests:
+      storage: 1Mi # Sets volume size
+  volumeName: web-history.config-volume

@@ -1,0 +1,31 @@
+kind: PersistentVolume
+apiVersion: v1
+metadata:
+  name: web-history.migrations-volume
+  labels:
+    label: local
+    project: web-history
+spec:
+  storageClassName: manual
+  capacity:
+    storage: 100Mi
+  accessModes:
+    - ReadOnlyMany
+  hostPath:
+    path: /volumes/web-history-data/migrations
+---
+kind: PersistentVolume
+apiVersion: v1
+metadata:
+  name: web-history.config-volume
+  labels:
+    label: local
+    project: web-history
+spec:
+  storageClassName: manual
+  capacity:
+    storage: 1Mi
+  accessModes:
+    - ReadOnlyMany
+  hostPath:
+    path: /volumes/web-history-data/config

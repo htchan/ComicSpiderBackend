@@ -1,4 +1,4 @@
-workerVersion: apps/v1
+apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: web-history.worker  # Sets Deployment name
@@ -20,7 +20,7 @@ spec:
       containers:
         - name: web-history-worker
           image: ghcr.io/htchan/web-history:worker-v2024.04.03-f9db50c # Sets Image
-          imagePullPolicy: "Never"
+          imagePullPolicy: "IfNotPresent"
           resources:
             limits:
               memory: 50M
@@ -31,9 +31,14 @@ spec:
                 name: web-history.worker.secret
           volumeMounts:
             - mountPath: /config
-              name: web-history-worker-config-volume
+              name: web-history-config-volume
+            - mountPath: /migrations
+              name: web-history-migrations-volume
       volumes:
-        - name: web-history-worker-config-volume
+        - name: web-history-config-volume
           persistentVolumeClaim:
-            claimName: web-history.worker.config-claim
+            claimName: web-history.config-claim
+        - name: web-history-migrations-volume
+          persistentVolumeClaim:
+            claimName: web-history.migrations-claim
       restartPolicy: Always
