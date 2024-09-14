@@ -8,6 +8,7 @@ metadata:
     project: web-history
 resources:
   - ./base/deployment.yml
+  - ./base/cronjob.yml
 patches:
   - target:
       group: apps
