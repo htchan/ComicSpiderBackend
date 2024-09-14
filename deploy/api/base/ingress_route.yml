@@ -1,0 +1,32 @@
+apiVersion: traefik.io/v1alpha1
+kind: IngressRoute
+metadata:
+  name: web-history-ingress-route
+  namespace: default
+spec:
+#  entryPoints:
+#    - web
+#    - websecure
+  routes:
+    - match: Host(`web-history.localhost`) && PathPrefix(`/api`)
+      kind: Rule
+      services:
+        - name: web-history-api-service
+          port: 8000
+      middlewares:
+        - name: user-service.traefik-middleware
+          namespace: default
+    - match: Host(`web-history.localhost`) && PathPrefix(`/docs/swagger`)
+      kind: Rule
+      services:
+        - name: web-history-api-service
+          port: 8000
+      middlewares:
+        - name: web-history--swagger-docs-redirect
+          namespace: default
+    - match: Host(`web-history.localhost`)
+      kind: Rule
+      services:
+        - name: nginx
+          port: 80
+

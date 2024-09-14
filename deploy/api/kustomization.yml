@@ -9,7 +9,8 @@ metadata:
 resources:
   - ./base/deployment.yml
   - ./base/service.yml
-  - ./base/ingress.yml
+  - ./base/ingress_route.yml
+  - ./base/redirect-middleware.yml
 patches:
   - target:
       group: apps
@@ -19,11 +20,11 @@ patches:
       labelSelector: "app=api,project=web-history"
     path: ./patch/deployment.yml
   - target:
-      group: networking.k8s.io
-      version: v1
-      kind: Ingress
-      name: web-history-api-ingress
-    path: ./patch/ingress.yml
+      group: traefik.io
+      version: v1alpha1
+      kind: IngressRoute
+      name: web-history-ingress-route
+    path: ./patch/ingress_route.yml
 secretGenerator:
 - name: web-history.api.secret
   type: Opaque

@@ -19,7 +19,7 @@ spec:
     spec:
       containers:
         - name: web-history-api
-          image: ghcr.io/htchan/web-history:api-v2024.04.03-f9db50c # Sets Image
+          image: ghcr.io/htchan/web-history-api:latest # Sets Image
           imagePullPolicy: "IfNotPresent"
           resources:
             limits:
