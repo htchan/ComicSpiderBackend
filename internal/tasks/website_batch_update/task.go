@@ -141,7 +141,9 @@ func (t *Task) Subscribe(ctx context.Context, ch chan goworkers.Msg) error {
 
 	createErr := t.stream.CreateStream(ctx)
 	if createErr != nil {
-		return fmt.Errorf("website batch update create stream failed: %w", createErr)
+		log.Error().Err(createErr).Str("task", t.Name()).Msg("create stream failed")
+
+		return createErr
 	}
 
 	interfaceCh := make(chan interface{})
