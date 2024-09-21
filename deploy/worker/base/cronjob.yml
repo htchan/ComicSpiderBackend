@@ -6,10 +6,14 @@ metadata:
     app: worker
     project: web-history
 spec:
-  schedule:
-    - cron: 0 4 * * 5  # runs every minute
+  successfulJobsHistoryLimit: 1
+  failedJobsHistoryLimit: 2
+  concurrencyPolicy: Forbid
+  schedule: '0 4 * * 5'  # runs every minute
   jobTemplate:
     spec:
+      backoffLimit: 2
+      activeDeadlineSeconds: 600
       template:
         spec:
           containers:
@@ -26,4 +30,4 @@ spec:
             - "*"
             - "date"
             - "$(date +%Y-%m-%d)"
-          restartPolicy: OnFailure
+          restartPolicy: Never
