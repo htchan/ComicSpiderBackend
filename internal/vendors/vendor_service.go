@@ -13,5 +13,6 @@ var ErrInvalidStatusCode = fmt.Errorf("invalid status code")
 type VendorService interface {
 	Support(*model.Website) bool
 	Update(context.Context, *model.Website) error
+	Name() string
 	// Download(context.Context, *model.Website) error
 }

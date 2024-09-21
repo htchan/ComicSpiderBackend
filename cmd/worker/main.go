@@ -8,10 +8,11 @@ import (
 	"time"
 
 	"github.com/htchan/WebHistory/internal/config"
-	"github.com/htchan/WebHistory/internal/executor"
-	"github.com/htchan/WebHistory/internal/jobs/websiteupdate"
+
+	// "github.com/htchan/WebHistory/internal/jobs/websiteupdate"
 	"github.com/htchan/WebHistory/internal/repository/sqlc"
 	websitebatchupdate "github.com/htchan/WebHistory/internal/tasks/website_batch_update"
+	websiteupdate "github.com/htchan/WebHistory/internal/tasks/website_update"
 	"github.com/htchan/WebHistory/internal/utils"
 	"github.com/htchan/WebHistory/internal/vendors"
 	"github.com/htchan/WebHistory/internal/vendors/baozimh"
@@ -28,6 +29,7 @@ import (
 	"github.com/rs/zerolog/log"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/exporters/jaeger"
+	"go.opentelemetry.io/otel/propagation"
 	"go.opentelemetry.io/otel/sdk/resource"
 	tracesdk "go.opentelemetry.io/otel/sdk/trace"
 	semconv "go.opentelemetry.io/otel/semconv/v1.4.0"
@@ -49,6 +51,7 @@ func tracerProvider(conf config.TraceConfig) (*tracesdk.TracerProvider, error) {
 	)
 
 	otel.SetTracerProvider(tp)
+	otel.SetTextMapPropagator(propagation.TraceContext{})
 
 	return tp, nil
 }
@@ -95,8 +98,6 @@ func main() {
 
 	rpo := sqlc.NewRepo(db, &conf.WebsiteConfig)
 
-	exec := executor.NewExecutor(conf.BinConfig.WorkerExecutorCount)
-
 	cli := &http.Client{Timeout: conf.BinConfig.ClientTimeout}
 
 	services := []vendors.VendorService{}
@@ -133,11 +134,16 @@ func main() {
 		log.Fatal().Err(err).Msg("failed to create redis client")
 	}
 
-	// TODO: register new task to worker
-	// for _, service := range services {
-	// 	pool.Register(websiteupdate.NewTask(service))
-	// }
-	err = pool.Register(ctx, websitebatchupdate.NewTask(redisClient))
+	var updateTasks []*websiteupdate.Task
+	for _, service := range services {
+		updateTasks = append(updateTasks, websiteupdate.NewTask(redisClient, service, rpo, &conf.WebsiteConfig))
+
+		err := pool.Register(ctx, updateTasks[len(updateTasks)-1])
+		if err != nil {
+			log.Fatal().Err(err).Msg("failed to register task")
+		}
+	}
+	err = pool.Register(ctx, websitebatchupdate.NewTask(redisClient, updateTasks, rpo))
 	if err != nil {
 		log.Fatal().Err(err).Msg("failed to register task")
 	}
@@ -149,21 +155,17 @@ func main() {
 		}
 	}()
 
+	// todo: run shutdown function for each task if necessary
+	shutdownHandler.Register("redis stream", func() error {
+		redisClient.Close()
+
+		return nil
+	})
 	shutdownHandler.Register("worker pool", pool.Stop)
-
-	// start website update job
-	websiteUpdateScheduler := websiteupdate.Setup(rpo, &conf.BinConfig, services)
-	exec.Register(websiteUpdateScheduler.Publisher())
-	go websiteUpdateScheduler.Start()
-
-	shutdownHandler.Register("websiteupdate.Scheduler", websiteUpdateScheduler.Stop)
-	shutdownHandler.Register("executor", exec.Stop)
 	shutdownHandler.Register("database", db.Close)
 	shutdownHandler.Register("tracer", func() error {
 		return tp.Shutdown(context.Background())
 	})
-
-	go exec.Start()
 
 	shutdownHandler.Listen(60 * time.Second)
 }

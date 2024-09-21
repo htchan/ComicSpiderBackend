@@ -49,6 +49,10 @@ func NewVendorService(
 	}
 }
 
+func (serv *VendorService) Name() string {
+	return Host
+}
+
 func (serv *VendorService) fetchWebsite(ctx context.Context, web *model.Website) (string, error) {
 	serv.lock.Acquire(ctx, 1)
 	defer func() {

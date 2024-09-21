@@ -15,10 +15,12 @@ require (
 	github.com/google/uuid v1.3.0
 	github.com/htchan/UserService v0.0.0-20220101064522-c9d57069f9df
 	github.com/htchan/goshutdown v0.0.0-20231003015559-4aa563eafbb1
-	github.com/htchan/goworkers v0.0.2
+	github.com/htchan/goworkers v0.0.3
 	github.com/lib/pq v1.10.6
 	github.com/mattn/go-sqlite3 v1.14.10
 	github.com/ory/dockertest/v3 v3.10.0
+	github.com/redis/rueidis v1.0.32
+	github.com/redis/rueidis/rueidiscompat v1.0.32
 	github.com/rs/zerolog v1.29.0
 	github.com/stretchr/testify v1.8.4
 	github.com/swaggo/http-swagger/v2 v2.0.2
@@ -68,8 +70,6 @@ require (
 	github.com/opencontainers/runc v1.1.5 // indirect
 	github.com/pkg/errors v0.9.1 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
-	github.com/redis/rueidis v1.0.32 // indirect
-	github.com/redis/rueidis/rueidiscompat v1.0.32 // indirect
 	github.com/sirupsen/logrus v1.9.0 // indirect
 	github.com/swaggo/files/v2 v2.0.0 // indirect
 	github.com/xeipuuv/gojsonpointer v0.0.0-20190905194746-02993c407bfb // indirect
