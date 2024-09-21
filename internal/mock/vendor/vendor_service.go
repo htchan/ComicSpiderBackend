@@ -35,6 +35,20 @@ func (m *MockVendorService) EXPECT() *MockVendorServiceMockRecorder {
 	return m.recorder
 }
 
+// Name mocks base method.
+func (m *MockVendorService) Name() string {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Name")
+	ret0, _ := ret[0].(string)
+	return ret0
+}
+
+// Name indicates an expected call of Name.
+func (mr *MockVendorServiceMockRecorder) Name() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Name", reflect.TypeOf((*MockVendorService)(nil).Name))
+}
+
 // Support mocks base method.
 func (m *MockVendorService) Support(arg0 *model.Website) bool {
 	m.ctrl.T.Helper()

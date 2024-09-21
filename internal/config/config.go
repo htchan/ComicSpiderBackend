@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/caarlos0/env/v10"
+	worker "github.com/htchan/goworkers"
 	"gopkg.in/yaml.v3"
 )
 
@@ -15,6 +16,7 @@ type APIConfig struct {
 	TraceConfig       TraceConfig
 	UserServiceConfig UserServiceConfig
 	WebsiteConfig     WebsiteConfig
+	RedisStreamConfig RedisStreamConfig
 }
 
 type APIBinConfig struct {
@@ -26,11 +28,13 @@ type APIBinConfig struct {
 }
 
 type WorkerConfig struct {
-	BinConfig        WorkerBinConfig
-	DatabaseConfig   DatabaseConfig
-	TraceConfig      TraceConfig
-	WebsiteConfig    WebsiteConfig
-	VendorConfigPath string `env:"VENDOR_CONFIG_PATH" envDefault:"/config/vendors.yaml"`
+	BinConfig         WorkerBinConfig
+	WorkerConfig      worker.Config
+	DatabaseConfig    DatabaseConfig
+	TraceConfig       TraceConfig
+	WebsiteConfig     WebsiteConfig
+	RedisStreamConfig RedisStreamConfig
+	VendorConfigPath  string `env:"VENDOR_CONFIG_PATH" envDefault:"/config/vendors.yaml"`
 }
 
 type WorkerBinConfig struct {
@@ -65,6 +69,10 @@ type WebsiteConfig struct {
 	MaxDateLength int    `env:"WEB_WATCHER_DATE_MAX_LENGTH" envDefault:"2"`
 }
 
+type RedisStreamConfig struct {
+	Addr string `env:"REDIS_CLIENT_ADDR"`
+}
+
 func LoadAPIConfig() (*APIConfig, error) {
 	var conf APIConfig
 
@@ -75,6 +83,7 @@ func LoadAPIConfig() (*APIConfig, error) {
 		func() error { return env.Parse(&conf.TraceConfig) },
 		func() error { return env.Parse(&conf.UserServiceConfig) },
 		func() error { return env.Parse(&conf.WebsiteConfig) },
+		func() error { return env.Parse(&conf.RedisStreamConfig) },
 	}
 
 	for _, f := range loadConfigFuncs {
@@ -95,6 +104,7 @@ func LoadWorkerConfig() (*WorkerConfig, error) {
 		func() error { return env.Parse(&conf.DatabaseConfig) },
 		func() error { return env.Parse(&conf.TraceConfig) },
 		func() error { return env.Parse(&conf.WebsiteConfig) },
+		func() error { return env.Parse(&conf.RedisStreamConfig) },
 		func() error {
 			contentBytes, err := os.ReadFile(conf.VendorConfigPath)
 			if err != nil {

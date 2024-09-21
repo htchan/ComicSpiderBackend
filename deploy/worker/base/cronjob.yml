@@ -1,0 +1,29 @@
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: web-history.website-batch-update-cronjob
+  labels:
+    app: worker
+    project: web-history
+spec:
+  schedule:
+    - cron: 0 4 * * 5  # runs every minute
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          containers:
+          - name: redis-cli
+            image: redis:alpine
+            command: ["redis-cli"]
+            args:
+            - "-h"
+            - "common-infra-redis-service"
+            - "-p"
+            - "6379"
+            - "XADD"
+            - "web-history/website-batch-update"
+            - "*"
+            - "date"
+            - "$(date +%Y-%m-%d)"
+          restartPolicy: OnFailure
