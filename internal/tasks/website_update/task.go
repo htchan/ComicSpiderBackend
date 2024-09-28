@@ -32,6 +32,32 @@ type Task struct {
 
 var _ goworkers.Task = (*Task)(nil)
 
+type Tasks []*Task
+
+func NewTaskSet(redisClient rueidis.Client, services []vendors.VendorService, rpo repository.Repostory, conf *config.WebsiteConfig) Tasks {
+	var updateTasks Tasks
+	for _, service := range services {
+		updateTasks = append(updateTasks, NewTask(redisClient, service, rpo, conf))
+	}
+
+	return updateTasks
+}
+
+func (ts Tasks) Publish(ctx context.Context, params WebsiteUpdateParams) ([]string, []error) {
+	var errs []error
+	var supportTasks []string
+
+	for _, task := range ts {
+		if !task.Support(&params.Website) {
+			continue
+		}
+		supportTasks = append(supportTasks, task.Name())
+		errs = append(errs, task.Publish(ctx, params))
+	}
+
+	return supportTasks, errs
+}
+
 func NewTask(redisClient rueidis.Client, vendorService vendors.VendorService, rpo repository.Repostory, conf *config.WebsiteConfig) *Task {
 	return &Task{
 		stream: redis.NewRedisStream(
@@ -50,6 +76,7 @@ func NewTask(redisClient rueidis.Client, vendorService vendors.VendorService, rp
 		websiteConf:   conf,
 	}
 }
+
 func (t *Task) Name() string {
 	return fmt.Sprintf("website_update/%s", t.vendorService.Name())
 }

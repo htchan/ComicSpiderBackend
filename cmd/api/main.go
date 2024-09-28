@@ -16,14 +16,7 @@ import (
 	"github.com/htchan/WebHistory/internal/router/website"
 	websiteupdate "github.com/htchan/WebHistory/internal/tasks/website_update"
 	"github.com/htchan/WebHistory/internal/utils"
-	"github.com/htchan/WebHistory/internal/vendors"
-	"github.com/htchan/WebHistory/internal/vendors/baozimh"
-	"github.com/htchan/WebHistory/internal/vendors/kuaikanmanhua"
-	"github.com/htchan/WebHistory/internal/vendors/manhuagui"
-	"github.com/htchan/WebHistory/internal/vendors/manhuaren"
-	"github.com/htchan/WebHistory/internal/vendors/qiman6"
-	"github.com/htchan/WebHistory/internal/vendors/u17"
-	"github.com/htchan/WebHistory/internal/vendors/webtoons"
+	vendorhelper "github.com/htchan/WebHistory/internal/vendors/helpers"
 
 	"github.com/go-chi/chi/v5"
 )
@@ -63,28 +56,9 @@ func main() {
 
 	rpo := sqlc.NewRepo(db, &conf.WebsiteConfig)
 
-	services := []vendors.VendorService{}
-	for key, cfg := range conf.BinConfig.VendorServiceConfigs {
-		switch key {
-		case baozimh.Host:
-			services = append(services, baozimh.NewVendorService(nil, rpo, &cfg))
-		case kuaikanmanhua.Host:
-			services = append(services, kuaikanmanhua.NewVendorService(nil, rpo, &cfg))
-		case manhuagui.Host:
-			services = append(services, manhuagui.NewVendorService(nil, rpo, &cfg))
-		case manhuaren.Host:
-			services = append(services, manhuaren.NewVendorService(nil, rpo, &cfg))
-		case qiman6.Host:
-			services = append(services, qiman6.NewVendorService(nil, rpo, &cfg))
-		case u17.Host:
-			services = append(services, u17.NewVendorService(nil, rpo, &cfg))
-		case webtoons.Host:
-			services = append(services, webtoons.NewVendorService(nil, rpo, &cfg))
-		default:
-			log.Error().Str("vendor", key).Msg("unknown vendor")
-
-			return
-		}
+	services, err := vendorhelper.NewServiceSet(nil, rpo, conf.BinConfig.VendorServiceConfigs)
+	if err != nil {
+		log.Fatal().Err(err).Msg("create vendor services failed")
 	}
 
 	redisClient, err := rueidis.NewClient(rueidis.ClientOption{
@@ -94,10 +68,7 @@ func main() {
 		log.Fatal().Err(err).Msg("failed to create redis client")
 	}
 
-	var updateTasks []*websiteupdate.Task
-	for _, service := range services {
-		updateTasks = append(updateTasks, websiteupdate.NewTask(redisClient, service, rpo, &conf.WebsiteConfig))
-	}
+	updateTasks := websiteupdate.NewTaskSet(redisClient, services, rpo, &conf.WebsiteConfig)
 
 	r := chi.NewRouter()
 	website.AddRoutes(r, rpo, conf, updateTasks)
