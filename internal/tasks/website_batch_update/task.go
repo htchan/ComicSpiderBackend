@@ -12,6 +12,7 @@ import (
 	"github.com/htchan/goworkers/stream/redis"
 	"github.com/redis/rueidis"
 	"github.com/redis/rueidis/rueidiscompat"
+	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/attribute"
@@ -53,8 +54,8 @@ func (t *Task) Execute(ctx context.Context, params interface{}) error {
 	defer span.End()
 
 	redisParams := params.(rueidiscompat.XMessage)
-	logger := log.With().Str("task", t.Name()).Str("redis_task_id", redisParams.ID).Logger()
-	logger.
+	ctx = log.With().Str("task", t.Name()).Str("redis_task_id", redisParams.ID).Logger().WithContext(ctx)
+	zerolog.Ctx(ctx).
 		Info().
 		Interface("values", redisParams.Values).
 		Msg("execute website batch update task")
@@ -79,7 +80,7 @@ func (t *Task) Execute(ctx context.Context, params interface{}) error {
 		supportTasks, errs := t.vendorTasks.Publish(websiteCtx, websiteupdate.WebsiteUpdateParams{Website: website})
 		for i, err := range errs {
 			if err != nil {
-				logger.Error().Err(err).
+				zerolog.Ctx(ctx).Error().Err(err).
 					Str("task_name", supportTasks[i]).
 					Str("website_uuid", website.UUID).
 					Str("website_url", website.URL).
@@ -97,11 +98,11 @@ func (t *Task) Execute(ctx context.Context, params interface{}) error {
 		websiteSpan.End()
 
 		if len(supportTasks) == 0 {
-			logger.Warn().
+			zerolog.Ctx(ctx).Warn().
 				Str("website_uuid", website.UUID).
 				Msg("no support task for website")
 		} else if len(supportTasks) > 1 {
-			logger.Warn().
+			zerolog.Ctx(ctx).Warn().
 				Str("website_uuid", website.UUID).
 				Strs("support_task_names", supportTasks).
 				Msg("multiple support task for website")

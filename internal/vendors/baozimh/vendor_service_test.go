@@ -198,9 +198,11 @@ func TestVendorService_isUpdated(t *testing.T) {
 			web: &model.Website{Conf: &config.WebsiteConfig{Separator: "\n"}},
 			body: `<head>
 				<title>title</title>
+				<div class="supporting-text"><div><span>
 				<em data-v-6191a505="">
                     (2021年07月30日 更新)
-                  </em>
+				</em>
+				</div></div></span>
 			</head>`,
 			want: true,
 			wantWeb: &model.Website{
@@ -222,9 +224,11 @@ func TestVendorService_isUpdated(t *testing.T) {
 			},
 			body: `<head>
 				<title>new title</title>
+				<div class="supporting-text"><div><span>
 				<em data-v-6191a505="">
-                    (2021年07月30日 更新)
-                  </em>
+					(2021年07月30日 更新)
+				</em>
+				</div></div></span>
 			</head>`,
 			want: false,
 			wantWeb: &model.Website{
@@ -241,9 +245,11 @@ func TestVendorService_isUpdated(t *testing.T) {
 			},
 			web: &model.Website{Conf: &config.WebsiteConfig{Separator: "\n"}},
 			body: `<html>
+				<div class="supporting-text"><div><span>
 				<em data-v-6191a505="">
 					(2021年07月30日 更新)
 				</em>
+				</div></div></span>
 			</html>`,
 			want: true,
 			wantWeb: &model.Website{
@@ -261,9 +267,11 @@ func TestVendorService_isUpdated(t *testing.T) {
 				Conf: &config.WebsiteConfig{Separator: "\n"},
 			},
 			body: `<html>
+				<div class="supporting-text"><div><span>
 				<em style="color:var(--link-hover-color);" data-v-6191a505="">
 					(5小時前 更新)
 				</em>
+				</div></div></span>
 		</html>`,
 			want: true,
 			wantWeb: &model.Website{
@@ -338,9 +346,11 @@ func TestVendorService_Update(t *testing.T) {
 			w.Write([]byte(`<html>
 			<head><title>title</title></head>
 			<body>
+				<div class="supporting-text"><div><span>
 				<em data-v-6191a505="">
 					(2021年07月30日 更新)
 				</em>
+				</div></div></span>
 			</body>
 		</html>`))
 		} else {
