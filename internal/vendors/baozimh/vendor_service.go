@@ -31,7 +31,7 @@ var _ vendors.VendorService = (*VendorService)(nil)
 
 var (
 	titleGoQuery = "head>title"
-	dateGoQuery  = "em[data-v-6191a505='']"
+	dateGoQuery  = "div.supporting-text>div>span>em"
 	// contentGoQuery = "div.comics-detail__info>div.supporting-text>div:nth-child(2)>span>em"
 	// fromIndex      = 0
 	// toIndex        = 2
@@ -132,6 +132,8 @@ func (serv *VendorService) isUpdated(ctx context.Context, web *model.Website, bo
 	)
 
 	if len(updateTimeStr) < 2 {
+		zerolog.Ctx(ctx).Warn().Str("update_time_str", doc.Find(dateGoQuery).Text()).Msg("cannot find update time str")
+
 		return isUpdated
 	}
 

@@ -14,6 +14,7 @@ import (
 	"github.com/htchan/goworkers/stream/redis"
 	"github.com/redis/rueidis"
 	"github.com/redis/rueidis/rueidiscompat"
+	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/attribute"
@@ -92,8 +93,8 @@ func (t *Task) Execute(ctx context.Context, params interface{}) error {
 
 	redisParams := params.(rueidiscompat.XMessage)
 	parsedParams := FromMap(redisParams.Values, t.websiteConf)
-	logger := log.With().Str("task", t.Name()).Str("redis_task_id", redisParams.ID).Logger()
-	logger.
+	ctx = log.With().Str("task", t.Name()).Str("redis_task_id", redisParams.ID).Logger().WithContext(ctx)
+	zerolog.Ctx(ctx).
 		Info().
 		Interface("values", redisParams.Values).
 		Msg("execute website update task")
@@ -110,7 +111,7 @@ func (t *Task) Execute(ctx context.Context, params interface{}) error {
 			ackSpan.SetStatus(codes.Error, ackErr.Error())
 			ackSpan.RecordError(ackErr)
 
-			logger.Error().Err(ackErr).Msg("ack message failed")
+			zerolog.Ctx(ctx).Error().Err(ackErr).Msg("ack message failed")
 		}
 	}()
 

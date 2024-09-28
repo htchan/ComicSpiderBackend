@@ -82,8 +82,6 @@ func createWebsiteHandler(r repository.Repostory, conf *config.WebsiteConfig, up
 		url := req.Context().Value(ContextKeyWebURL).(string)
 
 		web := model.NewWebsite(url, conf)
-		// TODO: update website in worker
-		// service.Update(context.Background(), r, &web)
 
 		err := r.CreateWebsite(&web)
 		if err != nil {
@@ -92,6 +90,7 @@ func createWebsiteHandler(r repository.Repostory, conf *config.WebsiteConfig, up
 			return
 		}
 
+		//TODO: publish job only if web is a new record (updateTime is not updated)
 		supportTasks, errs := updateTasks.Publish(req.Context(), websiteupdate.WebsiteUpdateParams{Website: web})
 		for i, err := range errs {
 			if err != nil {
