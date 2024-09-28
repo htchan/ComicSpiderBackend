@@ -14,6 +14,7 @@ import (
 	"github.com/htchan/WebHistory/internal/config"
 	"github.com/htchan/WebHistory/internal/model"
 	"github.com/htchan/WebHistory/internal/repository"
+	websiteupdate "github.com/htchan/WebHistory/internal/tasks/website_update"
 )
 
 // @Summary		Get website group
@@ -74,7 +75,7 @@ func getWebsiteGroupHandler(r repository.Repostory) http.HandlerFunc {
 // @Success		200			{object}	createWebsiteResp
 // @Failure		400			{object}	errResp
 // @Router			/api/web-watcher/websites [post]
-func createWebsiteHandler(r repository.Repostory, conf *config.WebsiteConfig) http.HandlerFunc {
+func createWebsiteHandler(r repository.Repostory, conf *config.WebsiteConfig, updateTasks []*websiteupdate.Task) http.HandlerFunc {
 	return func(res http.ResponseWriter, req *http.Request) {
 		// userUUID, err := UserUUID(req)
 		userUUID := req.Context().Value(ContextKeyUserUUID).(string)
@@ -89,6 +90,15 @@ func createWebsiteHandler(r repository.Repostory, conf *config.WebsiteConfig) ht
 			zerolog.Ctx(req.Context()).Error().Err(err).Msg("create website failed")
 			writeError(res, http.StatusBadRequest, err)
 			return
+		}
+
+		for _, task := range updateTasks {
+			if task.Support(&web) {
+				err := task.Publish(req.Context(), websiteupdate.WebsiteUpdateParams{Website: web})
+				if err != nil {
+					zerolog.Ctx(req.Context()).Error().Err(err).Str("task", task.Name()).Msg("publish task failed")
+				}
+			}
 		}
 
 		userWeb := model.NewUserWebsite(web, userUUID)
