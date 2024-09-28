@@ -20,13 +20,13 @@ import (
 
 type Task struct {
 	stream      stream.Stream
-	vendorTasks []*websiteupdate.Task
+	vendorTasks websiteupdate.Tasks
 	rpo         repository.Repostory
 }
 
 var _ goworkers.Task = (*Task)(nil)
 
-func NewTask(redisClient rueidis.Client, vendorTasks []*websiteupdate.Task, rpo repository.Repostory) *Task {
+func NewTask(redisClient rueidis.Client, vendorTasks websiteupdate.Tasks, rpo repository.Repostory) *Task {
 	return &Task{
 		stream: redis.NewRedisStream(
 			redisClient,
@@ -75,17 +75,12 @@ func (t *Task) Execute(ctx context.Context, params interface{}) error {
 	iterateCtx, iterateSpan := tr.Start(ctx, "Iterate Websites")
 	for _, website := range websites {
 		websiteCtx, websiteSpan := tr.Start(iterateCtx, "Publish Update Website")
-		var supportTasks []string
-		for _, task := range t.vendorTasks {
-			task := task
-			if !task.Support(&website) {
-				continue
-			}
 
-			supportTasks = append(supportTasks, task.Name())
-			err := task.Publish(websiteCtx, websiteupdate.WebsiteUpdateParams{Website: website})
+		supportTasks, errs := t.vendorTasks.Publish(websiteCtx, websiteupdate.WebsiteUpdateParams{Website: website})
+		for i, err := range errs {
 			if err != nil {
 				logger.Error().Err(err).
+					Str("task_name", supportTasks[i]).
 					Str("website_uuid", website.UUID).
 					Str("website_url", website.URL).
 					Str("website_title", website.Title).

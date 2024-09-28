@@ -687,8 +687,8 @@ github.com/htchan/UserService v0.0.0-20220101064522-c9d57069f9df h1:gG++WNyG89kc
 github.com/htchan/UserService v0.0.0-20220101064522-c9d57069f9df/go.mod h1:yXUGOcNXjVXzn5BPfDTcMnOnkqn/xeYZR6hetHgqjaQ=
 github.com/htchan/goshutdown v0.0.0-20231003015559-4aa563eafbb1 h1:4Ie8g+PJEgXG/sqkL/XkLmkShLMqIeRkQMIAkhytdIM=
 github.com/htchan/goshutdown v0.0.0-20231003015559-4aa563eafbb1/go.mod h1:cLXIumSEYq8s3dVicCVaRAnt6NKO46OzheaYIESjY/o=
-github.com/htchan/goworkers v0.0.4 h1:8HCKVyVsZBA+xljO6fRaOxU7ZUO8pcLmnhpUM4QlM5U=
-github.com/htchan/goworkers v0.0.4/go.mod h1:arssaqHf7lXkZAtZEYG3go0SlcCmf4fMG5OJjsUGt+s=
+github.com/htchan/goworkers v0.0.5 h1:jwAAuU+Z4G3HxyPtQDn5rXtqwWSAX7nSglpLhy1JSQc=
+github.com/htchan/goworkers v0.0.5/go.mod h1:arssaqHf7lXkZAtZEYG3go0SlcCmf4fMG5OJjsUGt+s=
 github.com/iancoleman/strcase v0.2.0/go.mod h1:iwCmte+B7n89clKwxIoIXy/HfoL7AsD47ZCWhYzw7ho=
 github.com/ianlancetaylor/demangle v0.0.0-20181102032728-5e5cf60278f6/go.mod h1:aSSvb/t6k1mPoxDqO4vJh6VOCGPwU4O0C2/Eqndh1Sc=
 github.com/ianlancetaylor/demangle v0.0.0-20200824232613-28f6c0f3b639/go.mod h1:aSSvb/t6k1mPoxDqO4vJh6VOCGPwU4O0C2/Eqndh1Sc=

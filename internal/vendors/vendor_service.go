@@ -8,6 +8,7 @@ import (
 )
 
 var ErrInvalidStatusCode = fmt.Errorf("invalid status code")
+var ErrUnknownHost = fmt.Errorf("unknown host")
 
 //go:generate mockgen -destination=../mock/vendor/vendor_service.go -package=mockvendor . VendorService
 type VendorService interface {

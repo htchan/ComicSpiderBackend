@@ -8,22 +8,15 @@ import (
 	"time"
 
 	"github.com/htchan/WebHistory/internal/config"
+	"github.com/htchan/goworkers"
 
 	// "github.com/htchan/WebHistory/internal/jobs/websiteupdate"
 	"github.com/htchan/WebHistory/internal/repository/sqlc"
 	websitebatchupdate "github.com/htchan/WebHistory/internal/tasks/website_batch_update"
 	websiteupdate "github.com/htchan/WebHistory/internal/tasks/website_update"
 	"github.com/htchan/WebHistory/internal/utils"
-	"github.com/htchan/WebHistory/internal/vendors"
-	"github.com/htchan/WebHistory/internal/vendors/baozimh"
-	"github.com/htchan/WebHistory/internal/vendors/kuaikanmanhua"
-	"github.com/htchan/WebHistory/internal/vendors/manhuagui"
-	"github.com/htchan/WebHistory/internal/vendors/manhuaren"
-	"github.com/htchan/WebHistory/internal/vendors/qiman6"
-	"github.com/htchan/WebHistory/internal/vendors/u17"
-	"github.com/htchan/WebHistory/internal/vendors/webtoons"
+	vendorhelper "github.com/htchan/WebHistory/internal/vendors/helpers"
 	shutdown "github.com/htchan/goshutdown"
-	worker "github.com/htchan/goworkers"
 	"github.com/redis/rueidis"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
@@ -100,33 +93,14 @@ func main() {
 
 	cli := &http.Client{Timeout: conf.BinConfig.ClientTimeout}
 
-	services := []vendors.VendorService{}
-	for key, cfg := range conf.BinConfig.VendorServiceConfigs {
-		switch key {
-		case baozimh.Host:
-			services = append(services, baozimh.NewVendorService(cli, rpo, &cfg))
-		case kuaikanmanhua.Host:
-			services = append(services, kuaikanmanhua.NewVendorService(cli, rpo, &cfg))
-		case manhuagui.Host:
-			services = append(services, manhuagui.NewVendorService(cli, rpo, &cfg))
-		case manhuaren.Host:
-			services = append(services, manhuaren.NewVendorService(cli, rpo, &cfg))
-		case qiman6.Host:
-			services = append(services, qiman6.NewVendorService(cli, rpo, &cfg))
-		case u17.Host:
-			services = append(services, u17.NewVendorService(cli, rpo, &cfg))
-		case webtoons.Host:
-			services = append(services, webtoons.NewVendorService(cli, rpo, &cfg))
-		default:
-			log.Error().Str("vendor", key).Msg("unknown vendor")
-
-			return
-		}
+	services, err := vendorhelper.NewServiceSet(cli, rpo, conf.BinConfig.VendorServiceConfigs)
+	if err != nil {
+		log.Fatal().Err(err).Msg("create vendor services failed")
 	}
 
 	ctx := context.Background()
 
-	pool := worker.NewWorkerPool(worker.Config{MaxThreads: 10})
+	pool := goworkers.NewWorkerPool(goworkers.Config{MaxThreads: 10})
 	redisClient, err := rueidis.NewClient(rueidis.ClientOption{
 		InitAddress: []string{conf.RedisStreamConfig.Addr},
 	})
@@ -134,15 +108,14 @@ func main() {
 		log.Fatal().Err(err).Msg("failed to create redis client")
 	}
 
-	var updateTasks []*websiteupdate.Task
-	for _, service := range services {
-		updateTasks = append(updateTasks, websiteupdate.NewTask(redisClient, service, rpo, &conf.WebsiteConfig))
-
-		err := pool.Register(ctx, updateTasks[len(updateTasks)-1])
-		if err != nil {
+	updateTasks := websiteupdate.NewTaskSet(redisClient, services, rpo, &conf.WebsiteConfig)
+	for _, task := range updateTasks {
+		registerErr := pool.Register(ctx, task)
+		if registerErr != nil {
 			log.Fatal().Err(err).Msg("failed to register task")
 		}
 	}
+
 	err = pool.Register(ctx, websitebatchupdate.NewTask(redisClient, updateTasks, rpo))
 	if err != nil {
 		log.Fatal().Err(err).Msg("failed to register task")

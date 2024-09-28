@@ -39,13 +39,24 @@ func Test_LoadAPIConfig(t *testing.T) {
 				"PSQL_NAME":          "name",
 				"USER_SERVICE_ADDR":  "user_serv_addr",
 				"USER_SERVICE_TOKEN": "user_serv_token",
+				"VENDOR_CONFIG_PATH": "../../data/testing/vendor_configs.yml",
+				"REDIS_CLIENT_ADDR":  "redis:6379",
 			},
 			expectedConf: &APIConfig{
+				VendorConfigPath: "../../data/testing/vendor_configs.yml",
 				BinConfig: APIBinConfig{
 					ReadTimeout:    5 * time.Second,
 					WriteTimeout:   5 * time.Second,
 					IdleTimeout:    5 * time.Second,
 					APIRoutePrefix: "/api/web-watcher",
+					VendorServiceConfigs: map[string]VendorServiceConfig{
+						"testing": {
+							MaxConcurrency: 10,
+							FetchInterval:  time.Second,
+							MaxRetry:       10,
+							RetryInterval:  time.Second,
+						},
+					},
 				},
 				DatabaseConfig: DatabaseConfig{
 					Driver:   "postgres",
@@ -61,6 +72,9 @@ func Test_LoadAPIConfig(t *testing.T) {
 				WebsiteConfig: WebsiteConfig{
 					Separator:     "\n",
 					MaxDateLength: 2,
+				},
+				RedisStreamConfig: RedisStreamConfig{
+					Addr: "redis:6379",
 				},
 			},
 			expectError: false,
@@ -85,14 +99,25 @@ func Test_LoadAPIConfig(t *testing.T) {
 				"PSQL_NAME":                    "name",
 				"USER_SERVICE_ADDR":            "user_serv_addr",
 				"USER_SERVICE_TOKEN":           "user_serv_token",
+				"VENDOR_CONFIG_PATH":           "../../data/testing/vendor_configs.yml",
+				"REDIS_CLIENT_ADDR":            "redis:6379",
 			},
 			expectedConf: &APIConfig{
+				VendorConfigPath: "../../data/testing/vendor_configs.yml",
 				BinConfig: APIBinConfig{
 					Addr:           "addr",
 					ReadTimeout:    1 * time.Second,
 					WriteTimeout:   1 * time.Second,
 					IdleTimeout:    1 * time.Second,
 					APIRoutePrefix: "prefix",
+					VendorServiceConfigs: map[string]VendorServiceConfig{
+						"testing": {
+							MaxConcurrency: 10,
+							FetchInterval:  time.Second,
+							MaxRetry:       10,
+							RetryInterval:  time.Second,
+						},
+					},
 				},
 				TraceConfig: TraceConfig{
 					TraceURL:         "trace_url",
@@ -112,6 +137,9 @@ func Test_LoadAPIConfig(t *testing.T) {
 				WebsiteConfig: WebsiteConfig{
 					Separator:     ",",
 					MaxDateLength: 10,
+				},
+				RedisStreamConfig: RedisStreamConfig{
+					Addr: "redis:6379",
 				},
 			},
 			expectError: false,
@@ -136,7 +164,9 @@ func Test_LoadAPIConfig(t *testing.T) {
 
 			conf, err := LoadAPIConfig()
 			assert.Equal(t, test.expectedConf, conf)
-			assert.Equal(t, test.expectError, (err != nil))
+			if !assert.Equal(t, test.expectError, (err != nil)) {
+				assert.Fail(t, "error is %s", err)
+			}
 		})
 	}
 }
@@ -159,6 +189,7 @@ func Test_LoadWorkerConfig(t *testing.T) {
 				"PSQL_PASSWORD":                 "password",
 				"PSQL_NAME":                     "name",
 				"VENDOR_CONFIG_PATH":            "../../data/testing/vendor_configs.yml",
+				"REDIS_CLIENT_ADDR":             "redis:6379",
 			},
 			want: &WorkerConfig{
 				VendorConfigPath: "../../data/testing/vendor_configs.yml",
@@ -187,6 +218,9 @@ func Test_LoadWorkerConfig(t *testing.T) {
 					Separator:     "\n",
 					MaxDateLength: 2,
 				},
+				RedisStreamConfig: RedisStreamConfig{
+					Addr: "redis:6379",
+				},
 			},
 			wantError: nil,
 		},
@@ -207,6 +241,7 @@ func Test_LoadWorkerConfig(t *testing.T) {
 				"PSQL_PASSWORD":                 "password",
 				"PSQL_NAME":                     "name",
 				"VENDOR_CONFIG_PATH":            "../../data/testing/vendor_configs.yml",
+				"REDIS_CLIENT_ADDR":             "redis:6379",
 			},
 			want: &WorkerConfig{
 				VendorConfigPath: "../../data/testing/vendor_configs.yml",
@@ -238,6 +273,9 @@ func Test_LoadWorkerConfig(t *testing.T) {
 				WebsiteConfig: WebsiteConfig{
 					Separator:     ",",
 					MaxDateLength: 10,
+				},
+				RedisStreamConfig: RedisStreamConfig{
+					Addr: "redis:6379",
 				},
 			},
 			wantError: nil,

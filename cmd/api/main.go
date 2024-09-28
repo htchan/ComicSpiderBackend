@@ -7,13 +7,16 @@ import (
 	"os/signal"
 	"time"
 
+	"github.com/redis/rueidis"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 
 	"github.com/htchan/WebHistory/internal/config"
 	"github.com/htchan/WebHistory/internal/repository/sqlc"
 	"github.com/htchan/WebHistory/internal/router/website"
+	websiteupdate "github.com/htchan/WebHistory/internal/tasks/website_update"
 	"github.com/htchan/WebHistory/internal/utils"
+	vendorhelper "github.com/htchan/WebHistory/internal/vendors/helpers"
 
 	"github.com/go-chi/chi/v5"
 )
@@ -52,8 +55,23 @@ func main() {
 	defer db.Close()
 
 	rpo := sqlc.NewRepo(db, &conf.WebsiteConfig)
+
+	services, err := vendorhelper.NewServiceSet(nil, rpo, conf.BinConfig.VendorServiceConfigs)
+	if err != nil {
+		log.Fatal().Err(err).Msg("create vendor services failed")
+	}
+
+	redisClient, err := rueidis.NewClient(rueidis.ClientOption{
+		InitAddress: []string{conf.RedisStreamConfig.Addr},
+	})
+	if err != nil {
+		log.Fatal().Err(err).Msg("failed to create redis client")
+	}
+
+	updateTasks := websiteupdate.NewTaskSet(redisClient, services, rpo, &conf.WebsiteConfig)
+
 	r := chi.NewRouter()
-	website.AddRoutes(r, rpo, conf)
+	website.AddRoutes(r, rpo, conf, updateTasks)
 
 	server := http.Server{
 		Addr:         conf.BinConfig.Addr,

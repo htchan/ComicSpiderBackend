@@ -17,14 +17,16 @@ type APIConfig struct {
 	UserServiceConfig UserServiceConfig
 	WebsiteConfig     WebsiteConfig
 	RedisStreamConfig RedisStreamConfig
+	VendorConfigPath  string `env:"VENDOR_CONFIG_PATH" envDefault:"/config/vendors.yaml"`
 }
 
 type APIBinConfig struct {
-	Addr           string        `env:"ADDR"`
-	ReadTimeout    time.Duration `env:"API_READ_TIMEOUT" envDefault:"5s"`
-	WriteTimeout   time.Duration `env:"API_WRITE_TIMEOUT" envDefault:"5s"`
-	IdleTimeout    time.Duration `env:"API_IDLE_TIMEOUT" envDefault:"5s"`
-	APIRoutePrefix string        `env:"WEB_WATCHER_API_ROUTE_PREFIX" envDefault:"/api/web-watcher"`
+	Addr                 string        `env:"ADDR"`
+	ReadTimeout          time.Duration `env:"API_READ_TIMEOUT" envDefault:"5s"`
+	WriteTimeout         time.Duration `env:"API_WRITE_TIMEOUT" envDefault:"5s"`
+	IdleTimeout          time.Duration `env:"API_IDLE_TIMEOUT" envDefault:"5s"`
+	APIRoutePrefix       string        `env:"WEB_WATCHER_API_ROUTE_PREFIX" envDefault:"/api/web-watcher"`
+	VendorServiceConfigs map[string]VendorServiceConfig
 }
 
 type WorkerConfig struct {
@@ -65,12 +67,12 @@ type UserServiceConfig struct {
 }
 
 type WebsiteConfig struct {
-	Separator     string `env:"WEB_WATCHER_SEPARATOR" envDefault:"\n"`
-	MaxDateLength int    `env:"WEB_WATCHER_DATE_MAX_LENGTH" envDefault:"2"`
+	Separator     string `env:"WEB_WATCHER_SEPARATOR" envDefault:"\n"`      // to be deprecated:  move it to a const in model package
+	MaxDateLength int    `env:"WEB_WATCHER_DATE_MAX_LENGTH" envDefault:"2"` // to be deprecated
 }
 
 type RedisStreamConfig struct {
-	Addr string `env:"REDIS_CLIENT_ADDR"`
+	Addr string `env:"REDIS_CLIENT_ADDR,required"`
 }
 
 func LoadAPIConfig() (*APIConfig, error) {
@@ -84,6 +86,19 @@ func LoadAPIConfig() (*APIConfig, error) {
 		func() error { return env.Parse(&conf.UserServiceConfig) },
 		func() error { return env.Parse(&conf.WebsiteConfig) },
 		func() error { return env.Parse(&conf.RedisStreamConfig) },
+		func() error {
+			contentBytes, err := os.ReadFile(conf.VendorConfigPath)
+			if err != nil {
+				return err
+			}
+
+			yamlErr := yaml.Unmarshal(contentBytes, &conf.BinConfig.VendorServiceConfigs)
+			if yamlErr != nil {
+				return yamlErr
+			}
+
+			return nil
+		},
 	}
 
 	for _, f := range loadConfigFuncs {

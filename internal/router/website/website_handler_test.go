@@ -267,7 +267,8 @@ func Test_createWebsiteHandler(t *testing.T) {
 			ctx = context.WithValue(ctx, ContextKeyWebURL, test.url)
 			req = req.WithContext(ctx)
 			rr := httptest.NewRecorder()
-			createWebsiteHandler(test.mockRepo(ctrl), test.conf).ServeHTTP(rr, req)
+			// TODO: mock the update Tasks to make sure it publish tasks for supported website
+			createWebsiteHandler(test.mockRepo(ctrl), test.conf, nil).ServeHTTP(rr, req)
 
 			assert.Equal(t, test.expectStatus, rr.Code)
 			assert.Equal(t, test.expectRes, strings.Trim(rr.Body.String(), "\n"))
