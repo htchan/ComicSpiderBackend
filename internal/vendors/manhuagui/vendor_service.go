@@ -57,8 +57,11 @@ func (serv *VendorService) Name() string {
 
 func (serv *VendorService) fetchWebsite(ctx context.Context, web *model.Website) (string, error) {
 	serv.lock.Acquire(ctx, 1)
+	zerolog.Ctx(ctx).Debug().Msg("start fetch website")
 	defer func() {
+		zerolog.Ctx(ctx).Debug().Dur("interval", serv.cfg.FetchInterval).Msg("start sleeping")
 		time.Sleep(serv.cfg.FetchInterval)
+		zerolog.Ctx(ctx).Debug().Msg("finish sleeping")
 		serv.lock.Release(1)
 	}()
 
