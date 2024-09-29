@@ -22,7 +22,6 @@ func NewServiceSet(cli *http.Client, rpo repository.Repostory, cfgs map[string]c
 	var err error
 	for key, cfg := range cfgs {
 		cfg := cfg
-		fmt.Println(key, cfg)
 		switch key {
 		case baozimh.Host:
 			services = append(services, baozimh.NewVendorService(cli, rpo, &cfg))
