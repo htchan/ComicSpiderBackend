@@ -252,7 +252,7 @@ func TestVendorService_isUpdated(t *testing.T) {
 			},
 		},
 		{
-			name: "date updated by a related date",
+			name: "date updated by a year level related date",
 			serv: &VendorService{},
 			getCtx: func() context.Context {
 				return context.Background()
@@ -268,6 +268,66 @@ func TestVendorService_isUpdated(t *testing.T) {
 			want: true,
 			wantWeb: &model.Website{
 				UpdateTime: time.Date(time.Now().Year(), 7, 30, 0, 0, 0, 0, time.UTC),
+				Conf:       &config.WebsiteConfig{Separator: "\n"},
+			},
+		},
+		{
+			name: "date updated at today",
+			serv: &VendorService{},
+			getCtx: func() context.Context {
+				return context.Background()
+			},
+			web: &model.Website{
+				Conf: &config.WebsiteConfig{Separator: "\n"},
+			},
+			body: `<html>
+				<div class="detail-list-title">
+					<span class="detail-list-title-3">今天 18:01 </span>
+				</div>
+			</html>`,
+			want: true,
+			wantWeb: &model.Website{
+				UpdateTime: time.Date(time.Now().Year(), time.Now().Month(), time.Now().Day(), 0, 0, 0, 0, time.UTC),
+				Conf:       &config.WebsiteConfig{Separator: "\n"},
+			},
+		},
+		{
+			name: "date updated at yesterday",
+			serv: &VendorService{},
+			getCtx: func() context.Context {
+				return context.Background()
+			},
+			web: &model.Website{
+				Conf: &config.WebsiteConfig{Separator: "\n"},
+			},
+			body: `<html>
+				<div class="detail-list-title">
+					<span class="detail-list-title-3">昨天 18:01 </span>
+				</div>
+			</html>`,
+			want: true,
+			wantWeb: &model.Website{
+				UpdateTime: time.Date(time.Now().Year(), time.Now().Month(), time.Now().Day()-1, 0, 0, 0, 0, time.UTC),
+				Conf:       &config.WebsiteConfig{Separator: "\n"},
+			},
+		},
+		{
+			name: "date updated at the day before yesterday",
+			serv: &VendorService{},
+			getCtx: func() context.Context {
+				return context.Background()
+			},
+			web: &model.Website{
+				Conf: &config.WebsiteConfig{Separator: "\n"},
+			},
+			body: `<html>
+				<div class="detail-list-title">
+					<span class="detail-list-title-3">前天 18:01 </span>
+				</div>
+			</html>`,
+			want: true,
+			wantWeb: &model.Website{
+				UpdateTime: time.Date(time.Now().Year(), time.Now().Month(), time.Now().Day()-2, 0, 0, 0, 0, time.UTC),
 				Conf:       &config.WebsiteConfig{Separator: "\n"},
 			},
 		},

@@ -130,7 +130,15 @@ func (serv *VendorService) isUpdated(ctx context.Context, web *model.Website, bo
 		updateTime    time.Time
 	)
 
-	if strings.Contains(updateTimeStr, "月") {
+	if strings.Contains(updateTimeStr, "天") {
+		if strings.Contains(updateTimeStr, "今天") {
+			updateTime = time.Now().UTC()
+		} else if strings.Contains(updateTimeStr, "昨天") {
+			updateTime = time.Now().UTC().Add(-24 * time.Hour)
+		} else if strings.Contains(updateTimeStr, "前天") {
+			updateTime = time.Now().UTC().Add(-48 * time.Hour)
+		}
+	} else if strings.Contains(updateTimeStr, "月") && strings.Contains(updateTimeStr, "号") {
 		updateTime, err = time.Parse(sameYearDateFormat, fmt.Sprintf("%d-%s", time.Now().Year(), updateTimeStr))
 		if err != nil {
 			zerolog.Ctx(ctx).Error().Err(err).Str("date", updateTimeStr).Msg("Failed to parse update time")
