@@ -30,9 +30,14 @@ spec:
             - secretRef:
                 name: web-history.api.secret
           volumeMounts:
+            - mountPath: /config
+              name: web-history-config-volume
             - mountPath: /migrations
               name: web-history-migrations-volume
       volumes:
+        - name: web-history-config-volume
+          persistentVolumeClaim:
+            claimName: web-history.config-claim
         - name: web-history-migrations-volume
           persistentVolumeClaim:
             claimName: web-history.migrations-claim

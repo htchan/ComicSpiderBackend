@@ -9,8 +9,8 @@ metadata:
 resources:
   - ./base/deployment.yml
   - ./base/service.yml
-  - ./base/ingress_route.yml
   - ./base/redirect-middleware.yml
+  - ./base/ingress_route.yml
 patches:
   - target:
       group: apps

@@ -29,4 +29,7 @@ spec:
       services:
         - name: nginx
           port: 80
+      middlewares:
+        - name: web-history--frontend-redirect
+          namespace: default
 

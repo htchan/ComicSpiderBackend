@@ -7,3 +7,14 @@ spec:
   redirectRegex:
     regex: ^(https?)://(web-history.*?)/docs/swagger/?$
     replacement: $1://$2/docs/swagger/index.html
+---
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+metadata:
+  name: web-history--frontend-redirect
+  namespace: default
+spec:
+  redirectRegex:
+    regex: ^(https?)://(web-history.*?)/.+$
+    replacement: $1://$2
+
