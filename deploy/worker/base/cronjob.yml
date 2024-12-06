@@ -31,3 +31,4 @@ spec:
             - "date"
             - "$(date +%Y-%m-%d)"
           restartPolicy: Never
+
