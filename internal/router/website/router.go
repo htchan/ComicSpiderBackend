@@ -16,9 +16,9 @@ import (
 	httpSwagger "github.com/swaggo/http-swagger/v2"
 )
 
-var UnauthorizedError = errors.New("unauthorized")
-var InvalidParamsError = errors.New("invalid params")
-var RecordNotFoundError = errors.New("record not found")
+var ErrUnauthorized = errors.New("unauthorized")
+var ErrInvalidParams = errors.New("invalid params")
+var ErrRecordNotFound = errors.New("record not found")
 
 func writeError(res http.ResponseWriter, statusCode int, err error) {
 	res.WriteHeader(statusCode)
@@ -33,6 +33,7 @@ func redirectLogin(res http.ResponseWriter, req *http.Request) {
 
 func AddRoutes(router chi.Router, r repository.Repostory, conf *config.APIConfig, updateTasks []*websiteupdate.Task) {
 	router.Use(logRequest())
+	router.Use(TraceMiddleware)
 
 	router.Route(conf.BinConfig.APIRoutePrefix, func(router chi.Router) {
 		router.Route("/websites", func(router chi.Router) {

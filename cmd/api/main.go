@@ -10,16 +10,42 @@ import (
 	"github.com/redis/rueidis"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
+	"go.opentelemetry.io/otel"
+	"go.opentelemetry.io/otel/exporters/jaeger"
+	"go.opentelemetry.io/otel/propagation"
+	"go.opentelemetry.io/otel/sdk/resource"
+	semconv "go.opentelemetry.io/otel/semconv/v1.4.0"
 
+	"github.com/go-chi/chi/v5"
 	"github.com/htchan/WebHistory/internal/config"
 	"github.com/htchan/WebHistory/internal/repository/sqlc"
 	"github.com/htchan/WebHistory/internal/router/website"
 	websiteupdate "github.com/htchan/WebHistory/internal/tasks/website_update"
 	"github.com/htchan/WebHistory/internal/utils"
 	vendorhelper "github.com/htchan/WebHistory/internal/vendors/helpers"
-
-	"github.com/go-chi/chi/v5"
+	tracesdk "go.opentelemetry.io/otel/sdk/trace"
 )
+
+// TODO: move tracer to helper
+func tracerProvider(conf config.TraceConfig) (*tracesdk.TracerProvider, error) {
+	exp, err := jaeger.New(jaeger.WithCollectorEndpoint(jaeger.WithEndpoint(conf.TraceURL)))
+	if err != nil {
+		return nil, err
+	}
+
+	tp := tracesdk.NewTracerProvider(
+		tracesdk.WithBatcher(exp),
+		tracesdk.WithResource(resource.NewWithAttributes(
+			semconv.SchemaURL,
+			semconv.ServiceNameKey.String(conf.TraceServiceName),
+		)),
+	)
+
+	otel.SetTracerProvider(tp)
+	otel.SetTextMapPropagator(propagation.TraceContext{})
+
+	return tp, nil
+}
 
 func main() {
 	outputPath := os.Getenv("OUTPUT_PATH")
@@ -41,6 +67,11 @@ func main() {
 	conf, err := config.LoadAPIConfig()
 	if err != nil {
 		log.Fatal().Err(err).Msg("load config failed")
+	}
+
+	tp, err := tracerProvider(conf.TraceConfig)
+	if err != nil {
+		log.Error().Err(err).Msg("init tracer failed")
 	}
 
 	if err = utils.Migrate(&conf.DatabaseConfig); err != nil {
@@ -98,4 +129,5 @@ func main() {
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
 	server.Shutdown(ctx)
+	tp.Shutdown(ctx)
 }
