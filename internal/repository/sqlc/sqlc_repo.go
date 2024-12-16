@@ -48,16 +48,6 @@ func fromSqlcWebsite(webModel sqlc.Website) model.Website {
 	}
 }
 
-func fromSqlcWebsiteSetting(webModel sqlc.WebsiteSetting) model.WebsiteSetting {
-	return model.WebsiteSetting{
-		Domain:               webModel.Domain.String,
-		TitleGoquerySelector: webModel.TitleGoquerySelector.String,
-		DatesGoquerySelector: webModel.DateGoquerySelector.String,
-		FocusIndexFrom:       int(webModel.FocusIndexFrom.Int32),
-		FocusIndexTo:         int(webModel.FocusIndexTo.Int32),
-	}
-}
-
 func fromSqlcListUserWebsitesRow(userWebModel sqlc.ListUserWebsitesRow) model.UserWebsite {
 	return model.UserWebsite{
 		WebsiteUUID: userWebModel.WebsiteUuid.String,
@@ -306,31 +296,6 @@ func (r *SqlcRepo) FindUserWebsite(userUUID, websiteUUID string) (*model.UserWeb
 	web.Website.Conf = r.conf
 
 	return &web, nil
-}
-
-func (r *SqlcRepo) FindWebsiteSettings() ([]model.WebsiteSetting, error) {
-	settingModels, err := r.db.ListWebsiteSettings(r.ctx)
-	if err != nil {
-		return nil, fmt.Errorf("list user websites fail: %w", err)
-	}
-
-	settings := make([]model.WebsiteSetting, len(settingModels))
-	for i, settingModel := range settingModels {
-		settings[i] = fromSqlcWebsiteSetting(settingModel)
-	}
-
-	return settings, nil
-}
-
-func (r *SqlcRepo) FindWebsiteSetting(domain string) (*model.WebsiteSetting, error) {
-	settingModel, err := r.db.GetWebsiteSetting(r.ctx, toSqlString(domain))
-	if err != nil {
-		return nil, fmt.Errorf("get website settings fail: %w", err)
-	}
-
-	setting := fromSqlcWebsiteSetting(settingModel)
-
-	return &setting, nil
 }
 
 func (r *SqlcRepo) Stats() sql.DBStats {
