@@ -2,8 +2,8 @@
 -- PostgreSQL database dump
 --
 
--- Dumped from database version 14.2 (Debian 14.2-1.pgdg110+1)
--- Dumped by pg_dump version 14.6
+-- Dumped from database version 14.15 (Debian 14.15-1.pgdg120+1)
+-- Dumped by pg_dump version 16.6 (Ubuntu 16.6-0ubuntu0.24.04.1)
 
 SET statement_timeout = 0;
 SET lock_timeout = 0;
@@ -21,7 +21,7 @@ SET default_tablespace = '';
 SET default_table_access_method = heap;
 
 --
--- Name: user_websites; Type: TABLE; Schema: public; Owner: test
+-- Name: user_websites; Type: TABLE; Schema: public; Owner: web_history
 --
 
 CREATE TABLE public.user_websites (
@@ -32,25 +32,10 @@ CREATE TABLE public.user_websites (
 );
 
 
-ALTER TABLE public.user_websites OWNER TO test;
+ALTER TABLE public.user_websites OWNER TO web_history;
 
 --
--- Name: website_settings; Type: TABLE; Schema: public; Owner: test
---
-
-CREATE TABLE public.website_settings (
-    domain character varying(255),
-    focus_index_from integer,
-    focus_index_to integer,
-    title_goquery_selector text,
-    date_goquery_selector text
-);
-
-
-ALTER TABLE public.website_settings OWNER TO test;
-
---
--- Name: websites; Type: TABLE; Schema: public; Owner: test
+-- Name: websites; Type: TABLE; Schema: public; Owner: web_history
 --
 
 CREATE TABLE public.websites (
@@ -62,31 +47,24 @@ CREATE TABLE public.websites (
 );
 
 
-ALTER TABLE public.websites OWNER TO test;
+ALTER TABLE public.websites OWNER TO web_history;
 
 --
--- Name: user_websites__user_and_uuid; Type: INDEX; Schema: public; Owner: test
+-- Name: user_websites__user_and_uuid; Type: INDEX; Schema: public; Owner: web_history
 --
 
 CREATE UNIQUE INDEX user_websites__user_and_uuid ON public.user_websites USING btree (user_uuid, website_uuid);
 
 
 --
--- Name: website_settings__domain; Type: INDEX; Schema: public; Owner: test
---
-
-CREATE UNIQUE INDEX website_settings__domain ON public.website_settings USING btree (domain);
-
-
---
--- Name: websites__url; Type: INDEX; Schema: public; Owner: test
+-- Name: websites__url; Type: INDEX; Schema: public; Owner: web_history
 --
 
 CREATE UNIQUE INDEX websites__url ON public.websites USING btree (url);
 
 
 --
--- Name: websites__uuid; Type: INDEX; Schema: public; Owner: test
+-- Name: websites__uuid; Type: INDEX; Schema: public; Owner: web_history
 --
 
 CREATE UNIQUE INDEX websites__uuid ON public.websites USING btree (uuid);

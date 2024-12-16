@@ -59,12 +59,3 @@ SELECT website_uuid, user_uuid, access_time, group_name ,
 uuid, url, title, update_time 
 FROM user_websites JOIN websites ON user_websites.website_uuid=websites.uuid 
 WHERE user_uuid=$1 and website_uuid=$2;
-
--- name: ListWebsiteSettings :many
-SELECT *
-FROM website_settings;
-
--- name: GetWebsiteSetting :one
-SELECT *
-FROM website_settings 
-WHERE domain=$1;

@@ -23,8 +23,5 @@ type Repostory interface {
 	FindUserWebsitesByGroup(userUUID, group string) (model.WebsiteGroup, error)
 	FindUserWebsite(userUUID, websiteUUID string) (*model.UserWebsite, error)
 
-	FindWebsiteSettings() ([]model.WebsiteSetting, error)
-	FindWebsiteSetting(host string) (*model.WebsiteSetting, error)
-
 	Stats() sql.DBStats
 }
