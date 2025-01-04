@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"log/slog"
 	"net/http"
 	"os"
 	"syscall"
@@ -65,6 +66,8 @@ func main() {
 	}
 
 	zerolog.TimeFieldFormat = "2006-01-02T15:04:05.99999Z07:00"
+
+	slog.SetDefault(slog.New(slog.NewJSONHandler(os.Stdout, nil)))
 
 	conf, err := config.LoadWorkerConfig()
 	if err != nil {
