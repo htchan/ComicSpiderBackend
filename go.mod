@@ -1,8 +1,6 @@
 module github.com/htchan/WebHistory
 
-go 1.21.1
-
-toolchain go1.23.0
+go 1.23.5
 
 require (
 	github.com/PuerkitoBio/goquery v1.8.0
