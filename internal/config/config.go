@@ -48,8 +48,8 @@ type WorkerBinConfig struct {
 }
 
 type TraceConfig struct {
-	TraceURL         string `env:"TRACE_URL"`
-	TraceServiceName string `env:"TRACE_SERVICE_NAME"`
+	OtelURL         string `env:"OTEL_URL"`
+	OtelServiceName string `env:"OTEL_SERVICE_NAME"`
 }
 
 type DatabaseConfig struct {

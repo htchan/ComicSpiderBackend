@@ -89,8 +89,8 @@ func Test_LoadAPIConfig(t *testing.T) {
 				"API_WRITE_TIMEOUT":            "1s",
 				"API_IDLE_TIMEOUT":             "1s",
 				"WEB_WATCHER_API_ROUTE_PREFIX": "prefix",
-				"TRACE_URL":                    "trace_url",
-				"TRACE_SERVICE_NAME":           "trace_service_name",
+				"OTEL_URL":                     "otel_url",
+				"OTEL_SERVICE_NAME":            "otel_service_name",
 				"DRIVER":                       "driver",
 				"PSQL_HOST":                    "host",
 				"PSQL_PORT":                    "port",
@@ -120,8 +120,8 @@ func Test_LoadAPIConfig(t *testing.T) {
 					},
 				},
 				TraceConfig: TraceConfig{
-					TraceURL:         "trace_url",
-					TraceServiceName: "trace_service_name",
+					OtelURL:         "otel_url",
+					OtelServiceName: "otel_service_name",
 				},
 				DatabaseConfig: DatabaseConfig{
 					Driver:   "driver",
@@ -232,8 +232,8 @@ func Test_LoadWorkerConfig(t *testing.T) {
 				"WEBSITE_UPDATE_SLEEP_INTERVAL": "10s",
 				"CLIENT_TIMEOUT":                "1s",
 				"WORKER_EXECUTOR_COUNT":         "10",
-				"TRACE_URL":                     "trace_url",
-				"TRACE_SERVICE_NAME":            "trace_service_name",
+				"OTEL_URL":                      "otel_url",
+				"OTEL_SERVICE_NAME":             "otel_service_name",
 				"DRIVER":                        "driver",
 				"PSQL_HOST":                     "host",
 				"PSQL_PORT":                     "port",
@@ -259,8 +259,8 @@ func Test_LoadWorkerConfig(t *testing.T) {
 					},
 				},
 				TraceConfig: TraceConfig{
-					TraceURL:         "trace_url",
-					TraceServiceName: "trace_service_name",
+					OtelURL:         "otel_url",
+					OtelServiceName: "otel_service_name",
 				},
 				DatabaseConfig: DatabaseConfig{
 					Driver:   "driver",

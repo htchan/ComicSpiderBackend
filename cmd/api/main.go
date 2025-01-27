@@ -11,7 +11,6 @@ import (
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 	"go.opentelemetry.io/otel"
-	"go.opentelemetry.io/otel/exporters/jaeger"
 	"go.opentelemetry.io/otel/propagation"
 	"go.opentelemetry.io/otel/sdk/resource"
 	semconv "go.opentelemetry.io/otel/semconv/v1.4.0"
@@ -23,12 +22,19 @@ import (
 	websiteupdate "github.com/htchan/WebHistory/internal/tasks/website_update"
 	"github.com/htchan/WebHistory/internal/utils"
 	vendorhelper "github.com/htchan/WebHistory/internal/vendors/helpers"
+	"go.opentelemetry.io/otel/exporters/otlp/otlptrace"
+	"go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracehttp"
 	tracesdk "go.opentelemetry.io/otel/sdk/trace"
 )
 
-// TODO: move tracer to helper
-func tracerProvider(conf config.TraceConfig) (*tracesdk.TracerProvider, error) {
-	exp, err := jaeger.New(jaeger.WithCollectorEndpoint(jaeger.WithEndpoint(conf.TraceURL)))
+func otelProvider(conf config.TraceConfig) (*tracesdk.TracerProvider, error) {
+	exp, err := otlptrace.New(
+		context.Background(),
+		otlptracehttp.NewClient(
+			otlptracehttp.WithEndpoint(conf.OtelURL),
+			otlptracehttp.WithInsecure(),
+		),
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -37,7 +43,7 @@ func tracerProvider(conf config.TraceConfig) (*tracesdk.TracerProvider, error) {
 		tracesdk.WithBatcher(exp),
 		tracesdk.WithResource(resource.NewWithAttributes(
 			semconv.SchemaURL,
-			semconv.ServiceNameKey.String(conf.TraceServiceName),
+			semconv.ServiceNameKey.String(conf.OtelServiceName),
 		)),
 	)
 
@@ -69,7 +75,7 @@ func main() {
 		log.Fatal().Err(err).Msg("load config failed")
 	}
 
-	tp, err := tracerProvider(conf.TraceConfig)
+	tp, err := otelProvider(conf.TraceConfig)
 	if err != nil {
 		log.Error().Err(err).Msg("init tracer failed")
 	}
