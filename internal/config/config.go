@@ -16,7 +16,7 @@ type APIConfig struct {
 	TraceConfig       TraceConfig
 	UserServiceConfig UserServiceConfig
 	WebsiteConfig     WebsiteConfig
-	RedisStreamConfig RedisStreamConfig
+	NatsConfig        NatsConfig
 	VendorConfigPath  string `env:"VENDOR_CONFIG_PATH" envDefault:"/config/vendors.yaml"`
 }
 
@@ -30,13 +30,13 @@ type APIBinConfig struct {
 }
 
 type WorkerConfig struct {
-	BinConfig         WorkerBinConfig
-	WorkerConfig      worker.Config
-	DatabaseConfig    DatabaseConfig
-	TraceConfig       TraceConfig
-	WebsiteConfig     WebsiteConfig
-	RedisStreamConfig RedisStreamConfig
-	VendorConfigPath  string `env:"VENDOR_CONFIG_PATH" envDefault:"/config/vendors.yaml"`
+	BinConfig        WorkerBinConfig
+	WorkerConfig     worker.Config
+	DatabaseConfig   DatabaseConfig
+	TraceConfig      TraceConfig
+	WebsiteConfig    WebsiteConfig
+	NatsConfig       NatsConfig
+	VendorConfigPath string `env:"VENDOR_CONFIG_PATH" envDefault:"/config/vendors.yaml"`
 }
 
 type WorkerBinConfig struct {
@@ -71,8 +71,10 @@ type WebsiteConfig struct {
 	MaxDateLength int    `env:"WEB_WATCHER_DATE_MAX_LENGTH" envDefault:"2"` // to be deprecated
 }
 
-type RedisStreamConfig struct {
-	Addr string `env:"REDIS_CLIENT_ADDR,required"`
+type NatsConfig struct {
+	URL      string `env:"NATS_URL,required"`
+	User     string `env:"NATS_USER,required"`
+	Password string `env:"NATS_PASSWORD,required"`
 }
 
 func LoadAPIConfig() (*APIConfig, error) {
@@ -85,7 +87,7 @@ func LoadAPIConfig() (*APIConfig, error) {
 		func() error { return env.Parse(&conf.TraceConfig) },
 		func() error { return env.Parse(&conf.UserServiceConfig) },
 		func() error { return env.Parse(&conf.WebsiteConfig) },
-		func() error { return env.Parse(&conf.RedisStreamConfig) },
+		func() error { return env.Parse(&conf.NatsConfig) },
 		func() error {
 			contentBytes, err := os.ReadFile(conf.VendorConfigPath)
 			if err != nil {
@@ -119,7 +121,7 @@ func LoadWorkerConfig() (*WorkerConfig, error) {
 		func() error { return env.Parse(&conf.DatabaseConfig) },
 		func() error { return env.Parse(&conf.TraceConfig) },
 		func() error { return env.Parse(&conf.WebsiteConfig) },
-		func() error { return env.Parse(&conf.RedisStreamConfig) },
+		func() error { return env.Parse(&conf.NatsConfig) },
 		func() error {
 			contentBytes, err := os.ReadFile(conf.VendorConfigPath)
 			if err != nil {

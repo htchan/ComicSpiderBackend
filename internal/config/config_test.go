@@ -40,7 +40,9 @@ func Test_LoadAPIConfig(t *testing.T) {
 				"USER_SERVICE_ADDR":  "user_serv_addr",
 				"USER_SERVICE_TOKEN": "user_serv_token",
 				"VENDOR_CONFIG_PATH": "../../data/testing/vendor_configs.yml",
-				"REDIS_CLIENT_ADDR":  "redis:6379",
+				"NATS_URL":           "nats://localhost:4222",
+				"NATS_USER":          "user",
+				"NATS_PASSWORD":      "password",
 			},
 			expectedConf: &APIConfig{
 				VendorConfigPath: "../../data/testing/vendor_configs.yml",
@@ -73,8 +75,10 @@ func Test_LoadAPIConfig(t *testing.T) {
 					Separator:     "\n",
 					MaxDateLength: 2,
 				},
-				RedisStreamConfig: RedisStreamConfig{
-					Addr: "redis:6379",
+				NatsConfig: NatsConfig{
+					URL:      "nats://localhost:4222",
+					User:     "user",
+					Password: "password",
 				},
 			},
 			expectError: false,
@@ -100,7 +104,9 @@ func Test_LoadAPIConfig(t *testing.T) {
 				"USER_SERVICE_ADDR":            "user_serv_addr",
 				"USER_SERVICE_TOKEN":           "user_serv_token",
 				"VENDOR_CONFIG_PATH":           "../../data/testing/vendor_configs.yml",
-				"REDIS_CLIENT_ADDR":            "redis:6379",
+				"NATS_URL":                     "nats://localhost:4222",
+				"NATS_USER":                    "user",
+				"NATS_PASSWORD":                "password",
 			},
 			expectedConf: &APIConfig{
 				VendorConfigPath: "../../data/testing/vendor_configs.yml",
@@ -138,8 +144,10 @@ func Test_LoadAPIConfig(t *testing.T) {
 					Separator:     ",",
 					MaxDateLength: 10,
 				},
-				RedisStreamConfig: RedisStreamConfig{
-					Addr: "redis:6379",
+				NatsConfig: NatsConfig{
+					URL:      "nats://localhost:4222",
+					User:     "user",
+					Password: "password",
 				},
 			},
 			expectError: false,
@@ -189,7 +197,9 @@ func Test_LoadWorkerConfig(t *testing.T) {
 				"PSQL_PASSWORD":                 "password",
 				"PSQL_NAME":                     "name",
 				"VENDOR_CONFIG_PATH":            "../../data/testing/vendor_configs.yml",
-				"REDIS_CLIENT_ADDR":             "redis:6379",
+				"NATS_URL":                      "nats://localhost:4222",
+				"NATS_USER":                     "user",
+				"NATS_PASSWORD":                 "password",
 			},
 			want: &WorkerConfig{
 				VendorConfigPath: "../../data/testing/vendor_configs.yml",
@@ -218,8 +228,10 @@ func Test_LoadWorkerConfig(t *testing.T) {
 					Separator:     "\n",
 					MaxDateLength: 2,
 				},
-				RedisStreamConfig: RedisStreamConfig{
-					Addr: "redis:6379",
+				NatsConfig: NatsConfig{
+					URL:      "nats://localhost:4222",
+					User:     "user",
+					Password: "password",
 				},
 			},
 			wantError: nil,
@@ -241,7 +253,9 @@ func Test_LoadWorkerConfig(t *testing.T) {
 				"PSQL_PASSWORD":                 "password",
 				"PSQL_NAME":                     "name",
 				"VENDOR_CONFIG_PATH":            "../../data/testing/vendor_configs.yml",
-				"REDIS_CLIENT_ADDR":             "redis:6379",
+				"NATS_URL":                      "nats://localhost:4222",
+				"NATS_USER":                     "user",
+				"NATS_PASSWORD":                 "password",
 			},
 			want: &WorkerConfig{
 				VendorConfigPath: "../../data/testing/vendor_configs.yml",
@@ -274,8 +288,10 @@ func Test_LoadWorkerConfig(t *testing.T) {
 					Separator:     ",",
 					MaxDateLength: 10,
 				},
-				RedisStreamConfig: RedisStreamConfig{
-					Addr: "redis:6379",
+				NatsConfig: NatsConfig{
+					URL:      "nats://localhost:4222",
+					User:     "user",
+					Password: "password",
 				},
 			},
 			wantError: nil,
