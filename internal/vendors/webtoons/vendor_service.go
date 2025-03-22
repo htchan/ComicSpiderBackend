@@ -56,11 +56,12 @@ func (serv *VendorService) Name() string {
 }
 
 func (serv *VendorService) fetchWebsite(ctx context.Context, web *model.Website) (string, error) {
-	serv.lock.Acquire(ctx, 1)
-	defer func() {
-		time.Sleep(serv.cfg.FetchInterval)
-		serv.lock.Release(1)
-	}()
+	if serv.lock.Acquire(ctx, 1) == nil {
+		defer func() {
+			time.Sleep(serv.cfg.FetchInterval)
+			serv.lock.Release(1)
+		}()
+	}
 
 	url := regexp.MustCompile(fmt.Sprintf("^(http.*?)://.*?%s(.*)$", Host)).
 		ReplaceAllString(web.URL, fmt.Sprintf("$1://www.%s$2", Host))

@@ -157,7 +157,7 @@ func TestVendorService_fetchWebsite(t *testing.T) {
 				URL: serv.URL + "/success",
 			},
 			wantError:       context.Canceled,
-			expectTimeTaken: unitDuration,
+			expectTimeTaken: 0,
 		},
 	}
 
