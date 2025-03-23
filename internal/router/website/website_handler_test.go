@@ -70,7 +70,7 @@ func Test_getAllWebsiteGroupsHandler(t *testing.T) {
 			}, nil, nil),
 			userUUID:     "abc",
 			expectStatus: 200,
-			expectRes:    `{"website_groups":[[{"uuid":"1","user_uuid":"abc","url":"","title":"title 1","group_name":"group 1","update_time":"2000-01-01T01:00:00 UTC","access_time":"2000-01-01T00:00:00 UTC"},{"uuid":"2","user_uuid":"abc","url":"","title":"title 2","group_name":"group 1","update_time":"2000-01-02T01:00:00 UTC","access_time":"2000-01-02T00:00:00 UTC"}],[{"uuid":"3","user_uuid":"abc","url":"","title":"title 3","group_name":"group 3","update_time":"2000-01-03T01:00:00 UTC","access_time":"2000-01-03T00:00:00 UTC"}]]}`,
+			expectRes:    `{"website_groups":[[{"uuid":"1","user_uuid":"abc","url":"","title":"title 1","group_name":"group 1","update_time":"2000-01-01T01:00:00Z","access_time":"2000-01-01T00:00:00Z"},{"uuid":"2","user_uuid":"abc","url":"","title":"title 2","group_name":"group 1","update_time":"2000-01-02T01:00:00Z","access_time":"2000-01-02T00:00:00Z"}],[{"uuid":"3","user_uuid":"abc","url":"","title":"title 3","group_name":"group 3","update_time":"2000-01-03T01:00:00Z","access_time":"2000-01-03T00:00:00Z"}]]}`,
 		},
 		{
 			name:         "return error if findUserWebsites return error",
@@ -139,7 +139,7 @@ func Test_getWebsiteGroupHandler(t *testing.T) {
 			userUUID:     "abc",
 			group:        "group 1",
 			expectStatus: 200,
-			expectRes:    `{"website_group":[{"uuid":"1","user_uuid":"abc","url":"","title":"title 1","group_name":"group 1","update_time":"2000-01-01T01:00:00 UTC","access_time":"2000-01-01T00:00:00 UTC"},{"uuid":"2","user_uuid":"abc","url":"","title":"title 2","group_name":"group 1","update_time":"2000-01-02T01:00:00 UTC","access_time":"2000-01-02T00:00:00 UTC"}]}`,
+			expectRes:    `{"website_group":[{"uuid":"1","user_uuid":"abc","url":"","title":"title 1","group_name":"group 1","update_time":"2000-01-01T01:00:00Z","access_time":"2000-01-01T00:00:00Z"},{"uuid":"2","user_uuid":"abc","url":"","title":"title 2","group_name":"group 1","update_time":"2000-01-02T01:00:00Z","access_time":"2000-01-02T00:00:00Z"}]}`,
 		},
 		{
 			name:         "return error if user not exist",
@@ -299,7 +299,7 @@ func Test_getWebsiteHandler(t *testing.T) {
 				},
 			},
 			expectStatus: 200,
-			expectRes:    `{"website":{"uuid":"web_uuid","user_uuid":"user_uuid","url":"http://example.com/","title":"title","group_name":"name","update_time":"2000-01-01T00:00:00 UTC","access_time":"2000-01-01T00:00:00 UTC"}}`,
+			expectRes:    `{"website":{"uuid":"web_uuid","user_uuid":"user_uuid","url":"http://example.com/","title":"title","group_name":"name","update_time":"2000-01-01T00:00:00Z","access_time":"2000-01-01T00:00:00Z"}}`,
 		},
 	}
 
@@ -366,7 +366,7 @@ func Test_refreshWebsiteHandler(t *testing.T) {
 				},
 			},
 			expectStatus: 200,
-			expectResp:   fmt.Sprintf(`{"website":{"uuid":"web_uuid","user_uuid":"user_uuid","url":"http://example.com/","title":"title","group_name":"name","update_time":"2000-01-01T00:00:00 UTC","access_time":"%s"}}`, time.Now().UTC().Truncate(time.Second).Format("2006-01-02T15:04:05 MST")),
+			expectResp:   fmt.Sprintf(`{"website":{"uuid":"web_uuid","user_uuid":"user_uuid","url":"http://example.com/","title":"title","group_name":"name","update_time":"2000-01-01T00:00:00Z","access_time":"%s"}}`, time.Now().UTC().Truncate(time.Second).Format("2006-01-02T15:04:05Z07:00")),
 		},
 	}
 
@@ -525,7 +525,7 @@ func Test_changeWebsiteGroupHandler(t *testing.T) {
 				nil, nil,
 			),
 			expectStatus: 200,
-			expectResp:   `{"website":{"uuid":"web_uuid","user_uuid":"user_uuid","url":"http://example.com/","title":"title","group_name":"group_name","update_time":"2000-01-01T00:00:00 UTC","access_time":"2000-01-01T00:00:00 UTC"}}`,
+			expectResp:   `{"website":{"uuid":"web_uuid","user_uuid":"user_uuid","url":"http://example.com/","title":"title","group_name":"group_name","update_time":"2000-01-01T00:00:00Z","access_time":"2000-01-01T00:00:00Z"}}`,
 		},
 	}
 

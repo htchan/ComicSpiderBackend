@@ -57,8 +57,8 @@ func (web UserWebsite) MarshalJSON() ([]byte, error) {
 		URL:        web.Website.URL,
 		Title:      web.Website.Title,
 		GroupName:  web.GroupName,
-		UpdateTime: web.Website.UpdateTime.Format("2006-01-02T15:04:05 MST"),
-		AccessTime: web.AccessTime.Format("2006-01-02T15:04:05 MST"),
+		UpdateTime: web.Website.UpdateTime.Format("2006-01-02T15:04:05Z07:00"),
+		AccessTime: web.AccessTime.Format("2006-01-02T15:04:05Z07:00"),
 	})
 }
 
