@@ -19,7 +19,7 @@ import (
 	"github.com/htchan/WebHistory/internal/config"
 	"github.com/htchan/WebHistory/internal/repository/sqlc"
 	"github.com/htchan/WebHistory/internal/router/website"
-	websiteupdate "github.com/htchan/WebHistory/internal/tasks/website_update"
+	websiteupdate "github.com/htchan/WebHistory/internal/tasks/redis/website_update"
 	"github.com/htchan/WebHistory/internal/utils"
 	vendorhelper "github.com/htchan/WebHistory/internal/vendors/helpers"
 	"go.opentelemetry.io/otel/exporters/otlp/otlptrace"

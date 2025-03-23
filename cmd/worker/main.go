@@ -13,8 +13,8 @@ import (
 
 	// "github.com/htchan/WebHistory/internal/jobs/websiteupdate"
 	"github.com/htchan/WebHistory/internal/repository/sqlc"
-	websitebatchupdate "github.com/htchan/WebHistory/internal/tasks/website_batch_update"
-	websiteupdate "github.com/htchan/WebHistory/internal/tasks/website_update"
+	websitebatchupdate "github.com/htchan/WebHistory/internal/tasks/redis/website_batch_update"
+	websiteupdate "github.com/htchan/WebHistory/internal/tasks/redis/website_update"
 	"github.com/htchan/WebHistory/internal/utils"
 	vendorhelper "github.com/htchan/WebHistory/internal/vendors/helpers"
 	shutdown "github.com/htchan/goshutdown"

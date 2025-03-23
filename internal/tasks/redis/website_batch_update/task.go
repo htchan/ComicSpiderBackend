@@ -6,7 +6,7 @@ import (
 	"time"
 
 	"github.com/htchan/WebHistory/internal/repository"
-	websiteupdate "github.com/htchan/WebHistory/internal/tasks/website_update"
+	websiteupdate "github.com/htchan/WebHistory/internal/tasks/redis/website_update"
 	"github.com/htchan/goworkers"
 	"github.com/htchan/goworkers/stream"
 	"github.com/htchan/goworkers/stream/redis"
