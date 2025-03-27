@@ -308,7 +308,7 @@ func Test_createWebsiteHandler(t *testing.T) {
 					assert.Equal(t, `{"website":{"uuid":"30303030-3030-4030-b030-303030303030","url":"https://example.com/","title":"","update_time":"2020-01-01T00:00:00Z"},"trace_id":"00000000000000000000000000000000","span_id":"0000000000000000","trace_flags":0}`, string(msg.Data))
 				})
 				assert.NoError(t, err)
-				time.Sleep(time.Millisecond)
+				time.Sleep(100 * time.Millisecond)
 				sub.Unsubscribe()
 
 				assert.NotNil(t, gotMsg)

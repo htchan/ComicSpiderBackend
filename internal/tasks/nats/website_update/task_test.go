@@ -164,7 +164,6 @@ func TestWebsiteUpdateTask_Publish(t *testing.T) {
 func TestWebsiteUpdateTask_Subscribe(t *testing.T) {
 	nc, err := nats.Connect(connString)
 	assert.NoError(t, err)
-
 	t.Cleanup(func() {
 		nc.Close()
 	})
@@ -211,7 +210,7 @@ func TestWebsiteUpdateTask_Subscribe(t *testing.T) {
 			assert.ErrorIs(t, err, test.expectErr)
 
 			test.publish(t, nc)
-			time.Sleep(time.Millisecond)
+			time.Sleep(100 * time.Millisecond)
 			if err == nil {
 				defer ctx.Stop()
 			}
