@@ -27,6 +27,6 @@ ENV SERVICE=$SERVICE
 
 WORKDIR /usr/src/app
 
-COPY --from=builder /go/src/github.com/htchan/WebHistory/$SERVICE .
+COPY --from=builder --chmod=755 /go/src/github.com/htchan/WebHistory/${SERVICE} ./app
 
-ENTRYPOINT ["/usr/src/app/$SERVICE"]
+ENTRYPOINT ["/usr/src/app/app"]
