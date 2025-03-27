@@ -68,7 +68,6 @@ func (params *WebsiteUpdateParams) ToData(ctx context.Context) ([]byte, error) {
 	params.TraceID = spanCtx.TraceID().String()
 	params.SpanID = spanCtx.SpanID().String()
 	params.TraceFlags = byte(spanCtx.TraceFlags())
-	// fmt.Println(params.TraceID, params.SpanID, params.TraceFlags)
 
 	return json.Marshal(params)
 }

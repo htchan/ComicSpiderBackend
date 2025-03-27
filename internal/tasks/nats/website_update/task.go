@@ -57,7 +57,6 @@ func (task *WebsiteUpdateTask) Publish(
 		return err
 	}
 
-	fmt.Println(task.nc == nil)
 	err = task.nc.Publish(task.subject(), data)
 	if err != nil {
 		return err
