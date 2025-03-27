@@ -4,6 +4,7 @@ import (
 	"context"
 	"crypto/sha256"
 	"encoding/hex"
+	"strings"
 	"time"
 
 	"github.com/htchan/WebHistory/internal/model"
@@ -47,7 +48,7 @@ func (task *WebsiteBatchUpdateTask) Subscribe(ctx context.Context) (jetstream.Co
 	}
 
 	stream, err := js.CreateOrUpdateStream(ctx, jetstream.StreamConfig{
-		Name:     task.subject(),
+		Name:     strings.ReplaceAll(task.subject(), ".", "-"),
 		Subjects: []string{task.subject()},
 		MaxAge:   time.Hour * 24 * 7,
 	})
@@ -56,8 +57,8 @@ func (task *WebsiteBatchUpdateTask) Subscribe(ctx context.Context) (jetstream.Co
 	}
 
 	consumer, err := stream.CreateOrUpdateConsumer(ctx, jetstream.ConsumerConfig{
-		Name:      task.subject(),
-		Durable:   task.subject(),
+		Name:      strings.ReplaceAll(task.subject(), ".", "-"),
+		Durable:   strings.ReplaceAll(task.subject(), ".", "-"),
 		AckPolicy: jetstream.AckExplicitPolicy,
 		AckWait:   time.Minute * 10,
 	})
