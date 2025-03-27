@@ -9,16 +9,16 @@ import (
 	"time"
 
 	"github.com/htchan/WebHistory/internal/config"
-	"github.com/htchan/goworkers"
+	"github.com/nats-io/nats.go/jetstream"
 
 	// "github.com/htchan/WebHistory/internal/jobs/websiteupdate"
 	"github.com/htchan/WebHistory/internal/repository/sqlc"
-	websitebatchupdate "github.com/htchan/WebHistory/internal/tasks/website_batch_update"
-	websiteupdate "github.com/htchan/WebHistory/internal/tasks/website_update"
+	websitebatchupdate "github.com/htchan/WebHistory/internal/tasks/nats/website_batch_update"
+	websiteupdate "github.com/htchan/WebHistory/internal/tasks/nats/website_update"
 	"github.com/htchan/WebHistory/internal/utils"
 	vendorhelper "github.com/htchan/WebHistory/internal/vendors/helpers"
+
 	shutdown "github.com/htchan/goshutdown"
-	"github.com/redis/rueidis"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 	"go.opentelemetry.io/otel"
@@ -107,43 +107,85 @@ func main() {
 		log.Fatal().Err(err).Msg("create vendor services failed")
 	}
 
+	nc, err := utils.ConnectNatsQueue(&conf.NatsConfig)
+	if err != nil {
+		log.Fatal().Err(err).Msg("failed to connect to nats server")
+	}
+
 	ctx := context.Background()
 
-	pool := goworkers.NewWorkerPool(goworkers.Config{MaxThreads: 10})
-	redisClient, err := rueidis.NewClient(rueidis.ClientOption{
-		InitAddress: []string{conf.RedisStreamConfig.Addr},
-	})
-	if err != nil {
-		log.Fatal().Err(err).Msg("failed to create redis client")
-	}
-
-	updateTasks := websiteupdate.NewTaskSet(redisClient, services, rpo, &conf.WebsiteConfig)
-	for _, task := range updateTasks {
-		registerErr := pool.Register(ctx, task)
-		if registerErr != nil {
-			log.Fatal().Err(err).Msg("failed to register task")
-		}
-	}
-
-	err = pool.Register(ctx, websitebatchupdate.NewTask(redisClient, updateTasks, rpo))
-	if err != nil {
-		log.Fatal().Err(err).Msg("failed to register task")
-	}
-
-	go func() {
-		err := pool.Start(ctx)
+	updateTasks := make([]jetstream.ConsumeContext, 0, len(services))
+	websiteUpdateTasks := websiteupdate.NewTaskSet(nc, services, rpo, &conf.WebsiteConfig)
+	for _, task := range websiteUpdateTasks {
+		consumer, err := task.Subscribe(ctx)
 		if err != nil {
-			log.Fatal().Err(err).Msg("failed to start worker pool")
+			log.Fatal().Err(err).
+				Str("task", "website-update").
+				Msg("failed to subscribe to nats server")
 		}
-	}()
 
-	// todo: run shutdown function for each task if necessary
-	shutdownHandler.Register("redis stream", func() error {
-		redisClient.Close()
+		updateTasks = append(updateTasks, consumer)
+	}
+	batchUpdateTask := websitebatchupdate.NewTask(nc, websiteUpdateTasks, rpo)
+	batchConsumer, err := batchUpdateTask.Subscribe(ctx)
+	if err != nil {
+		log.Fatal().Err(err).
+			Str("task", "website-batch-update").
+			Msg("failed to subscribe to nats server")
+	}
+
+	// pool := goworkers.NewWorkerPool(goworkers.Config{MaxThreads: 10})
+	// redisClient, err := rueidis.NewClient(rueidis.ClientOption{
+	// 	InitAddress: []string{conf.RedisStreamConfig.Addr},
+	// })
+	// if err != nil {
+	// 	log.Fatal().Err(err).Msg("failed to create redis client")
+	// }
+
+	// updateTasks := websiteupdate.NewTaskSet(redisClient, services, rpo, &conf.WebsiteConfig)
+	// for _, task := range updateTasks {
+	// 	registerErr := pool.Register(ctx, task)
+	// 	if registerErr != nil {
+	// 		log.Fatal().Err(err).Msg("failed to register task")
+	// 	}
+	// }
+
+	// err = pool.Register(ctx, websitebatchupdate.NewTask(redisClient, updateTasks, rpo))
+	// if err != nil {
+	// 	log.Fatal().Err(err).Msg("failed to register task")
+	// }
+
+	// go func() {
+	// 	err := pool.Start(ctx)
+	// 	if err != nil {
+	// 		log.Fatal().Err(err).Msg("failed to start worker pool")
+	// 	}
+	// }()
+
+	// // todo: run shutdown function for each task if necessary
+	// shutdownHandler.Register("redis stream", func() error {
+	// 	redisClient.Close()
+
+	// 	return nil
+	// })
+	// shutdownHandler.Register("worker pool", pool.Stop)
+	shutdownHandler.Register("nats consumer", func() error {
+		batchConsumer.Stop()
 
 		return nil
 	})
-	shutdownHandler.Register("worker pool", pool.Stop)
+	for _, updateTask := range updateTasks {
+		shutdownHandler.Register("update task", func() error {
+			updateTask.Stop()
+
+			return nil
+		})
+	}
+	shutdownHandler.Register("nats connect", func() error {
+		nc.Close()
+
+		return nil
+	})
 	shutdownHandler.Register("database", db.Close)
 	shutdownHandler.Register("tracer", func() error {
 		return tp.Shutdown(context.Background())

@@ -49,7 +49,7 @@ func (web Website) MarshalJSON() ([]byte, error) {
 		UUID:       web.UUID,
 		URL:        web.URL,
 		Title:      web.Title,
-		UpdateTime: web.UpdateTime.Format("2006-01-02T15:04:05 MST"),
+		UpdateTime: web.UpdateTime.Format("2006-01-02T15:04:05Z07:00"),
 	})
 }
 

@@ -101,6 +101,7 @@ func (t *Task) Execute(ctx context.Context, params interface{}) error {
 
 	ctx, span := tr.Start(parsedParams.UpdateCtxOtel(ctx), "Website Update")
 	defer span.End()
+	span.SpanContext()
 
 	defer func() {
 		ackCtx, ackSpan := tr.Start(ctx, "Acknowledge Message")

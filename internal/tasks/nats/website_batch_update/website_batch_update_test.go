@@ -1,4 +1,4 @@
-package website
+package websitebatchupdate
 
 import (
 	"flag"
@@ -44,7 +44,7 @@ func setupContainer() (string, func(), error) {
 		return "", func() {}, err
 	}
 
-	containerName := "webhistory_test_router"
+	containerName := "webhistory_test_website_batch_update"
 	pool.RemoveContainerByName(containerName)
 
 	resource, err := pool.RunWithOptions(
@@ -68,7 +68,7 @@ func setupContainer() (string, func(), error) {
 	purge := func() {
 		err := pool.Purge(resource)
 		if err != nil {
-			log.Println("purge error", err)
+			fmt.Println("purge error", err)
 		}
 	}
 
