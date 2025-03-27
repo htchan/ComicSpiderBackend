@@ -7,24 +7,23 @@ import (
 	"os/signal"
 	"time"
 
-	"github.com/redis/rueidis"
+	"github.com/go-chi/chi/v5"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 	"go.opentelemetry.io/otel"
+	"go.opentelemetry.io/otel/exporters/otlp/otlptrace"
+	"go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracehttp"
 	"go.opentelemetry.io/otel/propagation"
 	"go.opentelemetry.io/otel/sdk/resource"
+	tracesdk "go.opentelemetry.io/otel/sdk/trace"
 	semconv "go.opentelemetry.io/otel/semconv/v1.4.0"
 
-	"github.com/go-chi/chi/v5"
 	"github.com/htchan/WebHistory/internal/config"
 	"github.com/htchan/WebHistory/internal/repository/sqlc"
 	"github.com/htchan/WebHistory/internal/router/website"
-	websiteupdate "github.com/htchan/WebHistory/internal/tasks/redis/website_update"
+	websiteupdate "github.com/htchan/WebHistory/internal/tasks/nats/website_update"
 	"github.com/htchan/WebHistory/internal/utils"
 	vendorhelper "github.com/htchan/WebHistory/internal/vendors/helpers"
-	"go.opentelemetry.io/otel/exporters/otlp/otlptrace"
-	"go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracehttp"
-	tracesdk "go.opentelemetry.io/otel/sdk/trace"
 )
 
 func otelProvider(conf config.TraceConfig) (*tracesdk.TracerProvider, error) {
@@ -93,22 +92,29 @@ func main() {
 
 	rpo := sqlc.NewRepo(db, &conf.WebsiteConfig)
 
+	nc, err := utils.ConnectNatsQueue(&conf.NatsConfig)
+	if err != nil {
+		log.Fatal().Err(err).Msg("failed to connect to nats queue")
+	}
+
 	services, err := vendorhelper.NewServiceSet(nil, rpo, conf.BinConfig.VendorServiceConfigs)
 	if err != nil {
 		log.Fatal().Err(err).Msg("create vendor services failed")
 	}
 
-	redisClient, err := rueidis.NewClient(rueidis.ClientOption{
-		InitAddress: []string{conf.RedisStreamConfig.Addr},
-	})
-	if err != nil {
-		log.Fatal().Err(err).Msg("failed to create redis client")
-	}
+	// redisClient, err := rueidis.NewClient(rueidis.ClientOption{
+	// 	InitAddress: []string{conf.RedisStreamConfig.Addr},
+	// })
+	// if err != nil {
+	// 	log.Fatal().Err(err).Msg("failed to create redis client")
+	// }
 
-	updateTasks := websiteupdate.NewTaskSet(redisClient, services, rpo, &conf.WebsiteConfig)
+	// updateTasks := websiteupdate.NewTaskSet(redisClient, services, rpo, &conf.WebsiteConfig)
+
+	websiteUpdateTasks := websiteupdate.NewTaskSet(nc, services, rpo, &conf.WebsiteConfig)
 
 	r := chi.NewRouter()
-	website.AddRoutes(r, rpo, conf, updateTasks)
+	website.AddRoutes(r, rpo, websiteUpdateTasks, conf)
 
 	server := http.Server{
 		Addr:         conf.BinConfig.Addr,
