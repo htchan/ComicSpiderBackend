@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"strings"
+	"sync"
 	"testing"
 	"time"
 
@@ -18,8 +19,11 @@ import (
 	"github.com/google/uuid"
 	"github.com/htchan/WebHistory/internal/config"
 	mockrepo "github.com/htchan/WebHistory/internal/mock/repository"
+	mockvendor "github.com/htchan/WebHistory/internal/mock/vendor"
 	"github.com/htchan/WebHistory/internal/model"
 	"github.com/htchan/WebHistory/internal/repository"
+	websiteupdate "github.com/htchan/WebHistory/internal/tasks/nats/website_update"
+	"github.com/nats-io/nats.go"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -182,21 +186,29 @@ func Test_getWebsiteGroupHandler(t *testing.T) {
 }
 
 func Test_createWebsiteHandler(t *testing.T) {
+	nc, err := nats.Connect(connString)
+	assert.NoError(t, err)
+	t.Cleanup(func() {
+		nc.Close()
+	})
+
 	uuid.SetClockSequence(1)
 	uuid.SetRand(io.NopCloser(bytes.NewReader([]byte(
 		"000000000000000000000000000000000000000000000000000000000000000000000000000000",
 	))))
 	tests := []struct {
-		name         string
-		conf         *config.WebsiteConfig
-		mockRepo     func(*gomock.Controller) repository.Repostory
-		userUUID     string
-		url          string
-		expectStatus int
-		expectRes    string
+		name            string
+		conf            *config.WebsiteConfig
+		mockRepo        func(*gomock.Controller) repository.Repostory
+		mockTasks       func(*gomock.Controller) websiteupdate.WebsiteUpdateTasks
+		userUUID        string
+		url             string
+		expectStatus    int
+		expectRes       string
+		expectSubscribe func(*testing.T, *nats.Conn)
 	}{
 		{
-			name: "get user websites of existing user and group",
+			name: "happy flow/within 24 hrs",
 			mockRepo: func(ctrl *gomock.Controller) repository.Repostory {
 				rpo := mockrepo.NewMockRepostory(ctrl)
 				rpo.EXPECT().CreateWebsite(
@@ -224,14 +236,150 @@ func Test_createWebsiteHandler(t *testing.T) {
 
 				return rpo
 			},
+			mockTasks: func(ctrl *gomock.Controller) websiteupdate.WebsiteUpdateTasks {
+				serv := mockvendor.NewMockVendorService(ctrl)
+
+				return websiteupdate.WebsiteUpdateTasks{
+					websiteupdate.NewTask(nc, serv, nil, nil),
+				}
+			},
+			conf:            &config.WebsiteConfig{},
+			userUUID:        "abc",
+			url:             "https://example.com/",
+			expectStatus:    200,
+			expectRes:       `{"message":"website \u003c\u003e inserted"}`,
+			expectSubscribe: func(t *testing.T, c *nats.Conn) {},
+		},
+		{
+			name: "happy flow/more than 24 hrs",
+			mockRepo: func(ctrl *gomock.Controller) repository.Repostory {
+				rpo := mockrepo.NewMockRepostory(ctrl)
+				rpo.EXPECT().CreateWebsite(
+					&model.Website{
+						UUID:       "30303030-3030-4030-b030-303030303030",
+						URL:        "https://example.com/",
+						UpdateTime: time.Now().UTC().Truncate(time.Second),
+						Conf:       &config.WebsiteConfig{},
+					},
+				).
+					Do(func(web *model.Website) {
+						web.UpdateTime = time.Date(2020, 1, 1, 0, 0, 0, 0, time.UTC).Truncate(time.Second)
+					}).Return(nil)
+
+				rpo.EXPECT().CreateUserWebsite(
+					&model.UserWebsite{
+						WebsiteUUID: "30303030-3030-4030-b030-303030303030",
+						UserUUID:    "abc",
+						AccessTime:  time.Now().UTC().Truncate(time.Second),
+						Website: model.Website{
+							UUID:       "30303030-3030-4030-b030-303030303030",
+							URL:        "https://example.com/",
+							UpdateTime: time.Date(2020, 1, 1, 0, 0, 0, 0, time.UTC).Truncate(time.Second),
+							Conf:       &config.WebsiteConfig{},
+						},
+					},
+				).Return(nil)
+
+				return rpo
+			},
+			mockTasks: func(ctrl *gomock.Controller) websiteupdate.WebsiteUpdateTasks {
+				serv := mockvendor.NewMockVendorService(ctrl)
+				serv.EXPECT().Support(&model.Website{
+					UUID:       "30303030-3030-4030-b030-303030303030",
+					URL:        "https://example.com/",
+					UpdateTime: time.Date(2020, 1, 1, 0, 0, 0, 0, time.UTC).Truncate(time.Second),
+					Conf:       &config.WebsiteConfig{},
+				}).Return(true)
+				serv.EXPECT().Name().Return("create_web.success.more_than_24_hrs").AnyTimes()
+
+				return websiteupdate.WebsiteUpdateTasks{
+					websiteupdate.NewTask(nc, serv, nil, nil),
+				}
+			},
 			conf:         &config.WebsiteConfig{},
 			userUUID:     "abc",
 			url:          "https://example.com/",
 			expectStatus: 200,
 			expectRes:    `{"message":"website \u003c\u003e inserted"}`,
+			expectSubscribe: func(t *testing.T, c *nats.Conn) {
+				var gotMsg *nats.Msg
+				sub, err := nc.Subscribe("web_history.websites.update.create_web_success_more_than_24_hrs", func(msg *nats.Msg) {
+					gotMsg = msg
+					assert.Equal(t, `{"website":{"uuid":"30303030-3030-4030-b030-303030303030","url":"https://example.com/","title":"","update_time":"2020-01-01T00:00:00Z"},"trace_id":"00000000000000000000000000000000","span_id":"0000000000000000","trace_flags":0}`, string(msg.Data))
+				})
+				assert.NoError(t, err)
+				time.Sleep(time.Millisecond)
+				sub.Unsubscribe()
+
+				assert.NotNil(t, gotMsg)
+			},
 		},
 		{
-			name: "return error if repo return error",
+			name: "error/not supported web",
+			mockRepo: func(ctrl *gomock.Controller) repository.Repostory {
+				rpo := mockrepo.NewMockRepostory(ctrl)
+				rpo.EXPECT().CreateWebsite(
+					&model.Website{
+						UUID:       "30303030-3030-4030-b030-303030303030",
+						URL:        "https://example.com/",
+						UpdateTime: time.Now().UTC().Truncate(time.Second),
+						Conf:       &config.WebsiteConfig{},
+					},
+				).
+					Do(func(web *model.Website) {
+						web.UpdateTime = time.Date(2020, 1, 1, 0, 0, 0, 0, time.UTC).Truncate(time.Second)
+					}).Return(nil)
+
+				rpo.EXPECT().CreateUserWebsite(
+					&model.UserWebsite{
+						WebsiteUUID: "30303030-3030-4030-b030-303030303030",
+						UserUUID:    "abc",
+						AccessTime:  time.Now().UTC().Truncate(time.Second),
+						Website: model.Website{
+							UUID:       "30303030-3030-4030-b030-303030303030",
+							URL:        "https://example.com/",
+							UpdateTime: time.Date(2020, 1, 1, 0, 0, 0, 0, time.UTC).Truncate(time.Second),
+							Conf:       &config.WebsiteConfig{},
+						},
+					},
+				).Return(nil)
+
+				return rpo
+			},
+			mockTasks: func(ctrl *gomock.Controller) websiteupdate.WebsiteUpdateTasks {
+				serv := mockvendor.NewMockVendorService(ctrl)
+				serv.EXPECT().Support(&model.Website{
+					UUID:       "30303030-3030-4030-b030-303030303030",
+					URL:        "https://example.com/",
+					UpdateTime: time.Date(2020, 1, 1, 0, 0, 0, 0, time.UTC).Truncate(time.Second),
+					Conf:       &config.WebsiteConfig{},
+				}).Return(false)
+				serv.EXPECT().Name().Return("create_web.error.not_supported_web").AnyTimes()
+
+				return websiteupdate.WebsiteUpdateTasks{
+					websiteupdate.NewTask(nc, serv, nil, nil),
+				}
+			},
+			conf:         &config.WebsiteConfig{},
+			userUUID:     "abc",
+			url:          "https://example.com/",
+			expectStatus: 400,
+			expectRes:    `{"error":"website is not supported"}`,
+			expectSubscribe: func(t *testing.T, c *nats.Conn) {
+				var gotMsg *nats.Msg
+				sub, err := nc.Subscribe("web_history.websites.update.create_web_error_not_supported_web", func(msg *nats.Msg) {
+					gotMsg = msg
+					assert.True(t, false, "some msg was sent")
+				})
+				assert.NoError(t, err)
+				time.Sleep(time.Millisecond)
+				sub.Unsubscribe()
+
+				assert.Nil(t, gotMsg)
+			},
+		},
+		{
+			name: "error/repo return error",
 			mockRepo: func(ctrl *gomock.Controller) repository.Repostory {
 				rpo := mockrepo.NewMockRepostory(ctrl)
 				rpo.EXPECT().CreateWebsite(
@@ -245,11 +393,19 @@ func Test_createWebsiteHandler(t *testing.T) {
 
 				return rpo
 			},
-			conf:         &config.WebsiteConfig{},
-			userUUID:     "unknown",
-			url:          "https://example.com/",
-			expectStatus: 400,
-			expectRes:    `{"error":"some error"}`,
+			mockTasks: func(ctrl *gomock.Controller) websiteupdate.WebsiteUpdateTasks {
+				serv := mockvendor.NewMockVendorService(ctrl)
+
+				return websiteupdate.WebsiteUpdateTasks{
+					websiteupdate.NewTask(nc, serv, nil, nil),
+				}
+			},
+			conf:            &config.WebsiteConfig{},
+			userUUID:        "unknown",
+			url:             "https://example.com/",
+			expectStatus:    400,
+			expectRes:       `{"error":"some error"}`,
+			expectSubscribe: func(t *testing.T, c *nats.Conn) {},
 		},
 	}
 
@@ -259,19 +415,27 @@ func Test_createWebsiteHandler(t *testing.T) {
 			ctrl := gomock.NewController(t)
 			defer ctrl.Finish()
 
-			req, err := http.NewRequest("POST", "/websites/", nil)
-			assert.NoError(t, err, "create request")
+			var wg sync.WaitGroup
+			wg.Add(1)
+			go func() {
+				defer wg.Done()
+				req, err := http.NewRequest("POST", "/websites/", nil)
+				assert.NoError(t, err, "create request")
 
-			ctx := req.Context()
-			ctx = context.WithValue(ctx, ContextKeyUserUUID, test.userUUID)
-			ctx = context.WithValue(ctx, ContextKeyWebURL, test.url)
-			req = req.WithContext(ctx)
-			rr := httptest.NewRecorder()
-			// TODO: mock the update Tasks to make sure it publish tasks for supported website
-			createWebsiteHandler(test.mockRepo(ctrl), test.conf, nil).ServeHTTP(rr, req)
+				ctx := req.Context()
+				ctx = context.WithValue(ctx, ContextKeyUserUUID, test.userUUID)
+				ctx = context.WithValue(ctx, ContextKeyWebURL, test.url)
+				req = req.WithContext(ctx)
+				rr := httptest.NewRecorder()
+				createWebsiteHandler(test.mockRepo(ctrl), test.conf, test.mockTasks(ctrl)).ServeHTTP(rr, req)
 
-			assert.Equal(t, test.expectStatus, rr.Code)
-			assert.Equal(t, test.expectRes, strings.Trim(rr.Body.String(), "\n"))
+				assert.Equal(t, test.expectStatus, rr.Code)
+				assert.Equal(t, test.expectRes, strings.Trim(rr.Body.String(), "\n"))
+			}()
+
+			test.expectSubscribe(t, nc)
+
+			wg.Wait()
 		})
 	}
 }

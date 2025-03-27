@@ -17,7 +17,7 @@ import (
 	"github.com/htchan/WebHistory/internal/config"
 	"github.com/htchan/WebHistory/internal/model"
 	"github.com/htchan/WebHistory/internal/repository"
-	websiteupdate "github.com/htchan/WebHistory/internal/tasks/website_update"
+	websiteupdate "github.com/htchan/WebHistory/internal/tasks/nats/website_update"
 )
 
 func encodeJsonResp(ctx context.Context, res http.ResponseWriter, body any) {
@@ -109,7 +109,7 @@ func getWebsiteGroupHandler(r repository.Repostory) http.HandlerFunc {
 // @Success		200			{object}	createWebsiteResp
 // @Failure		400			{object}	errResp
 // @Router			/api/web-watcher/websites [post]
-func createWebsiteHandler(r repository.Repostory, conf *config.WebsiteConfig, updateTasks websiteupdate.Tasks) http.HandlerFunc {
+func createWebsiteHandler(r repository.Repostory, conf *config.WebsiteConfig, tasks websiteupdate.WebsiteUpdateTasks) http.HandlerFunc {
 	return func(res http.ResponseWriter, req *http.Request) {
 		tr := otel.Tracer("htchan/WebHistory/api")
 
@@ -134,29 +134,6 @@ func createWebsiteHandler(r repository.Repostory, conf *config.WebsiteConfig, up
 
 		dbSpan.End()
 
-		// only publish job it website is updated more than 24 hr ago
-		if time.Since(web.UpdateTime) > 24*time.Hour {
-			jobCtx, jobSpan := tr.Start(req.Context(), "Website Update Job Creation")
-			defer jobSpan.End()
-
-			supportTasks, errs := updateTasks.Publish(jobCtx, websiteupdate.WebsiteUpdateParams{Website: web})
-			for i, err := range errs {
-				if err != nil {
-					dbSpan.SetStatus(codes.Error, err.Error())
-					dbSpan.RecordError(err)
-
-					zerolog.Ctx(req.Context()).Error().Err(err).
-						Str("task_name", supportTasks[i]).
-						Str("website_uuid", web.UUID).
-						Str("website_url", web.URL).
-						Str("website_title", web.Title).
-						Msg("publish website update task failed")
-				}
-			}
-
-			jobSpan.End()
-		}
-
 		dbCtx, dbSpan = tr.Start(req.Context(), "User Website Record Creation")
 		defer dbSpan.End()
 
@@ -172,6 +149,35 @@ func createWebsiteHandler(r repository.Repostory, conf *config.WebsiteConfig, up
 		}
 
 		dbSpan.End()
+
+		// only publish job it website is updated more than 24 hr ago
+		if time.Since(web.UpdateTime) > 24*time.Hour {
+			jobCtx, jobSpan := tr.Start(req.Context(), "Website Update Job Creation")
+			defer jobSpan.End()
+
+			supportedList, err := tasks.Publish(jobCtx, &web)
+			if err != nil {
+				jobSpan.SetStatus(codes.Error, err.Error())
+				jobSpan.RecordError(err)
+
+				zerolog.Ctx(jobCtx).Error().Err(err).
+					Msg("publish website update task failed")
+				writeError(res, http.StatusBadRequest, err)
+
+				return
+			} else if len(supportedList) == 0 {
+				jobSpan.SetStatus(codes.Error, "unsupported website")
+				jobSpan.RecordError(errors.New("unsupported website"))
+
+				zerolog.Ctx(jobCtx).Error().Err(err).
+					Msg("unsupported website")
+				writeError(res, http.StatusBadRequest, errors.New("unsupported website"))
+
+				return
+			}
+
+			jobSpan.End()
+		}
 
 		encodeJsonResp(req.Context(), res, createWebsiteResp{fmt.Sprintf("website <%v> inserted", web.Title)})
 	}
