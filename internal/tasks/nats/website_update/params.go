@@ -50,7 +50,7 @@ func ParamsFromData(ctx context.Context, data []byte, conf *config.WebsiteConfig
 			TraceFlags: trace.TraceFlags(params.TraceFlags),
 			Remote:     true, // Indicate that this span context is from a remote service
 		})
-		ctx := trace.ContextWithSpanContext(context.Background(), spanContext)
+		ctx := trace.ContextWithSpanContext(ctx, spanContext)
 
 		return ctx, params, nil
 	}
