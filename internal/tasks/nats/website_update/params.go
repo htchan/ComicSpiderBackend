@@ -7,7 +7,6 @@ import (
 	"github.com/htchan/WebHistory/internal/config"
 	"github.com/htchan/WebHistory/internal/model"
 	"github.com/rs/zerolog/log"
-	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/trace"
 )
 
@@ -19,10 +18,6 @@ type WebsiteUpdateParams struct {
 }
 
 func ParamsFromData(ctx context.Context, data []byte, conf *config.WebsiteConfig) (context.Context, *WebsiteUpdateParams, error) {
-	tr := otel.Tracer("htchan/WebHistory/website-update")
-	_, span := tr.Start(ctx, "Website Update Params")
-	defer span.End()
-
 	// parse message body
 	params := new(WebsiteUpdateParams)
 	if jsonErr := json.Unmarshal(data, params); jsonErr != nil {

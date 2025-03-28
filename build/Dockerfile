@@ -20,7 +20,7 @@ RUN --mount=type=bind,source=go.mod,target=go.mod \
     go build -ldflags="-s -w" -v ./cmd/$SERVICE
 
 
-FROM scratch
+FROM alpine
 
 ARG SERVICE
 ENV SERVICE=$SERVICE

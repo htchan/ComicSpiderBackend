@@ -72,6 +72,7 @@ func (task *WebsiteBatchUpdateTask) Subscribe(ctx context.Context) (jetstream.Co
 func (task *WebsiteBatchUpdateTask) handler(msg jetstream.Msg) {
 	ctx := log.With().
 		Str("task", "website-batch-update").
+		Str("task_id", hashData(msg.Data())).
 		Logger().WithContext(context.Background())
 
 	defer func() {
@@ -84,10 +85,6 @@ func (task *WebsiteBatchUpdateTask) handler(msg jetstream.Msg) {
 	tr := otel.Tracer("htchan/WebHistory/website-batch-update")
 	ctx, span := tr.Start(ctx, "Website Batch Update")
 	defer span.End()
-
-	ctx = log.With().
-		Str("task_id", hashData(msg.Data())).
-		Logger().WithContext(ctx)
 
 	// load all webstes from db
 	_, dbSpan := tr.Start(ctx, "Load Websites From DB")
