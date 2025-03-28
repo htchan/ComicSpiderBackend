@@ -124,8 +124,6 @@ func (task *WebsiteUpdateTask) handler(msg jetstream.Msg) {
 	}()
 
 	tr := otel.Tracer("htchan/WebHistory/website-update")
-	ctx, span := tr.Start(ctx, "Website Update")
-	defer span.End()
 
 	// parse message body
 	ctx, params, err := ParamsFromData(ctx, msg.Data(), task.websiteConf)
@@ -136,6 +134,9 @@ func (task *WebsiteUpdateTask) handler(msg jetstream.Msg) {
 
 		return
 	}
+
+	ctx, span := tr.Start(ctx, "Website Update")
+	defer span.End()
 
 	span.SetAttributes(
 		append(
