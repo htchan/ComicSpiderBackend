@@ -7,20 +7,7 @@ import (
 
 	"github.com/htchan/WebHistory/internal/config"
 	_ "github.com/lib/pq"
-	_ "github.com/mattn/go-sqlite3"
 )
-
-// open database for sqlite3
-
-func openSqliteDatabase(conf *config.DatabaseConfig) (*sql.DB, error) {
-	database, err := sql.Open(conf.Driver, conf.Host)
-	if err != nil {
-		return database, err
-	}
-	database.SetMaxIdleConns(5)
-	database.SetMaxOpenConns(50)
-	return database, err
-}
 
 // open database for psql
 func openPostgresDatabase(conf *config.DatabaseConfig) (*sql.DB, error) {

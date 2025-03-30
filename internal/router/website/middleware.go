@@ -11,7 +11,6 @@ import (
 	"github.com/google/uuid"
 	"github.com/htchan/WebHistory/internal/config"
 	"github.com/htchan/WebHistory/internal/repository"
-	"github.com/htchan/WebHistory/internal/utils"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 	"go.opentelemetry.io/otel"
@@ -82,19 +81,12 @@ func AuthenticateMiddleware(conf *config.UserServiceConfig) func(next http.Handl
 				userUUID := req.Header.Get(HeaderKeyUserUUID)
 
 				if _, err := uuid.Parse(userUUID); err != nil {
-					token := req.Header.Get("Authorization")
-					if token != "" {
-						userUUID = utils.FindUserByToken(token, conf)
-					}
+					authSpan.SetStatus(codes.Error, ErrUnauthorized.Error())
+					authSpan.RecordError(ErrUnauthorized)
 
-					if userUUID == "" {
-						authSpan.SetStatus(codes.Error, ErrUnauthorized.Error())
-						authSpan.RecordError(ErrUnauthorized)
+					writeError(res, http.StatusUnauthorized, ErrUnauthorized)
 
-						writeError(res, http.StatusUnauthorized, ErrUnauthorized)
-
-						return
-					}
+					return
 				}
 
 				zerolog.Ctx(req.Context()).Debug().

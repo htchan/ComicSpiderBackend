@@ -151,36 +151,6 @@ func (mr *MockRepostoryMockRecorder) FindWebsite(arg0 interface{}) *gomock.Call 
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "FindWebsite", reflect.TypeOf((*MockRepostory)(nil).FindWebsite), arg0)
 }
 
-// FindWebsiteSetting mocks base method.
-func (m *MockRepostory) FindWebsiteSetting(arg0 string) (*model.WebsiteSetting, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "FindWebsiteSetting", arg0)
-	ret0, _ := ret[0].(*model.WebsiteSetting)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// FindWebsiteSetting indicates an expected call of FindWebsiteSetting.
-func (mr *MockRepostoryMockRecorder) FindWebsiteSetting(arg0 interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "FindWebsiteSetting", reflect.TypeOf((*MockRepostory)(nil).FindWebsiteSetting), arg0)
-}
-
-// FindWebsiteSettings mocks base method.
-func (m *MockRepostory) FindWebsiteSettings() ([]model.WebsiteSetting, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "FindWebsiteSettings")
-	ret0, _ := ret[0].([]model.WebsiteSetting)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// FindWebsiteSettings indicates an expected call of FindWebsiteSettings.
-func (mr *MockRepostoryMockRecorder) FindWebsiteSettings() *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "FindWebsiteSettings", reflect.TypeOf((*MockRepostory)(nil).FindWebsiteSettings))
-}
-
 // FindWebsites mocks base method.
 func (m *MockRepostory) FindWebsites() ([]model.Website, error) {
 	m.ctrl.T.Helper()

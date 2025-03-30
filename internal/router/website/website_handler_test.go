@@ -15,7 +15,6 @@ import (
 
 	"github.com/go-chi/chi/v5"
 	"github.com/golang/mock/gomock"
-	"github.com/google/go-cmp/cmp"
 	"github.com/google/uuid"
 	"github.com/htchan/WebHistory/internal/config"
 	mockrepo "github.com/htchan/WebHistory/internal/mock/repository"
@@ -30,55 +29,69 @@ import (
 func Test_getAllWebsiteGroupsHandler(t *testing.T) {
 	tests := []struct {
 		name         string
-		r            repository.Repostory
+		getRepo      func(*gomock.Controller) repository.Repostory
 		userUUID     string
 		expectStatus int
 		expectRes    string
 	}{
 		{
 			name: "get all user websites of specific user in group array format",
-			r: repository.NewInMemRepo(nil, []model.UserWebsite{
-				{
-					UserUUID:    "abc",
-					WebsiteUUID: "1",
-					GroupName:   "group 1",
-					AccessTime:  time.Date(2000, 1, 1, 0, 0, 0, 0, time.UTC),
-					Website: model.Website{
-						UUID:       "1",
-						Title:      "title 1",
-						UpdateTime: time.Date(2000, 1, 1, 1, 0, 0, 0, time.UTC),
-					},
-				},
-				{
-					UserUUID:    "abc",
-					WebsiteUUID: "2",
-					GroupName:   "group 1",
-					AccessTime:  time.Date(2000, 1, 2, 0, 0, 0, 0, time.UTC),
-					Website: model.Website{
-						UUID:       "2",
-						Title:      "title 2",
-						UpdateTime: time.Date(2000, 1, 2, 1, 0, 0, 0, time.UTC),
-					},
-				},
-				{
-					UserUUID:    "abc",
-					WebsiteUUID: "3",
-					GroupName:   "group 3",
-					AccessTime:  time.Date(2000, 1, 3, 0, 0, 0, 0, time.UTC),
-					Website: model.Website{
-						UUID:       "3",
-						Title:      "title 3",
-						UpdateTime: time.Date(2000, 1, 3, 1, 0, 0, 0, time.UTC),
-					},
-				},
-			}, nil, nil),
+			getRepo: func(ctrl *gomock.Controller) repository.Repostory {
+				rpo := mockrepo.NewMockRepostory(ctrl)
+				rpo.EXPECT().FindUserWebsites("abc").Return(
+					model.UserWebsites{
+						{
+							UserUUID:    "abc",
+							WebsiteUUID: "1",
+							GroupName:   "group 1",
+							AccessTime:  time.Date(2000, 1, 1, 0, 0, 0, 0, time.UTC),
+							Website: model.Website{
+								UUID:       "1",
+								Title:      "title 1",
+								UpdateTime: time.Date(2000, 1, 1, 1, 0, 0, 0, time.UTC),
+							},
+						},
+						{
+							UserUUID:    "abc",
+							WebsiteUUID: "2",
+							GroupName:   "group 1",
+							AccessTime:  time.Date(2000, 1, 2, 0, 0, 0, 0, time.UTC),
+							Website: model.Website{
+								UUID:       "2",
+								Title:      "title 2",
+								UpdateTime: time.Date(2000, 1, 2, 1, 0, 0, 0, time.UTC),
+							},
+						},
+						{
+							UserUUID:    "abc",
+							WebsiteUUID: "3",
+							GroupName:   "group 3",
+							AccessTime:  time.Date(2000, 1, 3, 0, 0, 0, 0, time.UTC),
+							Website: model.Website{
+								UUID:       "3",
+								Title:      "title 3",
+								UpdateTime: time.Date(2000, 1, 3, 1, 0, 0, 0, time.UTC),
+							},
+						},
+					}, nil,
+				)
+
+				return rpo
+			},
 			userUUID:     "abc",
 			expectStatus: 200,
 			expectRes:    `{"website_groups":[[{"uuid":"1","user_uuid":"abc","url":"","title":"title 1","group_name":"group 1","update_time":"2000-01-01T01:00:00Z","access_time":"2000-01-01T00:00:00Z"},{"uuid":"2","user_uuid":"abc","url":"","title":"title 2","group_name":"group 1","update_time":"2000-01-02T01:00:00Z","access_time":"2000-01-02T00:00:00Z"}],[{"uuid":"3","user_uuid":"abc","url":"","title":"title 3","group_name":"group 3","update_time":"2000-01-03T01:00:00Z","access_time":"2000-01-03T00:00:00Z"}]]}`,
 		},
 		{
-			name:         "return error if findUserWebsites return error",
-			r:            repository.NewInMemRepo(nil, nil, nil, errors.New("some error")),
+			name: "return error if findUserWebsites return error",
+			getRepo: func(ctrl *gomock.Controller) repository.Repostory {
+				rpo := mockrepo.NewMockRepostory(ctrl)
+				rpo.EXPECT().FindUserWebsites("unknown").Return(
+					nil, errors.New("some error"),
+				)
+
+				return rpo
+			},
 			userUUID:     "unknown",
 			expectStatus: 400,
 			expectRes:    `{"error":"record not found"}`,
@@ -89,6 +102,9 @@ func Test_getAllWebsiteGroupsHandler(t *testing.T) {
 		test := test
 		t.Run(test.name, func(t *testing.T) {
 			t.Parallel()
+			ctrl := gomock.NewController(t)
+			defer ctrl.Finish()
+
 			req, err := http.NewRequest("GET", "/websites/groups/", nil)
 			assert.NoError(t, err, "create request")
 
@@ -96,7 +112,7 @@ func Test_getAllWebsiteGroupsHandler(t *testing.T) {
 			ctx = context.WithValue(ctx, ContextKeyUserUUID, test.userUUID)
 			req = req.WithContext(ctx)
 			rr := httptest.NewRecorder()
-			getAllWebsiteGroupsHandler(test.r).ServeHTTP(rr, req)
+			getAllWebsiteGroupsHandler(test.getRepo(ctrl)).ServeHTTP(rr, req)
 
 			assert.Equal(t, test.expectStatus, rr.Code)
 			assert.Equal(t, test.expectRes, strings.Trim(rr.Body.String(), "\n"))
@@ -108,7 +124,7 @@ func Test_getWebsiteGroupHandler(t *testing.T) {
 	t.Parallel()
 	tests := []struct {
 		name         string
-		r            repository.Repostory
+		r            func(*gomock.Controller) repository.Repostory
 		userUUID     string
 		group        string
 		expectStatus int
@@ -116,46 +132,67 @@ func Test_getWebsiteGroupHandler(t *testing.T) {
 	}{
 		{
 			name: "get user websites of existing user and group",
-			r: repository.NewInMemRepo(nil, []model.UserWebsite{
-				{
-					UserUUID:    "abc",
-					WebsiteUUID: "1",
-					GroupName:   "group 1",
-					AccessTime:  time.Date(2000, 1, 1, 0, 0, 0, 0, time.UTC),
-					Website: model.Website{
-						UUID:       "1",
-						Title:      "title 1",
-						UpdateTime: time.Date(2000, 1, 1, 1, 0, 0, 0, time.UTC),
-					},
-				},
-				{
-					UserUUID:    "abc",
-					WebsiteUUID: "2",
-					GroupName:   "group 1",
-					AccessTime:  time.Date(2000, 1, 2, 0, 0, 0, 0, time.UTC),
-					Website: model.Website{
-						UUID:       "2",
-						Title:      "title 2",
-						UpdateTime: time.Date(2000, 1, 2, 1, 0, 0, 0, time.UTC),
-					},
-				},
-			}, nil, nil),
+			r: func(c *gomock.Controller) repository.Repostory {
+				rpo := mockrepo.NewMockRepostory(c)
+				rpo.EXPECT().FindUserWebsitesByGroup("abc", "group 1").Return(
+					model.WebsiteGroup{
+						{
+							UserUUID:    "abc",
+							WebsiteUUID: "1",
+							GroupName:   "group 1",
+							AccessTime:  time.Date(2000, 1, 1, 0, 0, 0, 0, time.UTC),
+							Website: model.Website{
+								UUID:       "1",
+								Title:      "title 1",
+								UpdateTime: time.Date(2000, 1, 1, 1, 0, 0, 0, time.UTC),
+							},
+						},
+						{
+							UserUUID:    "abc",
+							WebsiteUUID: "2",
+							GroupName:   "group 1",
+							AccessTime:  time.Date(2000, 1, 2, 0, 0, 0, 0, time.UTC),
+							Website: model.Website{
+								UUID:       "2",
+								Title:      "title 2",
+								UpdateTime: time.Date(2000, 1, 2, 1, 0, 0, 0, time.UTC),
+							},
+						},
+					}, nil,
+				)
+
+				return rpo
+			},
 			userUUID:     "abc",
 			group:        "group 1",
 			expectStatus: 200,
 			expectRes:    `{"website_group":[{"uuid":"1","user_uuid":"abc","url":"","title":"title 1","group_name":"group 1","update_time":"2000-01-01T01:00:00Z","access_time":"2000-01-01T00:00:00Z"},{"uuid":"2","user_uuid":"abc","url":"","title":"title 2","group_name":"group 1","update_time":"2000-01-02T01:00:00Z","access_time":"2000-01-02T00:00:00Z"}]}`,
 		},
 		{
-			name:         "return error if user not exist",
-			r:            repository.NewInMemRepo(nil, nil, nil, errors.New("some error")),
+			name: "return error if user not exist",
+			r: func(c *gomock.Controller) repository.Repostory {
+				rpo := mockrepo.NewMockRepostory(c)
+				rpo.EXPECT().FindUserWebsitesByGroup("unknown", "group 1").Return(
+					nil, errors.New("some error"),
+				)
+
+				return rpo
+			},
 			userUUID:     "unknown",
 			group:        "group 1",
 			expectStatus: 400,
 			expectRes:    `{"error":"record not found"}`,
 		},
 		{
-			name:         "return error if group not exist",
-			r:            repository.NewInMemRepo(nil, nil, nil, errors.New("some error")),
+			name: "return error if group not exist",
+			r: func(c *gomock.Controller) repository.Repostory {
+				rpo := mockrepo.NewMockRepostory(c)
+				rpo.EXPECT().FindUserWebsitesByGroup("abc", "group not exist").Return(
+					nil, errors.New("some error"),
+				)
+
+				return rpo
+			},
 			userUUID:     "abc",
 			group:        "group not exist",
 			expectStatus: 400,
@@ -167,6 +204,10 @@ func Test_getWebsiteGroupHandler(t *testing.T) {
 		test := test
 		t.Run(test.name, func(t *testing.T) {
 			t.Parallel()
+
+			ctrl := gomock.NewController(t)
+			defer ctrl.Finish()
+
 			req, err := http.NewRequest("GET", "/websites/groups/{groupName}", nil)
 			assert.NoError(t, err, "create request")
 
@@ -177,7 +218,7 @@ func Test_getWebsiteGroupHandler(t *testing.T) {
 			ctx = context.WithValue(ctx, ContextKeyUserUUID, test.userUUID)
 			req = req.WithContext(ctx)
 			rr := httptest.NewRecorder()
-			getWebsiteGroupHandler(test.r).ServeHTTP(rr, req)
+			getWebsiteGroupHandler(test.r(ctrl)).ServeHTTP(rr, req)
 
 			assert.Equal(t, test.expectStatus, rr.Code)
 			assert.Equal(t, test.expectRes, strings.Trim(rr.Body.String(), "\n"))
@@ -630,22 +671,21 @@ func Test_changeWebsiteGroupHandler(t *testing.T) {
 	t.Parallel()
 	tests := []struct {
 		name         string
-		r            repository.Repostory
+		getRepo      func(*gomock.Controller) repository.Repostory
 		web          model.UserWebsite
 		group        string
-		expectRepo   repository.Repostory
 		expectStatus int
 		expectResp   string
 	}{
 		{
 			name: "return website of deleted content",
-			r: repository.NewInMemRepo(
-				nil,
-				[]model.UserWebsite{
-					{
+			getRepo: func(c *gomock.Controller) repository.Repostory {
+				rpo := mockrepo.NewMockRepostory(c)
+				rpo.EXPECT().UpdateUserWebsite(
+					&model.UserWebsite{
 						WebsiteUUID: "web_uuid",
 						UserUUID:    "user_uuid",
-						GroupName:   "name",
+						GroupName:   "group_name",
 						AccessTime:  time.Date(2000, 1, 1, 0, 0, 0, 0, time.UTC),
 						Website: model.Website{
 							UUID:       "web_uuid",
@@ -654,9 +694,10 @@ func Test_changeWebsiteGroupHandler(t *testing.T) {
 							UpdateTime: time.Date(2000, 1, 1, 0, 0, 0, 0, time.UTC),
 						},
 					},
-				},
-				nil, nil,
-			),
+				).Return(nil)
+
+				return rpo
+			},
 			web: model.UserWebsite{
 				WebsiteUUID: "web_uuid",
 				UserUUID:    "user_uuid",
@@ -669,25 +710,7 @@ func Test_changeWebsiteGroupHandler(t *testing.T) {
 					UpdateTime: time.Date(2000, 1, 1, 0, 0, 0, 0, time.UTC),
 				},
 			},
-			group: "group_name",
-			expectRepo: repository.NewInMemRepo(
-				nil,
-				[]model.UserWebsite{
-					{
-						WebsiteUUID: "web_uuid",
-						UserUUID:    "user_uuid",
-						GroupName:   "group_name",
-						AccessTime:  time.Date(2000, 1, 1, 0, 0, 0, 0, time.UTC),
-						Website: model.Website{
-							UUID:       "web_uuid",
-							Title:      "title",
-							URL:        "http://example.com/",
-							UpdateTime: time.Date(2000, 1, 1, 0, 0, 0, 0, time.UTC),
-						},
-					},
-				},
-				nil, nil,
-			),
+			group:        "group_name",
 			expectStatus: 200,
 			expectResp:   `{"website":{"uuid":"web_uuid","user_uuid":"user_uuid","url":"http://example.com/","title":"title","group_name":"group_name","update_time":"2000-01-01T00:00:00Z","access_time":"2000-01-01T00:00:00Z"}}`,
 		},
@@ -698,6 +721,9 @@ func Test_changeWebsiteGroupHandler(t *testing.T) {
 		t.Run(test.name, func(t *testing.T) {
 			t.Parallel()
 
+			ctrl := gomock.NewController(t)
+			defer ctrl.Finish()
+
 			req, err := http.NewRequest("GET", "/websites/{webUUID}/refresh", nil)
 			assert.NoError(t, err, "create request")
 
@@ -706,15 +732,10 @@ func Test_changeWebsiteGroupHandler(t *testing.T) {
 			ctx = context.WithValue(ctx, ContextKeyGroup, test.group)
 			req = req.WithContext(ctx)
 			rr := httptest.NewRecorder()
-			changeWebsiteGroupHandler(test.r).ServeHTTP(rr, req)
+			changeWebsiteGroupHandler(test.getRepo(ctrl)).ServeHTTP(rr, req)
 
 			assert.Equal(t, test.expectStatus, rr.Code)
 			assert.Equal(t, test.expectResp, strings.Trim(rr.Body.String(), "\n"))
-			if !cmp.Equal(test.r, test.expectRepo) {
-				t.Error("got different repo as expect")
-				t.Error(test.r)
-				t.Error(test.expectRepo)
-			}
 		})
 	}
 }
