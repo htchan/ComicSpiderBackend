@@ -134,42 +134,7 @@ func main() {
 			Msg("failed to subscribe to nats server")
 	}
 
-	// pool := goworkers.NewWorkerPool(goworkers.Config{MaxThreads: 10})
-	// redisClient, err := rueidis.NewClient(rueidis.ClientOption{
-	// 	InitAddress: []string{conf.RedisStreamConfig.Addr},
-	// })
-	// if err != nil {
-	// 	log.Fatal().Err(err).Msg("failed to create redis client")
-	// }
-
-	// updateTasks := websiteupdate.NewTaskSet(redisClient, services, rpo, &conf.WebsiteConfig)
-	// for _, task := range updateTasks {
-	// 	registerErr := pool.Register(ctx, task)
-	// 	if registerErr != nil {
-	// 		log.Fatal().Err(err).Msg("failed to register task")
-	// 	}
-	// }
-
-	// err = pool.Register(ctx, websitebatchupdate.NewTask(redisClient, updateTasks, rpo))
-	// if err != nil {
-	// 	log.Fatal().Err(err).Msg("failed to register task")
-	// }
-
-	// go func() {
-	// 	err := pool.Start(ctx)
-	// 	if err != nil {
-	// 		log.Fatal().Err(err).Msg("failed to start worker pool")
-	// 	}
-	// }()
-
-	// // todo: run shutdown function for each task if necessary
-	// shutdownHandler.Register("redis stream", func() error {
-	// 	redisClient.Close()
-
-	// 	return nil
-	// })
-	// shutdownHandler.Register("worker pool", pool.Stop)
-	shutdownHandler.Register("nats consumer", func() error {
+	shutdownHandler.Register("batch update task", func() error {
 		batchConsumer.Stop()
 
 		return nil
