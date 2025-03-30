@@ -6,7 +6,6 @@ import (
 	"time"
 
 	"github.com/caarlos0/env/v10"
-	worker "github.com/htchan/goworkers"
 	"gopkg.in/yaml.v3"
 )
 
@@ -31,7 +30,6 @@ type APIBinConfig struct {
 
 type WorkerConfig struct {
 	BinConfig        WorkerBinConfig
-	WorkerConfig     worker.Config
 	DatabaseConfig   DatabaseConfig
 	TraceConfig      TraceConfig
 	WebsiteConfig    WebsiteConfig
@@ -72,9 +70,7 @@ type WebsiteConfig struct {
 }
 
 type NatsConfig struct {
-	URL      string `env:"NATS_URL,required"`
-	User     string `env:"NATS_USER,required"`
-	Password string `env:"NATS_PASSWORD,required"`
+	URL string `env:"NATS_URL,required"`
 }
 
 func LoadAPIConfig() (*APIConfig, error) {

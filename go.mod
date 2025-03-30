@@ -9,17 +9,11 @@ require (
 	github.com/go-chi/cors v1.2.1
 	github.com/golang-migrate/migrate/v4 v4.15.2
 	github.com/golang/mock v1.6.0
-	github.com/google/go-cmp v0.6.0
 	github.com/google/uuid v1.3.0
-	github.com/htchan/UserService v0.0.0-20220101064522-c9d57069f9df
 	github.com/htchan/goshutdown v0.0.0-20231003015559-4aa563eafbb1
-	github.com/htchan/goworkers v0.0.5
 	github.com/lib/pq v1.10.6
-	github.com/mattn/go-sqlite3 v1.14.24
 	github.com/nats-io/nats.go v1.39.1
 	github.com/ory/dockertest/v3 v3.10.0
-	github.com/redis/rueidis v1.0.32
-	github.com/redis/rueidis/rueidiscompat v1.0.32
 	github.com/rs/zerolog v1.29.0
 	github.com/stretchr/testify v1.8.4
 	github.com/swaggo/http-swagger/v2 v2.0.2
