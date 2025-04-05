@@ -100,6 +100,11 @@ func (task *WebsiteUpdateTask) Validate(ctx context.Context, params *WebsiteUpda
 	_, validateSpan := tr.Start(ctx, "Validate Params")
 	defer validateSpan.End()
 
+	validateSpan.SetAttributes(
+		attribute.String("vendor_name", task.Service.Name()),
+		attribute.String("website_host", params.Website.Host()),
+	)
+
 	if !task.Service.Support(&params.Website) {
 		validateSpan.SetStatus(codes.Error, ErrNotSupportedWebsite.Error())
 		validateSpan.RecordError(ErrNotSupportedWebsite)

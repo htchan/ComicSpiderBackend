@@ -87,5 +87,6 @@ func (web Website) OtelAttributes() []attribute.KeyValue {
 	return []attribute.KeyValue{
 		attribute.String("url", web.URL),
 		attribute.String("title", web.Title),
+		attribute.String("raw_content", web.RawContent),
 	}
 }

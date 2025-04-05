@@ -16,6 +16,8 @@ import (
 	"github.com/htchan/WebHistory/internal/vendors"
 	"github.com/rs/zerolog"
 	"go.opentelemetry.io/otel"
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/codes"
 	"golang.org/x/sync/semaphore"
 )
 
@@ -155,25 +157,37 @@ func (serv *VendorService) Update(ctx context.Context, web *model.Website) error
 	tr := otel.Tracer("htchan/WebHistory/vendors/kuaikanmanhua")
 
 	_, fetchWebSpan := tr.Start(ctx, "fetch website")
-	body, fetchErr := serv.fetchWebsite(ctx, web)
-	fetchWebSpan.End()
+	defer fetchWebSpan.End()
 
+	body, fetchErr := serv.fetchWebsite(ctx, web)
 	if fetchErr != nil {
+		fetchWebSpan.SetStatus(codes.Error, fetchErr.Error())
 		fetchWebSpan.RecordError(fetchErr)
 
 		return fetchErr
 	}
 
+	fetchWebSpan.End()
+
 	if serv.isUpdated(ctx, web, body) {
 		_, repoSpan := tr.Start(ctx, "update db record")
-		repoErr := serv.repo.UpdateWebsite(web)
-		repoSpan.End()
+		defer repoSpan.End()
 
+		repoSpan.SetAttributes(
+			attribute.String("title", web.Title),
+			attribute.String("content", web.RawContent),
+			attribute.String("update_time", web.UpdateTime.String()),
+		)
+
+		repoErr := serv.repo.UpdateWebsite(web)
 		if repoErr != nil {
+			repoSpan.SetStatus(codes.Error, repoErr.Error())
 			repoSpan.RecordError(repoErr)
 
 			return repoErr
 		}
+
+		repoSpan.End()
 	}
 
 	return nil

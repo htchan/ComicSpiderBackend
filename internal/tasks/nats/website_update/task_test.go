@@ -271,6 +271,7 @@ func TestWebsiteUpdateTask_Validate(t *testing.T) {
 			name: "supported web",
 			getServ: func(c *gomock.Controller) vendors.VendorService {
 				serv := mockvendor.NewMockVendorService(c)
+				serv.EXPECT().Name().Return("supported_web").AnyTimes()
 				serv.EXPECT().Support(
 					&model.Website{URL: "https://example.com"},
 				).Return(true)
@@ -286,6 +287,7 @@ func TestWebsiteUpdateTask_Validate(t *testing.T) {
 			name: "unsupported web",
 			getServ: func(c *gomock.Controller) vendors.VendorService {
 				serv := mockvendor.NewMockVendorService(c)
+				serv.EXPECT().Name().Return("supported_web").AnyTimes()
 				serv.EXPECT().Support(
 					&model.Website{URL: "https://example.com"},
 				).Return(false)
