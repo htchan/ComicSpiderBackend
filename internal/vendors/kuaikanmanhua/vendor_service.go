@@ -174,9 +174,9 @@ func (serv *VendorService) Update(ctx context.Context, web *model.Website) error
 		defer repoSpan.End()
 
 		repoSpan.SetAttributes(
-			attribute.String("title", web.Title),
-			attribute.String("content", web.RawContent),
-			attribute.String("update_time", web.UpdateTime.String()),
+			attribute.String("updated_title", web.Title),
+			attribute.String("updated_content", web.RawContent),
+			attribute.String("updated_time", web.UpdateTime.String()),
 		)
 
 		repoErr := serv.repo.UpdateWebsite(web)
