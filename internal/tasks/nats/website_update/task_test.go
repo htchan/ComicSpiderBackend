@@ -65,7 +65,7 @@ func TestWebsiteUpdateTask_subject(t *testing.T) {
 		expect  string
 	}{
 		{
-			name: "subject without .",
+			name: "subject of service name without .",
 			getServ: func(ctrl *gomock.Controller) vendors.VendorService {
 				serv := mockvendor.NewMockVendorService(ctrl)
 				serv.EXPECT().Name().Return("website_update").AnyTimes()
@@ -75,7 +75,7 @@ func TestWebsiteUpdateTask_subject(t *testing.T) {
 			expect: "web_history.websites.update.website_update",
 		},
 		{
-			name: "subject without .",
+			name: "subject of service name with .",
 			getServ: func(ctrl *gomock.Controller) vendors.VendorService {
 				serv := mockvendor.NewMockVendorService(ctrl)
 				serv.EXPECT().Name().Return("example.com").AnyTimes()
@@ -131,7 +131,7 @@ func TestWebsiteUpdateTask_Publish(t *testing.T) {
 				var gotMsg *nats.Msg
 				sub, err := nc.Subscribe("web_history.websites.update.publish_success", func(msg *nats.Msg) {
 					gotMsg = msg
-					assert.Equal(t, `{"website":{"uuid":"some uuid","url":"https://example.com","title":"","update_time":"0001-01-01T00:00:00Z"},"trace_id":"00000000000000000000000000000000","span_id":"0000000000000000","trace_flags":0}`, string(msg.Data))
+					assert.Equal(t, `{"website":{"uuid":"some uuid","url":"https://example.com","title":"","raw_content":"","update_time":"0001-01-01T00:00:00Z"},"trace_id":"00000000000000000000000000000000","span_id":"0000000000000000","trace_flags":0}`, string(msg.Data))
 				})
 				assert.NoError(t, err)
 				time.Sleep(time.Millisecond)
@@ -328,9 +328,10 @@ func TestWebsiteUpdateTask_handler(t *testing.T) {
 			getServ: func(ctrl *gomock.Controller) vendors.VendorService {
 				serv := mockvendor.NewMockVendorService(ctrl)
 				web := &model.Website{
-					UUID:       "",
+					UUID:       "test uuid",
 					URL:        "https://example.com",
 					Title:      "test",
+					RawContent: "content",
 					UpdateTime: time.Date(2020, 5, 1, 0, 0, 0, 0, time.UTC),
 				}
 				serv.EXPECT().Name().Return("happy_flow").AnyTimes()
@@ -341,7 +342,7 @@ func TestWebsiteUpdateTask_handler(t *testing.T) {
 			},
 			getMsg: func(ctrl *gomock.Controller) jetstream.Msg {
 				msg := mocknats.NewMockNatsMsg(ctrl)
-				msg.EXPECT().Data().Return([]byte(`{"website":{"uuid":"","url":"https://example.com","title":"test","update_time":"2020-05-01T00:00:00Z"},"trace_id":"01234567890123456789012345678901","span_id":"0123456789012345","trace_flags":1}`))
+				msg.EXPECT().Data().Return([]byte(`{"website":{"uuid":"test uuid","url":"https://example.com","title":"test","raw_content":"content","update_time":"2020-05-01T00:00:00Z"},"trace_id":"01234567890123456789012345678901","span_id":"0123456789012345","trace_flags":1}`))
 				msg.EXPECT().Ack()
 
 				return msg
@@ -353,9 +354,10 @@ func TestWebsiteUpdateTask_handler(t *testing.T) {
 				serv := mockvendor.NewMockVendorService(ctrl)
 				serv.EXPECT().Name().Return("not_supported_web").AnyTimes()
 				serv.EXPECT().Support(&model.Website{
-					UUID:       "",
+					UUID:       "test uuid",
 					URL:        "https://example.com",
 					Title:      "test",
+					RawContent: "content",
 					UpdateTime: time.Date(2020, 5, 1, 0, 0, 0, 0, time.UTC),
 				}).Return(false)
 
@@ -363,7 +365,7 @@ func TestWebsiteUpdateTask_handler(t *testing.T) {
 			},
 			getMsg: func(ctrl *gomock.Controller) jetstream.Msg {
 				msg := mocknats.NewMockNatsMsg(ctrl)
-				msg.EXPECT().Data().Return([]byte(`{"website":{"uuid":"", "url":"https://example.com", "title":"test", "update_time":"2020-05-01T00:00:00Z"}, "trace_id":"01234567890123456789012345678901", "span_id":"0123456789012345", "trace_flags":1}`))
+				msg.EXPECT().Data().Return([]byte(`{"website":{"uuid":"test uuid", "url":"https://example.com", "title":"test", "raw_content":"content", "update_time":"2020-05-01T00:00:00Z"}, "trace_id":"01234567890123456789012345678901", "span_id":"0123456789012345", "trace_flags":1}`))
 				msg.EXPECT().Ack()
 
 				return msg
@@ -390,9 +392,10 @@ func TestWebsiteUpdateTask_handler(t *testing.T) {
 			getServ: func(ctrl *gomock.Controller) vendors.VendorService {
 				serv := mockvendor.NewMockVendorService(ctrl)
 				web := &model.Website{
-					UUID:       "",
+					UUID:       "test uuid",
 					URL:        "https://example.com",
 					Title:      "test",
+					RawContent: "content",
 					UpdateTime: time.Date(2020, 5, 1, 0, 0, 0, 0, time.UTC),
 				}
 				serv.EXPECT().Name().Return("happy_flow").AnyTimes()
@@ -403,7 +406,7 @@ func TestWebsiteUpdateTask_handler(t *testing.T) {
 			},
 			getMsg: func(ctrl *gomock.Controller) jetstream.Msg {
 				msg := mocknats.NewMockNatsMsg(ctrl)
-				msg.EXPECT().Data().Return([]byte(`{"website":{"uuid":"","url":"https://example.com","title":"test","update_time":"2020-05-01T00:00:00Z"},"trace_id":"01234567890123456789012345678901","span_id":"0123456789012345","trace_flags":1}`))
+				msg.EXPECT().Data().Return([]byte(`{"website":{"uuid":"test uuid","url":"https://example.com","title":"test","raw_content":"content","update_time":"2020-05-01T00:00:00Z"},"trace_id":"01234567890123456789012345678901","span_id":"0123456789012345","trace_flags":1}`))
 				msg.EXPECT().Ack().Return(errors.New("ack error"))
 
 				return msg

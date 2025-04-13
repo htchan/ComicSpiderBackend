@@ -25,12 +25,14 @@ func Test_ParamsFromData(t *testing.T) {
 	}{
 		{
 			name: "happy flow/with trace",
-			data: []byte(`{"website":{"uuid":"","url":"https://example.com","title":"test","update_time":"2020-05-01T00:00:00Z"},"trace_id":"01234567890123456789012345678901","span_id":"0123456789012345","trace_flags":1}`),
+			data: []byte(`{"website":{"uuid":"test uuid","url":"https://example.com","title":"test","raw_content":"test content","update_time":"2020-05-01T00:00:00Z"},"trace_id":"01234567890123456789012345678901","span_id":"0123456789012345","trace_flags":1}`),
 			conf: &config.WebsiteConfig{},
 			expectParams: &WebsiteUpdateParams{
 				Website: model.Website{
+					UUID:       "test uuid",
 					URL:        "https://example.com",
 					Title:      "test",
+					RawContent: "test content",
 					UpdateTime: time.Date(2020, 5, 1, 0, 0, 0, 0, time.UTC),
 					Conf:       &config.WebsiteConfig{},
 				},
@@ -42,12 +44,14 @@ func Test_ParamsFromData(t *testing.T) {
 		},
 		{
 			name: "happy flow/without trace",
-			data: []byte(`{"website":{"uuid":"","url":"https://example.com","title":"test","update_time":"2020-05-01T00:00:00Z"}}`),
+			data: []byte(`{"website":{"uuid":"test uuid","url":"https://example.com","title":"test","raw_content":"test content","update_time":"2020-05-01T00:00:00Z"}}`),
 			conf: &config.WebsiteConfig{},
 			expectParams: &WebsiteUpdateParams{
 				Website: model.Website{
+					UUID:       "test uuid",
 					URL:        "https://example.com",
 					Title:      "test",
+					RawContent: "test content",
 					UpdateTime: time.Date(2020, 5, 1, 0, 0, 0, 0, time.UTC),
 					Conf:       &config.WebsiteConfig{},
 				},
@@ -94,6 +98,44 @@ func Test_ParamsFromData(t *testing.T) {
 	}
 }
 
+func TestWebsiteUpdateParams_MarshalJSON(t *testing.T) {
+	tests := []struct {
+		name        string
+		params      *WebsiteUpdateParams
+		expect      string
+		expectError error
+	}{
+		{
+			name: "success",
+			params: &WebsiteUpdateParams{
+				Website: model.Website{
+					UUID:       "test uuid",
+					URL:        "https://example.com",
+					Title:      "test title",
+					RawContent: "test content",
+					UpdateTime: time.Date(2020, time.May, 1, 0, 0, 0, 0, time.UTC),
+				},
+				TraceID:    "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX",
+				SpanID:     "XXXXXXXXXXXXXXXX",
+				TraceFlags: 0x1,
+			},
+			expect:      `{"website":{"uuid":"test uuid","url":"https://example.com","title":"test title","raw_content":"test content","update_time":"2020-05-01T00:00:00Z"},"trace_id":"XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX","span_id":"XXXXXXXXXXXXXXXX","trace_flags":1}`,
+			expectError: nil,
+		},
+	}
+
+	for _, test := range tests {
+		test := test
+		t.Run(test.name, func(t *testing.T) {
+			t.Parallel()
+
+			data, err := json.Marshal(test.params)
+			assert.Equal(t, test.expect, string(data))
+			assert.ErrorIs(t, err, test.expectError)
+		})
+	}
+}
+
 func TestWebsiteUpdateParams_ToData(t *testing.T) {
 	emptyCtx := context.Background()
 	spanCtx, span := otel.Tracer("test").Start(emptyCtx, "test")
@@ -111,13 +153,15 @@ func TestWebsiteUpdateParams_ToData(t *testing.T) {
 			ctx:  spanCtx,
 			params: &WebsiteUpdateParams{
 				Website: model.Website{
+					UUID:       "test uuid",
 					URL:        "https://example.com",
 					Title:      "test",
+					RawContent: "test content",
 					UpdateTime: time.Date(2020, time.May, 1, 0, 0, 0, 0, time.UTC),
 				},
 			},
 			expect: fmt.Sprintf(
-				`{"website":{"uuid":"","url":"https://example.com","title":"test","update_time":"2020-05-01T00:00:00Z"},"trace_id":"%s","span_id":"%s","trace_flags":1}`,
+				`{"website":{"uuid":"test uuid","url":"https://example.com","title":"test","raw_content":"test content","update_time":"2020-05-01T00:00:00Z"},"trace_id":"%s","span_id":"%s","trace_flags":1}`,
 				span.SpanContext().TraceID().String(),
 				span.SpanContext().SpanID().String(),
 			),
@@ -128,12 +172,14 @@ func TestWebsiteUpdateParams_ToData(t *testing.T) {
 			ctx:  emptyCtx,
 			params: &WebsiteUpdateParams{
 				Website: model.Website{
+					UUID:       "test uuid",
 					URL:        "https://example.com",
 					Title:      "test",
+					RawContent: "test content",
 					UpdateTime: time.Date(2020, time.May, 1, 0, 0, 0, 0, time.UTC),
 				},
 			},
-			expect:      `{"website":{"uuid":"","url":"https://example.com","title":"test","update_time":"2020-05-01T00:00:00Z"},"trace_id":"00000000000000000000000000000000","span_id":"0000000000000000","trace_flags":0}`,
+			expect:      `{"website":{"uuid":"test uuid","url":"https://example.com","title":"test","raw_content":"test content","update_time":"2020-05-01T00:00:00Z"},"trace_id":"00000000000000000000000000000000","span_id":"0000000000000000","trace_flags":0}`,
 			expectError: nil,
 		},
 	}

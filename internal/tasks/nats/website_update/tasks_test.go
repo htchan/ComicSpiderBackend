@@ -92,7 +92,7 @@ func TestWebsiteUpdateTasks_Publish(t *testing.T) {
 				var gotMsg *nats.Msg
 				sub, err := nc.Subscribe("web_history.websites.update.set_publish_happy_flow_one_supported", func(msg *nats.Msg) {
 					gotMsg = msg
-					assert.Equal(t, `{"website":{"uuid":"some uuid","url":"https://example.com","title":"","update_time":"0001-01-01T00:00:00Z"},"trace_id":"00000000000000000000000000000000","span_id":"0000000000000000","trace_flags":0}`, string(msg.Data))
+					assert.Equal(t, `{"website":{"uuid":"some uuid","url":"https://example.com","title":"","raw_content":"","update_time":"0001-01-01T00:00:00Z"},"trace_id":"00000000000000000000000000000000","span_id":"0000000000000000","trace_flags":0}`, string(msg.Data))
 				})
 				assert.NoError(t, err)
 				time.Sleep(time.Millisecond)
@@ -124,11 +124,11 @@ func TestWebsiteUpdateTasks_Publish(t *testing.T) {
 				var gotMsg1, gotMsg2 *nats.Msg
 				sub1, err1 := nc.Subscribe("web_history.websites.update.set_publish_happy_flow_multi_supported_1", func(msg *nats.Msg) {
 					gotMsg1 = msg
-					assert.Equal(t, `{"website":{"uuid":"some uuid","url":"https://example.com","title":"","update_time":"0001-01-01T00:00:00Z"},"trace_id":"00000000000000000000000000000000","span_id":"0000000000000000","trace_flags":0}`, string(msg.Data))
+					assert.Equal(t, `{"website":{"uuid":"some uuid","url":"https://example.com","title":"","raw_content":"","update_time":"0001-01-01T00:00:00Z"},"trace_id":"00000000000000000000000000000000","span_id":"0000000000000000","trace_flags":0}`, string(msg.Data))
 				})
 				sub2, err2 := nc.Subscribe("web_history.websites.update.set_publish_happy_flow_multi_supported_2", func(msg *nats.Msg) {
 					gotMsg2 = msg
-					assert.Equal(t, `{"website":{"uuid":"some uuid","url":"https://example.com","title":"","update_time":"0001-01-01T00:00:00Z"},"trace_id":"00000000000000000000000000000000","span_id":"0000000000000000","trace_flags":0}`, string(msg.Data))
+					assert.Equal(t, `{"website":{"uuid":"some uuid","url":"https://example.com","title":"","raw_content":"","update_time":"0001-01-01T00:00:00Z"},"trace_id":"00000000000000000000000000000000","span_id":"0000000000000000","trace_flags":0}`, string(msg.Data))
 				})
 
 				assert.NoError(t, err1)

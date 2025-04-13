@@ -346,7 +346,7 @@ func Test_createWebsiteHandler(t *testing.T) {
 				var gotMsg *nats.Msg
 				sub, err := nc.Subscribe("web_history.websites.update.create_web_success_more_than_24_hrs", func(msg *nats.Msg) {
 					gotMsg = msg
-					assert.Equal(t, `{"website":{"uuid":"30303030-3030-4030-b030-303030303030","url":"https://example.com/","title":"","update_time":"2020-01-01T00:00:00Z"},"trace_id":"00000000000000000000000000000000","span_id":"0000000000000000","trace_flags":0}`, string(msg.Data))
+					assert.Equal(t, `{"website":{"uuid":"30303030-3030-4030-b030-303030303030","url":"https://example.com/","title":"","raw_content":"","update_time":"2020-01-01T00:00:00Z"},"trace_id":"00000000000000000000000000000000","span_id":"0000000000000000","trace_flags":0}`, string(msg.Data))
 				})
 				assert.NoError(t, err)
 				time.Sleep(100 * time.Millisecond)

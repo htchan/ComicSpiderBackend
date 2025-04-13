@@ -112,9 +112,10 @@ func TestWebsiteBatchUpdateTask_handler(t *testing.T) {
 	})
 
 	web := model.Website{
-		UUID:  "some uuid",
-		Title: "title",
-		URL:   "https://example.com",
+		UUID:       "some uuid",
+		Title:      "title",
+		RawContent: "raw content",
+		URL:        "https://example.com",
 	}
 	tests := []struct {
 		name            string
@@ -155,7 +156,7 @@ func TestWebsiteBatchUpdateTask_handler(t *testing.T) {
 					gotMsg = msg
 					assert.Equal(
 						t,
-						`{"website":{"uuid":"some uuid","url":"https://example.com","title":"title","update_time":"0001-01-01T00:00:00Z"},"trace_id":"00000000000000000000000000000000","span_id":"0000000000000000","trace_flags":0}`,
+						`{"website":{"uuid":"some uuid","url":"https://example.com","title":"title","raw_content":"raw content","update_time":"0001-01-01T00:00:00Z"},"trace_id":"00000000000000000000000000000000","span_id":"0000000000000000","trace_flags":0}`,
 						string(msg.Data),
 					)
 				})
@@ -224,7 +225,7 @@ func TestWebsiteBatchUpdateTask_handler(t *testing.T) {
 					gotMsg = msg
 					assert.Equal(
 						t,
-						`{"website":{"uuid":"some uuid","url":"https://example.com","title":"title","update_time":"0001-01-01T00:00:00Z"},"trace_id":"00000000000000000000000000000000","span_id":"0000000000000000","trace_flags":0}`,
+						`{"website":{"uuid":"some uuid","url":"https://example.com","title":"title","raw_content":"raw content","update_time":"0001-01-01T00:00:00Z"},"trace_id":"00000000000000000000000000000000","span_id":"0000000000000000","trace_flags":0}`,
 						string(msg.Data),
 					)
 				})
@@ -284,9 +285,10 @@ func TestWebsiteBatchUpdateTask_publishWebsiteUpdateTask(t *testing.T) {
 				}
 			},
 			web: &model.Website{
-				UUID:  "some uuid",
-				Title: "title",
-				URL:   "https://example.com",
+				UUID:       "some uuid",
+				Title:      "title",
+				RawContent: "raw content",
+				URL:        "https://example.com",
 			},
 			expectSubscribe: func(t *testing.T, c *nats.Conn) {
 				var gotMsg *nats.Msg
@@ -294,7 +296,7 @@ func TestWebsiteBatchUpdateTask_publishWebsiteUpdateTask(t *testing.T) {
 					gotMsg = msg
 					assert.Equal(
 						t,
-						`{"website":{"uuid":"some uuid","url":"https://example.com","title":"title","update_time":"0001-01-01T00:00:00Z"},"trace_id":"skipped_data","span_id":"skipped_data","trace_flags":1}`,
+						`{"website":{"uuid":"some uuid","url":"https://example.com","title":"title","raw_content":"raw content","update_time":"0001-01-01T00:00:00Z"},"trace_id":"skipped_data","span_id":"skipped_data","trace_flags":1}`,
 						regexp.MustCompile(`"(trace_id|span_id)":"\w+"`).ReplaceAllString(string(msg.Data), `"$1":"skipped_data"`),
 					)
 				})
@@ -317,9 +319,10 @@ func TestWebsiteBatchUpdateTask_publishWebsiteUpdateTask(t *testing.T) {
 				}
 			},
 			web: &model.Website{
-				UUID:  "some uuid",
-				Title: "title",
-				URL:   "https://example.com",
+				UUID:       "some uuid",
+				Title:      "title",
+				RawContent: "raw content",
+				URL:        "https://example.com",
 			},
 			expectSubscribe: func(t *testing.T, c *nats.Conn) {
 				var gotMsg *nats.Msg
@@ -362,8 +365,8 @@ func TestWebsiteBatchUpdateTask_hashData(t *testing.T) {
 		},
 		{
 			name:   "test json",
-			input:  []byte(`{"website":{"uuid":"","url":"https://example.com","title":"test","update_time":"2020-05-01T00:00:00Z"},"trace_id":"01234567890123456789012345678901","span_id":"0123456789012345","trace_flags":1}`),
-			expect: "cde5bb87f8ccca94fb216529d7644703fe41517f522a5b126830972e139a0931",
+			input:  []byte(`{"website":{"uuid":"","url":"https://example.com","title":"test","raw_content":"raw content","update_time":"2020-05-01T00:00:00Z"},"trace_id":"01234567890123456789012345678901","span_id":"0123456789012345","trace_flags":1}`),
+			expect: "d98e03a372153f9f7980d08c66a2e7ca310dc2a2fd0ab5c881b5176222777426",
 		},
 	}
 

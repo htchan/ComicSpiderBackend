@@ -3,6 +3,7 @@ package websiteupdate
 import (
 	"context"
 	"encoding/json"
+	"time"
 
 	"github.com/htchan/WebHistory/internal/config"
 	"github.com/htchan/WebHistory/internal/model"
@@ -56,6 +57,30 @@ func ParamsFromData(ctx context.Context, data []byte, conf *config.WebsiteConfig
 	}
 
 	return ctx, params, nil
+}
+
+func (params WebsiteUpdateParams) MarshalJSON() ([]byte, error) {
+	type Alias WebsiteUpdateParams
+	type WebsiteParams struct {
+		UUID       string    `json:"uuid"`
+		URL        string    `json:"url"`
+		Title      string    `json:"title"`
+		RawContent string    `json:"raw_content"`
+		UpdateTime time.Time `json:"update_time"`
+	}
+	return json.Marshal(&struct {
+		Website WebsiteParams `json:"website"`
+		Alias
+	}{
+		Alias: Alias(params),
+		Website: WebsiteParams{
+			UUID:       params.Website.UUID,
+			URL:        params.Website.URL,
+			Title:      params.Website.Title,
+			RawContent: params.Website.RawContent,
+			UpdateTime: params.Website.UpdateTime.UTC(),
+		},
+	})
 }
 
 func (params *WebsiteUpdateParams) ToData(ctx context.Context) ([]byte, error) {
