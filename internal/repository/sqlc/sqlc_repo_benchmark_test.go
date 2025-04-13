@@ -24,7 +24,7 @@ func BenchmarkPsqlRepo_CreateWebsite(b *testing.B) {
 		db.Close()
 	})
 
-	updateTime := time.Now().UTC().Truncate(time.Second)
+	updateTime := time.Now().UTC().Truncate(5 * time.Second)
 
 	b.ResetTimer()
 	b.StopTimer()
@@ -192,7 +192,7 @@ func BenchmarkPsqlRepo_CreateUserWebsite(b *testing.B) {
 		db.Close()
 	})
 
-	accessTime := time.Now().UTC().Truncate(time.Second)
+	accessTime := time.Now().UTC().Truncate(5 * time.Second)
 
 	b.ResetTimer()
 	b.StopTimer()
@@ -234,7 +234,7 @@ func BenchmarkPsqlRepo_UpdateUserWebsite(b *testing.B) {
 		WebsiteUUID: uuid,
 		UserUUID:    userUUID,
 		GroupName:   "group",
-		AccessTime:  time.Now().UTC().Truncate(time.Second),
+		AccessTime:  time.Now().UTC().Truncate(5 * time.Second),
 	}
 
 	b.ResetTimer()

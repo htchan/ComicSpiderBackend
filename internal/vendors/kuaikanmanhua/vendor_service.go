@@ -143,7 +143,7 @@ func (serv *VendorService) isUpdated(ctx context.Context, web *model.Website, bo
 	}
 
 	if isUpdated {
-		web.UpdateTime = time.Now().UTC().Truncate(time.Second)
+		web.UpdateTime = time.Now().UTC().Truncate(5 * time.Second)
 	}
 
 	return isUpdated

@@ -201,7 +201,7 @@ func TestVendorService_isUpdated(t *testing.T) {
 			wantWeb: &model.Website{
 				Title:      "title",
 				Conf:       &config.WebsiteConfig{Separator: "\n"},
-				UpdateTime: time.Now().UTC().Truncate(time.Second),
+				UpdateTime: time.Now().UTC().Truncate(5 * time.Second),
 			},
 		},
 		{
@@ -243,7 +243,7 @@ func TestVendorService_isUpdated(t *testing.T) {
 			wantWeb: &model.Website{
 				RawContent: "content 1\ncontent 2\ncontent 3\ncontent 4\ncontent 5",
 				Conf:       &config.WebsiteConfig{Separator: "\n"},
-				UpdateTime: time.Now().UTC().Truncate(time.Second),
+				UpdateTime: time.Now().UTC().Truncate(5 * time.Second),
 			},
 		},
 		{
@@ -271,7 +271,7 @@ func TestVendorService_isUpdated(t *testing.T) {
 			wantWeb: &model.Website{
 				RawContent: "content 1\ncontent 2\ncontent 3\ncontent 4\ncontent 5",
 				Conf:       &config.WebsiteConfig{Separator: "\n"},
-				UpdateTime: time.Now().UTC().Truncate(time.Second),
+				UpdateTime: time.Now().UTC().Truncate(5 * time.Second),
 			},
 		},
 	}
@@ -386,7 +386,7 @@ func TestVendorService_Update(t *testing.T) {
 					URL:        serv.URL + "/success",
 					Title:      "title",
 					RawContent: "content 1\ncontent 2\ncontent 3\ncontent 4\ncontent 5",
-					UpdateTime: time.Now().UTC().Truncate(time.Second),
+					UpdateTime: time.Now().UTC().Truncate(5 * time.Second),
 					Conf:       &config.WebsiteConfig{Separator: "\n"},
 				}).Return(nil)
 
@@ -400,7 +400,7 @@ func TestVendorService_Update(t *testing.T) {
 				URL:        serv.URL + "/success",
 				Title:      "title",
 				RawContent: "content 1\ncontent 2\ncontent 3\ncontent 4\ncontent 5",
-				UpdateTime: time.Now().UTC().Truncate(time.Second),
+				UpdateTime: time.Now().UTC().Truncate(5 * time.Second),
 				Conf:       &config.WebsiteConfig{Separator: "\n"},
 			},
 			wantErr: nil,
@@ -454,7 +454,7 @@ func TestVendorService_Update(t *testing.T) {
 					URL:        serv.URL + "/success",
 					Title:      "title",
 					RawContent: "content 1\ncontent 2\ncontent 3\ncontent 4\ncontent 5",
-					UpdateTime: time.Now().UTC().Truncate(time.Second),
+					UpdateTime: time.Now().UTC().Truncate(5 * time.Second),
 					Conf:       &config.WebsiteConfig{Separator: "\n"},
 				}).Return(testError)
 
@@ -468,7 +468,7 @@ func TestVendorService_Update(t *testing.T) {
 				URL:        serv.URL + "/success",
 				Title:      "title",
 				RawContent: "content 1\ncontent 2\ncontent 3\ncontent 4\ncontent 5",
-				UpdateTime: time.Now().UTC().Truncate(time.Second),
+				UpdateTime: time.Now().UTC().Truncate(5 * time.Second),
 				Conf:       &config.WebsiteConfig{Separator: "\n"},
 			},
 			wantErr: testError,

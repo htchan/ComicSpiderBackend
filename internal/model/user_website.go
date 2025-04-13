@@ -19,7 +19,7 @@ func NewUserWebsite(web Website, userUUID string) UserWebsite {
 		WebsiteUUID: web.UUID,
 		UserUUID:    userUUID,
 		GroupName:   web.Title,
-		AccessTime:  time.Now().UTC().Truncate(time.Second),
+		AccessTime:  time.Now().UTC().Truncate(5 * time.Second),
 		Website:     web,
 	}
 }

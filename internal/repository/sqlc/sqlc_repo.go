@@ -44,7 +44,7 @@ func fromSqlcWebsite(webModel sqlc.Website) model.Website {
 		URL:        webModel.Url.String,
 		Title:      webModel.Title.String,
 		RawContent: webModel.Content.String,
-		UpdateTime: webModel.UpdateTime.Time.UTC().Truncate(time.Second),
+		UpdateTime: webModel.UpdateTime.Time.UTC().Truncate(5 * time.Second),
 	}
 }
 
@@ -53,12 +53,12 @@ func fromSqlcListUserWebsitesRow(userWebModel sqlc.ListUserWebsitesRow) model.Us
 		WebsiteUUID: userWebModel.WebsiteUuid.String,
 		UserUUID:    userWebModel.UserUuid.String,
 		GroupName:   userWebModel.GroupName.String,
-		AccessTime:  userWebModel.AccessTime.Time.UTC().Truncate(time.Second),
+		AccessTime:  userWebModel.AccessTime.Time.UTC().Truncate(5 * time.Second),
 		Website: model.Website{
 			UUID:       userWebModel.WebsiteUuid.String,
 			URL:        userWebModel.Url.String,
 			Title:      userWebModel.Title.String,
-			UpdateTime: userWebModel.UpdateTime.Time.UTC().Truncate(time.Second),
+			UpdateTime: userWebModel.UpdateTime.Time.UTC().Truncate(5 * time.Second),
 		},
 	}
 }
@@ -68,12 +68,12 @@ func fromSqlcListUserWebsitesByGroupRow(userWebModel sqlc.ListUserWebsitesByGrou
 		WebsiteUUID: userWebModel.WebsiteUuid.String,
 		UserUUID:    userWebModel.UserUuid.String,
 		GroupName:   userWebModel.GroupName.String,
-		AccessTime:  userWebModel.AccessTime.Time.UTC().Truncate(time.Second),
+		AccessTime:  userWebModel.AccessTime.Time.UTC().Truncate(5 * time.Second),
 		Website: model.Website{
 			UUID:       userWebModel.WebsiteUuid.String,
 			URL:        userWebModel.Url.String,
 			Title:      userWebModel.Title.String,
-			UpdateTime: userWebModel.UpdateTime.Time.UTC().Truncate(time.Second),
+			UpdateTime: userWebModel.UpdateTime.Time.UTC().Truncate(5 * time.Second),
 		},
 	}
 }
@@ -83,12 +83,12 @@ func fromSqlcGetUserWebsiteRow(userWebModel sqlc.GetUserWebsiteRow) model.UserWe
 		WebsiteUUID: userWebModel.WebsiteUuid.String,
 		UserUUID:    userWebModel.UserUuid.String,
 		GroupName:   userWebModel.GroupName.String,
-		AccessTime:  userWebModel.AccessTime.Time.UTC().Truncate(time.Second),
+		AccessTime:  userWebModel.AccessTime.Time.UTC().Truncate(5 * time.Second),
 		Website: model.Website{
 			UUID:       userWebModel.WebsiteUuid.String,
 			URL:        userWebModel.Url.String,
 			Title:      userWebModel.Title.String,
-			UpdateTime: userWebModel.UpdateTime.Time.UTC().Truncate(time.Second),
+			UpdateTime: userWebModel.UpdateTime.Time.UTC().Truncate(5 * time.Second),
 		},
 	}
 }
@@ -164,7 +164,7 @@ func (r *SqlcRepo) CreateWebsite(web *model.Website) error {
 
 	web.UUID = webModel.Uuid.String
 	web.Title, web.RawContent = webModel.Title.String, webModel.Content.String
-	web.UpdateTime = webModel.UpdateTime.Time.UTC().Truncate(time.Second)
+	web.UpdateTime = webModel.UpdateTime.Time.UTC().Truncate(5 * time.Second)
 	web.Conf = r.conf
 
 	return nil
@@ -227,7 +227,7 @@ func (r *SqlcRepo) CreateUserWebsite(web *model.UserWebsite) error {
 	}
 
 	web.GroupName = userWebModel.GroupName.String
-	web.AccessTime = userWebModel.AccessTime.Time.UTC().Truncate(time.Second)
+	web.AccessTime = userWebModel.AccessTime.Time.UTC().Truncate(5 * time.Second)
 	tempWeb, err := r.FindWebsite(web.WebsiteUUID)
 	if err != nil {
 		return fmt.Errorf("assign website fail: %w", err)

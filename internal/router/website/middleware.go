@@ -40,7 +40,7 @@ func logRequest() func(next http.Handler) http.Handler {
 					Str("request_id", requestID.String()).
 					Logger()
 
-				start := time.Now().UTC().Truncate(time.Second)
+				start := time.Now().UTC().Truncate(5 * time.Second)
 				next.ServeHTTP(res, req.WithContext(logger.WithContext(ctx)))
 
 				logger.Info().

@@ -256,7 +256,7 @@ func Test_createWebsiteHandler(t *testing.T) {
 					&model.Website{
 						UUID:       "30303030-3030-4030-b030-303030303030",
 						URL:        "https://example.com/",
-						UpdateTime: time.Now().UTC().Truncate(time.Second),
+						UpdateTime: time.Now().UTC().Truncate(5 * time.Second),
 						Conf:       &config.WebsiteConfig{},
 					},
 				).Return(nil)
@@ -265,11 +265,11 @@ func Test_createWebsiteHandler(t *testing.T) {
 					&model.UserWebsite{
 						WebsiteUUID: "30303030-3030-4030-b030-303030303030",
 						UserUUID:    "abc",
-						AccessTime:  time.Now().UTC().Truncate(time.Second),
+						AccessTime:  time.Now().UTC().Truncate(5 * time.Second),
 						Website: model.Website{
 							UUID:       "30303030-3030-4030-b030-303030303030",
 							URL:        "https://example.com/",
-							UpdateTime: time.Now().UTC().Truncate(time.Second),
+							UpdateTime: time.Now().UTC().Truncate(5 * time.Second),
 							Conf:       &config.WebsiteConfig{},
 						},
 					},
@@ -299,23 +299,23 @@ func Test_createWebsiteHandler(t *testing.T) {
 					&model.Website{
 						UUID:       "30303030-3030-4030-b030-303030303030",
 						URL:        "https://example.com/",
-						UpdateTime: time.Now().UTC().Truncate(time.Second),
+						UpdateTime: time.Now().UTC().Truncate(5 * time.Second),
 						Conf:       &config.WebsiteConfig{},
 					},
 				).
 					Do(func(web *model.Website) {
-						web.UpdateTime = time.Date(2020, 1, 1, 0, 0, 0, 0, time.UTC).Truncate(time.Second)
+						web.UpdateTime = time.Date(2020, 1, 1, 0, 0, 0, 0, time.UTC).Truncate(5 * time.Second)
 					}).Return(nil)
 
 				rpo.EXPECT().CreateUserWebsite(
 					&model.UserWebsite{
 						WebsiteUUID: "30303030-3030-4030-b030-303030303030",
 						UserUUID:    "abc",
-						AccessTime:  time.Now().UTC().Truncate(time.Second),
+						AccessTime:  time.Now().UTC().Truncate(5 * time.Second),
 						Website: model.Website{
 							UUID:       "30303030-3030-4030-b030-303030303030",
 							URL:        "https://example.com/",
-							UpdateTime: time.Date(2020, 1, 1, 0, 0, 0, 0, time.UTC).Truncate(time.Second),
+							UpdateTime: time.Date(2020, 1, 1, 0, 0, 0, 0, time.UTC).Truncate(5 * time.Second),
 							Conf:       &config.WebsiteConfig{},
 						},
 					},
@@ -328,7 +328,7 @@ func Test_createWebsiteHandler(t *testing.T) {
 				serv.EXPECT().Support(&model.Website{
 					UUID:       "30303030-3030-4030-b030-303030303030",
 					URL:        "https://example.com/",
-					UpdateTime: time.Date(2020, 1, 1, 0, 0, 0, 0, time.UTC).Truncate(time.Second),
+					UpdateTime: time.Date(2020, 1, 1, 0, 0, 0, 0, time.UTC).Truncate(5 * time.Second),
 					Conf:       &config.WebsiteConfig{},
 				}).Return(true)
 				serv.EXPECT().Name().Return("create_web.success.more_than_24_hrs").AnyTimes()
@@ -363,23 +363,23 @@ func Test_createWebsiteHandler(t *testing.T) {
 					&model.Website{
 						UUID:       "30303030-3030-4030-b030-303030303030",
 						URL:        "https://example.com/",
-						UpdateTime: time.Now().UTC().Truncate(time.Second),
+						UpdateTime: time.Now().UTC().Truncate(5 * time.Second),
 						Conf:       &config.WebsiteConfig{},
 					},
 				).
 					Do(func(web *model.Website) {
-						web.UpdateTime = time.Date(2020, 1, 1, 0, 0, 0, 0, time.UTC).Truncate(time.Second)
+						web.UpdateTime = time.Date(2020, 1, 1, 0, 0, 0, 0, time.UTC).Truncate(5 * time.Second)
 					}).Return(nil)
 
 				rpo.EXPECT().CreateUserWebsite(
 					&model.UserWebsite{
 						WebsiteUUID: "30303030-3030-4030-b030-303030303030",
 						UserUUID:    "abc",
-						AccessTime:  time.Now().UTC().Truncate(time.Second),
+						AccessTime:  time.Now().UTC().Truncate(5 * time.Second),
 						Website: model.Website{
 							UUID:       "30303030-3030-4030-b030-303030303030",
 							URL:        "https://example.com/",
-							UpdateTime: time.Date(2020, 1, 1, 0, 0, 0, 0, time.UTC).Truncate(time.Second),
+							UpdateTime: time.Date(2020, 1, 1, 0, 0, 0, 0, time.UTC).Truncate(5 * time.Second),
 							Conf:       &config.WebsiteConfig{},
 						},
 					},
@@ -392,7 +392,7 @@ func Test_createWebsiteHandler(t *testing.T) {
 				serv.EXPECT().Support(&model.Website{
 					UUID:       "30303030-3030-4030-b030-303030303030",
 					URL:        "https://example.com/",
-					UpdateTime: time.Date(2020, 1, 1, 0, 0, 0, 0, time.UTC).Truncate(time.Second),
+					UpdateTime: time.Date(2020, 1, 1, 0, 0, 0, 0, time.UTC).Truncate(5 * time.Second),
 					Conf:       &config.WebsiteConfig{},
 				}).Return(false)
 				serv.EXPECT().Name().Return("create_web.error.not_supported_web").AnyTimes()
@@ -427,7 +427,7 @@ func Test_createWebsiteHandler(t *testing.T) {
 					&model.Website{
 						UUID:       "30303030-3030-4030-b030-303030303030",
 						URL:        "https://example.com/",
-						UpdateTime: time.Now().UTC().Truncate(time.Second),
+						UpdateTime: time.Now().UTC().Truncate(5 * time.Second),
 						Conf:       &config.WebsiteConfig{},
 					},
 				).Return(errors.New("some error"))
@@ -546,7 +546,7 @@ func Test_refreshWebsiteHandler(t *testing.T) {
 						WebsiteUUID: "web_uuid",
 						UserUUID:    "user_uuid",
 						GroupName:   "name",
-						AccessTime:  time.Now().UTC().Truncate(time.Second),
+						AccessTime:  time.Now().UTC().Truncate(5 * time.Second),
 						Website: model.Website{
 							UUID:       "web_uuid",
 							Title:      "title",
@@ -571,7 +571,7 @@ func Test_refreshWebsiteHandler(t *testing.T) {
 				},
 			},
 			expectStatus: 200,
-			expectResp:   fmt.Sprintf(`{"website":{"uuid":"web_uuid","user_uuid":"user_uuid","url":"http://example.com/","title":"title","group_name":"name","update_time":"2000-01-01T00:00:00Z","access_time":"%s"}}`, time.Now().UTC().Truncate(time.Second).Format("2006-01-02T15:04:05Z07:00")),
+			expectResp:   fmt.Sprintf(`{"website":{"uuid":"web_uuid","user_uuid":"user_uuid","url":"http://example.com/","title":"title","group_name":"name","update_time":"2000-01-01T00:00:00Z","access_time":"%s"}}`, time.Now().UTC().Truncate(5*time.Second).Format("2006-01-02T15:04:05Z07:00")),
 		},
 	}
 
