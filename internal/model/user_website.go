@@ -1,7 +1,6 @@
 package model
 
 import (
-	"encoding/json"
 	"time"
 )
 
@@ -40,26 +39,6 @@ func (webs UserWebsites) WebsiteGroups() WebsiteGroups {
 	}
 
 	return groups
-}
-
-func (web UserWebsite) MarshalJSON() ([]byte, error) {
-	return json.Marshal(&struct {
-		UUID       string `json:"uuid"`
-		UserUUID   string `json:"user_uuid"`
-		URL        string `json:"url"`
-		Title      string `json:"title"`
-		GroupName  string `json:"group_name"`
-		UpdateTime string `json:"update_time"`
-		AccessTime string `json:"access_time"`
-	}{
-		UUID:       web.WebsiteUUID,
-		UserUUID:   web.UserUUID,
-		URL:        web.Website.URL,
-		Title:      web.Website.Title,
-		GroupName:  web.GroupName,
-		UpdateTime: web.Website.UpdateTime.Format("2006-01-02T15:04:05Z07:00"),
-		AccessTime: web.AccessTime.Format("2006-01-02T15:04:05Z07:00"),
-	})
 }
 
 func (web UserWebsite) Equal(compare UserWebsite) bool {

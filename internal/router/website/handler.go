@@ -59,7 +59,7 @@ func getAllWebsiteGroupsHandler(r repository.Repostory) http.HandlerFunc {
 
 		dbSpan.End()
 
-		encodeJsonResp(req.Context(), res, listAllWebsiteGroupsResp{webs.WebsiteGroups()})
+		encodeJsonResp(req.Context(), res, listAllWebsiteGroupsResp{fromModelWebsiteGroups(webs.WebsiteGroups())})
 	}
 }
 
@@ -95,7 +95,7 @@ func getWebsiteGroupHandler(r repository.Repostory) http.HandlerFunc {
 
 		dbSpan.End()
 
-		encodeJsonResp(req.Context(), res, getWebsiteGroupResp{webs})
+		encodeJsonResp(req.Context(), res, getWebsiteGroupResp{fromModelWebsiteGroup(webs)})
 	}
 }
 
@@ -197,7 +197,7 @@ func getUserWebsiteHandler() http.HandlerFunc {
 	return func(res http.ResponseWriter, req *http.Request) {
 		web := req.Context().Value(ContextKeyWebsite).(model.UserWebsite)
 
-		encodeJsonResp(req.Context(), res, getUserWebsiteResp{web})
+		encodeJsonResp(req.Context(), res, getUserWebsiteResp{fromModelUserWebsite(web)})
 	}
 }
 
@@ -216,7 +216,7 @@ func refreshWebsiteHandler(r repository.Repostory) http.HandlerFunc {
 		tr := otel.Tracer("htchan/WebHistory/api")
 
 		web := req.Context().Value(ContextKeyWebsite).(model.UserWebsite)
-		web.AccessTime = time.Now().UTC().Truncate(time.Second)
+		web.AccessTime = time.Now().UTC().Truncate(5 * time.Second)
 
 		dbCtx, dbSpan := tr.Start(req.Context(), "Refresh User Website")
 		defer dbSpan.End()
@@ -234,7 +234,7 @@ func refreshWebsiteHandler(r repository.Repostory) http.HandlerFunc {
 
 		dbSpan.End()
 
-		encodeJsonResp(req.Context(), res, refreshWebsiteResp{web})
+		encodeJsonResp(req.Context(), res, refreshWebsiteResp{fromModelUserWebsite(web)})
 	}
 }
 
@@ -327,7 +327,7 @@ func changeWebsiteGroupHandler(r repository.Repostory) http.HandlerFunc {
 
 		dbSpan.End()
 
-		encodeJsonResp(req.Context(), res, changeWebsiteGroupResp{web})
+		encodeJsonResp(req.Context(), res, changeWebsiteGroupResp{fromModelUserWebsite(web)})
 	}
 }
 

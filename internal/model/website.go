@@ -1,7 +1,6 @@
 package model
 
 import (
-	"encoding/json"
 	"net/url"
 	"strings"
 	"time"
@@ -12,12 +11,12 @@ import (
 )
 
 type Website struct {
-	UUID       string    `json:"uuid"`
-	URL        string    `json:"url"`
-	Title      string    `json:"title"`
-	RawContent string    `json:"raw_content"`
-	UpdateTime time.Time `json:"update_time"`
-	Conf       *config.WebsiteConfig
+	UUID       string                `json:"uuid"`
+	URL        string                `json:"url"`
+	Title      string                `json:"title"`
+	RawContent string                `json:"raw_content"`
+	UpdateTime time.Time             `json:"update_time"`
+	Conf       *config.WebsiteConfig `json:"-"`
 }
 
 func NewWebsite(url string, conf *config.WebsiteConfig) Website {
@@ -37,20 +36,6 @@ func (web Website) Map() map[string]interface{} {
 		"title":      web.Title,
 		"updateTime": web.UpdateTime,
 	}
-}
-
-func (web Website) MarshalJSON() ([]byte, error) {
-	return json.Marshal(&struct {
-		UUID       string `json:"uuid"`
-		URL        string `json:"url"`
-		Title      string `json:"title"`
-		UpdateTime string `json:"update_time"`
-	}{
-		UUID:       web.UUID,
-		URL:        web.URL,
-		Title:      web.Title,
-		UpdateTime: web.UpdateTime.Format("2006-01-02T15:04:05Z07:00"),
-	})
 }
 
 func (web Website) FullHost() string {
