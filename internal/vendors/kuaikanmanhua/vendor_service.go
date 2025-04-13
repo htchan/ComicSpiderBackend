@@ -110,9 +110,41 @@ func (serv *VendorService) fetchWebsite(ctx context.Context, web *model.Website)
 }
 
 func (serv *VendorService) isUpdated(ctx context.Context, web *model.Website, body string) bool {
+	tr := otel.Tracer("htchan/WebHistory/vendors/kuaikanmanhua")
+
+	_, checkUpdateSpan := tr.Start(ctx, "check update")
+	defer checkUpdateSpan.End()
+
+	oldTitle := web.Title
+	oldContent := web.RawContent
+	defer func() {
+		attrs := make([]attribute.KeyValue, 0, 6)
+		if oldTitle != web.Title {
+			attrs = append(
+				attrs,
+				attribute.Bool("title_updated", true),
+				attribute.String("old_title", oldTitle),
+				attribute.String("new_title", web.Title),
+			)
+		}
+
+		if oldContent != web.RawContent {
+			attrs = append(
+				attrs,
+				attribute.Bool("content_updated", true),
+				attribute.String("old_content", oldContent),
+				attribute.String("new_content", web.RawContent),
+			)
+		}
+
+		checkUpdateSpan.SetAttributes(attrs...)
+	}()
+
 	doc, err := goquery.NewDocumentFromReader(strings.NewReader(body))
 	if err != nil {
 		zerolog.Ctx(ctx).Error().Err(err).Msg("Failed to parse HTML")
+		checkUpdateSpan.SetStatus(codes.Error, err.Error())
+		checkUpdateSpan.RecordError(err)
 
 		return false
 	}
@@ -158,6 +190,13 @@ func (serv *VendorService) Update(ctx context.Context, web *model.Website) error
 
 	_, fetchWebSpan := tr.Start(ctx, "fetch website")
 	defer fetchWebSpan.End()
+
+	fetchWebSpan.SetAttributes(
+		append(
+			web.OtelAttributes(),
+			attribute.String("vendor", serv.Name()),
+		)...,
+	)
 
 	body, fetchErr := serv.fetchWebsite(ctx, web)
 	if fetchErr != nil {
