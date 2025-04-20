@@ -90,7 +90,7 @@ func (task *WebsiteBatchUpdateTask) handler(msg jetstream.Msg) {
 	_, dbSpan := tr.Start(ctx, "Load Websites From DB")
 	defer dbSpan.End()
 
-	websites, err := task.rpo.FindWebsites()
+	websites, err := task.rpo.FindWebsites(ctx)
 	if err != nil {
 		zerolog.Ctx(ctx).Error().Err(err).Msg("load website from db failed")
 		dbSpan.SetStatus(codes.Error, err.Error())
