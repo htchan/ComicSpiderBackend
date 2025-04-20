@@ -1,27 +1,34 @@
 package repository
 
 import (
+	"context"
 	"database/sql"
 
 	"github.com/htchan/WebHistory/internal/model"
+	"go.opentelemetry.io/otel"
+	"go.opentelemetry.io/otel/trace"
 )
 
 //go:generate mockgen -destination=../mock/repository/repository.go -package=mockrepo . Repostory
 type Repostory interface {
-	CreateWebsite(*model.Website) error
-	UpdateWebsite(*model.Website) error
-	DeleteWebsite(*model.Website) error
+	CreateWebsite(context.Context, *model.Website) error
+	UpdateWebsite(context.Context, *model.Website) error
+	DeleteWebsite(context.Context, *model.Website) error
 
-	FindWebsites() ([]model.Website, error)
-	FindWebsite(uuid string) (*model.Website, error)
+	FindWebsites(context.Context) ([]model.Website, error)
+	FindWebsite(ctx context.Context, uuid string) (*model.Website, error)
 
-	CreateUserWebsite(*model.UserWebsite) error
-	UpdateUserWebsite(*model.UserWebsite) error
-	DeleteUserWebsite(*model.UserWebsite) error
+	CreateUserWebsite(context.Context, *model.UserWebsite) error
+	UpdateUserWebsite(context.Context, *model.UserWebsite) error
+	DeleteUserWebsite(context.Context, *model.UserWebsite) error
 
-	FindUserWebsites(userUUID string) (model.UserWebsites, error)
-	FindUserWebsitesByGroup(userUUID, group string) (model.WebsiteGroup, error)
-	FindUserWebsite(userUUID, websiteUUID string) (*model.UserWebsite, error)
+	FindUserWebsites(ctx context.Context, userUUID string) (model.UserWebsites, error)
+	FindUserWebsitesByGroup(ctx context.Context, userUUID, group string) (model.WebsiteGroup, error)
+	FindUserWebsite(ctx context.Context, userUUID, websiteUUID string) (*model.UserWebsite, error)
 
 	Stats() sql.DBStats
+}
+
+func GetTracer() trace.Tracer {
+	return otel.Tracer("htchan/WebHistory/repository")
 }

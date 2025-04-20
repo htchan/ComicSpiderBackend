@@ -1,6 +1,7 @@
 package sqlc
 
 import (
+	"context"
 	"database/sql"
 	"testing"
 	"time"
@@ -100,7 +101,7 @@ func TestSqlcRepo_CreateWebsite(t *testing.T) {
 				URL:        "http://example.com/" + title,
 				Title:      title,
 				RawContent: "",
-				UpdateTime: time.Now().UTC().Truncate(5 * time.Second),
+				UpdateTime: time.Now().UTC().Truncate(MinTimeUnit),
 			},
 			expect: model.Website{
 				UUID:       uuid,
@@ -119,7 +120,7 @@ func TestSqlcRepo_CreateWebsite(t *testing.T) {
 		t.Run(test.name, func(t *testing.T) {
 			t.Parallel()
 
-			err := r.CreateWebsite(&test.web)
+			err := r.CreateWebsite(context.Background(), &test.web)
 			assert.ErrorIs(t, err, test.expectError)
 			assert.Equal(t, test.expect, test.web)
 		})
@@ -191,10 +192,10 @@ func TestSqlcRepo_UpdateWebsite(t *testing.T) {
 		t.Run(test.name, func(t *testing.T) {
 			t.Parallel()
 
-			err := r.UpdateWebsite(&test.web)
+			err := r.UpdateWebsite(context.Background(), &test.web)
 			assert.ErrorIs(t, err, test.expectError)
 
-			web, _ := r.FindWebsite(test.web.UUID)
+			web, _ := r.FindWebsite(context.Background(), test.web.UUID)
 			assert.Equal(t, test.expect, web)
 		})
 	}
@@ -242,10 +243,10 @@ func TestSqlcRepo_DeleteWebsite(t *testing.T) {
 		t.Run(test.name, func(t *testing.T) {
 			t.Parallel()
 
-			err := r.DeleteWebsite(&model.Website{UUID: test.webUUID})
+			err := r.DeleteWebsite(context.Background(), &model.Website{UUID: test.webUUID})
 			assert.ErrorIs(t, err, test.expectError)
 
-			web, err := r.FindWebsite(test.webUUID)
+			web, err := r.FindWebsite(context.Background(), test.webUUID)
 			assert.ErrorIs(t, err, sql.ErrNoRows)
 			assert.Nil(t, web)
 		})
@@ -296,7 +297,7 @@ func TestSqlcRepo_FindWebsites(t *testing.T) {
 		t.Run(test.name, func(t *testing.T) {
 			t.Parallel()
 
-			result, err := r.FindWebsites()
+			result, err := r.FindWebsites(context.Background())
 			assert.ErrorIs(t, err, test.expectError)
 			assert.Contains(t, result, test.expect)
 		})
@@ -355,7 +356,7 @@ func TestSqlcRepo_FindWebsite(t *testing.T) {
 		t.Run(test.name, func(t *testing.T) {
 			t.Parallel()
 
-			result, err := r.FindWebsite(test.webUUID)
+			result, err := r.FindWebsite(context.Background(), test.webUUID)
 			assert.ErrorIs(t, err, test.expectError)
 			assert.Equal(t, test.expect, result)
 		})
@@ -457,7 +458,7 @@ func TestSqlcRepo_CreateUserWebsite(t *testing.T) {
 		t.Run(test.name, func(t *testing.T) {
 			t.Parallel()
 
-			err := r.CreateUserWebsite(&test.web)
+			err := r.CreateUserWebsite(context.Background(), &test.web)
 			assert.ErrorIs(t, err, test.expectError)
 			assert.Equal(t, test.expect, test.web)
 		})
@@ -527,10 +528,10 @@ func TestSqlcRepo_UpdateUserWebsite(t *testing.T) {
 	for _, test := range tests {
 		test := test
 		t.Run(test.name, func(t *testing.T) {
-			err := r.UpdateUserWebsite(&test.web)
+			err := r.UpdateUserWebsite(context.Background(), &test.web)
 			assert.ErrorIs(t, err, test.expectError)
 
-			web, _ := r.FindUserWebsite(test.web.UserUUID, test.web.WebsiteUUID)
+			web, _ := r.FindUserWebsite(context.Background(), test.web.UserUUID, test.web.WebsiteUUID)
 			assert.Equal(t, test.expect, web)
 		})
 	}
@@ -579,13 +580,13 @@ func TestSqlcRepo_DeleteUserWebsite(t *testing.T) {
 	for _, test := range tests {
 		test := test
 		t.Run(test.name, func(t *testing.T) {
-			err := r.DeleteUserWebsite(&model.UserWebsite{
+			err := r.DeleteUserWebsite(context.Background(), &model.UserWebsite{
 				UserUUID:    test.userUUID,
 				WebsiteUUID: test.webUUID,
 			})
 			assert.ErrorIs(t, err, test.expectError)
 
-			web, err := r.FindUserWebsite(test.userUUID, test.webUUID)
+			web, err := r.FindUserWebsite(context.Background(), test.userUUID, test.webUUID)
 			assert.ErrorIs(t, err, sql.ErrNoRows)
 			assert.Nil(t, web)
 		})
@@ -649,7 +650,7 @@ func TestSqlcRepo_FindUserWebsites(t *testing.T) {
 	for _, test := range tests {
 		test := test
 		t.Run(test.name, func(t *testing.T) {
-			result, err := r.FindUserWebsites(test.userUUID)
+			result, err := r.FindUserWebsites(context.Background(), test.userUUID)
 			assert.ErrorIs(t, err, test.expectError)
 			assert.Equal(t, test.expect, result)
 		})
@@ -723,7 +724,7 @@ func TestSqlcRepo_FindUserWebsitesByGroup(t *testing.T) {
 	for _, test := range tests {
 		test := test
 		t.Run(test.name, func(t *testing.T) {
-			result, err := r.FindUserWebsitesByGroup(test.userUUID, test.group)
+			result, err := r.FindUserWebsitesByGroup(context.Background(), test.userUUID, test.group)
 			assert.ErrorIs(t, err, test.expectError)
 			assert.Equal(t, test.expect, result)
 		})
@@ -795,7 +796,7 @@ func TestSqlcRepo_FindUserWebsite(t *testing.T) {
 	for _, test := range tests {
 		test := test
 		t.Run(test.name, func(t *testing.T) {
-			result, err := r.FindUserWebsite(test.userUUID, test.webUUID)
+			result, err := r.FindUserWebsite(context.Background(), test.userUUID, test.webUUID)
 			assert.ErrorIs(t, err, test.expectError)
 			assert.Equal(t, test.expect, result)
 		})
