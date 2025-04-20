@@ -5,6 +5,7 @@
 package mockrepo
 
 import (
+	context "context"
 	sql "database/sql"
 	reflect "reflect"
 
@@ -36,134 +37,134 @@ func (m *MockRepostory) EXPECT() *MockRepostoryMockRecorder {
 }
 
 // CreateUserWebsite mocks base method.
-func (m *MockRepostory) CreateUserWebsite(arg0 *model.UserWebsite) error {
+func (m *MockRepostory) CreateUserWebsite(arg0 context.Context, arg1 *model.UserWebsite) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "CreateUserWebsite", arg0)
+	ret := m.ctrl.Call(m, "CreateUserWebsite", arg0, arg1)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
 // CreateUserWebsite indicates an expected call of CreateUserWebsite.
-func (mr *MockRepostoryMockRecorder) CreateUserWebsite(arg0 interface{}) *gomock.Call {
+func (mr *MockRepostoryMockRecorder) CreateUserWebsite(arg0, arg1 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateUserWebsite", reflect.TypeOf((*MockRepostory)(nil).CreateUserWebsite), arg0)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateUserWebsite", reflect.TypeOf((*MockRepostory)(nil).CreateUserWebsite), arg0, arg1)
 }
 
 // CreateWebsite mocks base method.
-func (m *MockRepostory) CreateWebsite(arg0 *model.Website) error {
+func (m *MockRepostory) CreateWebsite(arg0 context.Context, arg1 *model.Website) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "CreateWebsite", arg0)
+	ret := m.ctrl.Call(m, "CreateWebsite", arg0, arg1)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
 // CreateWebsite indicates an expected call of CreateWebsite.
-func (mr *MockRepostoryMockRecorder) CreateWebsite(arg0 interface{}) *gomock.Call {
+func (mr *MockRepostoryMockRecorder) CreateWebsite(arg0, arg1 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateWebsite", reflect.TypeOf((*MockRepostory)(nil).CreateWebsite), arg0)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateWebsite", reflect.TypeOf((*MockRepostory)(nil).CreateWebsite), arg0, arg1)
 }
 
 // DeleteUserWebsite mocks base method.
-func (m *MockRepostory) DeleteUserWebsite(arg0 *model.UserWebsite) error {
+func (m *MockRepostory) DeleteUserWebsite(arg0 context.Context, arg1 *model.UserWebsite) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "DeleteUserWebsite", arg0)
+	ret := m.ctrl.Call(m, "DeleteUserWebsite", arg0, arg1)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
 // DeleteUserWebsite indicates an expected call of DeleteUserWebsite.
-func (mr *MockRepostoryMockRecorder) DeleteUserWebsite(arg0 interface{}) *gomock.Call {
+func (mr *MockRepostoryMockRecorder) DeleteUserWebsite(arg0, arg1 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteUserWebsite", reflect.TypeOf((*MockRepostory)(nil).DeleteUserWebsite), arg0)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteUserWebsite", reflect.TypeOf((*MockRepostory)(nil).DeleteUserWebsite), arg0, arg1)
 }
 
 // DeleteWebsite mocks base method.
-func (m *MockRepostory) DeleteWebsite(arg0 *model.Website) error {
+func (m *MockRepostory) DeleteWebsite(arg0 context.Context, arg1 *model.Website) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "DeleteWebsite", arg0)
+	ret := m.ctrl.Call(m, "DeleteWebsite", arg0, arg1)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
 // DeleteWebsite indicates an expected call of DeleteWebsite.
-func (mr *MockRepostoryMockRecorder) DeleteWebsite(arg0 interface{}) *gomock.Call {
+func (mr *MockRepostoryMockRecorder) DeleteWebsite(arg0, arg1 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteWebsite", reflect.TypeOf((*MockRepostory)(nil).DeleteWebsite), arg0)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteWebsite", reflect.TypeOf((*MockRepostory)(nil).DeleteWebsite), arg0, arg1)
 }
 
 // FindUserWebsite mocks base method.
-func (m *MockRepostory) FindUserWebsite(arg0, arg1 string) (*model.UserWebsite, error) {
+func (m *MockRepostory) FindUserWebsite(arg0 context.Context, arg1, arg2 string) (*model.UserWebsite, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "FindUserWebsite", arg0, arg1)
+	ret := m.ctrl.Call(m, "FindUserWebsite", arg0, arg1, arg2)
 	ret0, _ := ret[0].(*model.UserWebsite)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // FindUserWebsite indicates an expected call of FindUserWebsite.
-func (mr *MockRepostoryMockRecorder) FindUserWebsite(arg0, arg1 interface{}) *gomock.Call {
+func (mr *MockRepostoryMockRecorder) FindUserWebsite(arg0, arg1, arg2 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "FindUserWebsite", reflect.TypeOf((*MockRepostory)(nil).FindUserWebsite), arg0, arg1)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "FindUserWebsite", reflect.TypeOf((*MockRepostory)(nil).FindUserWebsite), arg0, arg1, arg2)
 }
 
 // FindUserWebsites mocks base method.
-func (m *MockRepostory) FindUserWebsites(arg0 string) (model.UserWebsites, error) {
+func (m *MockRepostory) FindUserWebsites(arg0 context.Context, arg1 string) (model.UserWebsites, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "FindUserWebsites", arg0)
+	ret := m.ctrl.Call(m, "FindUserWebsites", arg0, arg1)
 	ret0, _ := ret[0].(model.UserWebsites)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // FindUserWebsites indicates an expected call of FindUserWebsites.
-func (mr *MockRepostoryMockRecorder) FindUserWebsites(arg0 interface{}) *gomock.Call {
+func (mr *MockRepostoryMockRecorder) FindUserWebsites(arg0, arg1 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "FindUserWebsites", reflect.TypeOf((*MockRepostory)(nil).FindUserWebsites), arg0)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "FindUserWebsites", reflect.TypeOf((*MockRepostory)(nil).FindUserWebsites), arg0, arg1)
 }
 
 // FindUserWebsitesByGroup mocks base method.
-func (m *MockRepostory) FindUserWebsitesByGroup(arg0, arg1 string) (model.WebsiteGroup, error) {
+func (m *MockRepostory) FindUserWebsitesByGroup(arg0 context.Context, arg1, arg2 string) (model.WebsiteGroup, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "FindUserWebsitesByGroup", arg0, arg1)
+	ret := m.ctrl.Call(m, "FindUserWebsitesByGroup", arg0, arg1, arg2)
 	ret0, _ := ret[0].(model.WebsiteGroup)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // FindUserWebsitesByGroup indicates an expected call of FindUserWebsitesByGroup.
-func (mr *MockRepostoryMockRecorder) FindUserWebsitesByGroup(arg0, arg1 interface{}) *gomock.Call {
+func (mr *MockRepostoryMockRecorder) FindUserWebsitesByGroup(arg0, arg1, arg2 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "FindUserWebsitesByGroup", reflect.TypeOf((*MockRepostory)(nil).FindUserWebsitesByGroup), arg0, arg1)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "FindUserWebsitesByGroup", reflect.TypeOf((*MockRepostory)(nil).FindUserWebsitesByGroup), arg0, arg1, arg2)
 }
 
 // FindWebsite mocks base method.
-func (m *MockRepostory) FindWebsite(arg0 string) (*model.Website, error) {
+func (m *MockRepostory) FindWebsite(arg0 context.Context, arg1 string) (*model.Website, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "FindWebsite", arg0)
+	ret := m.ctrl.Call(m, "FindWebsite", arg0, arg1)
 	ret0, _ := ret[0].(*model.Website)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // FindWebsite indicates an expected call of FindWebsite.
-func (mr *MockRepostoryMockRecorder) FindWebsite(arg0 interface{}) *gomock.Call {
+func (mr *MockRepostoryMockRecorder) FindWebsite(arg0, arg1 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "FindWebsite", reflect.TypeOf((*MockRepostory)(nil).FindWebsite), arg0)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "FindWebsite", reflect.TypeOf((*MockRepostory)(nil).FindWebsite), arg0, arg1)
 }
 
 // FindWebsites mocks base method.
-func (m *MockRepostory) FindWebsites() ([]model.Website, error) {
+func (m *MockRepostory) FindWebsites(arg0 context.Context) ([]model.Website, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "FindWebsites")
+	ret := m.ctrl.Call(m, "FindWebsites", arg0)
 	ret0, _ := ret[0].([]model.Website)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // FindWebsites indicates an expected call of FindWebsites.
-func (mr *MockRepostoryMockRecorder) FindWebsites() *gomock.Call {
+func (mr *MockRepostoryMockRecorder) FindWebsites(arg0 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "FindWebsites", reflect.TypeOf((*MockRepostory)(nil).FindWebsites))
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "FindWebsites", reflect.TypeOf((*MockRepostory)(nil).FindWebsites), arg0)
 }
 
 // Stats mocks base method.
@@ -181,29 +182,29 @@ func (mr *MockRepostoryMockRecorder) Stats() *gomock.Call {
 }
 
 // UpdateUserWebsite mocks base method.
-func (m *MockRepostory) UpdateUserWebsite(arg0 *model.UserWebsite) error {
+func (m *MockRepostory) UpdateUserWebsite(arg0 context.Context, arg1 *model.UserWebsite) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "UpdateUserWebsite", arg0)
+	ret := m.ctrl.Call(m, "UpdateUserWebsite", arg0, arg1)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
 // UpdateUserWebsite indicates an expected call of UpdateUserWebsite.
-func (mr *MockRepostoryMockRecorder) UpdateUserWebsite(arg0 interface{}) *gomock.Call {
+func (mr *MockRepostoryMockRecorder) UpdateUserWebsite(arg0, arg1 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateUserWebsite", reflect.TypeOf((*MockRepostory)(nil).UpdateUserWebsite), arg0)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateUserWebsite", reflect.TypeOf((*MockRepostory)(nil).UpdateUserWebsite), arg0, arg1)
 }
 
 // UpdateWebsite mocks base method.
-func (m *MockRepostory) UpdateWebsite(arg0 *model.Website) error {
+func (m *MockRepostory) UpdateWebsite(arg0 context.Context, arg1 *model.Website) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "UpdateWebsite", arg0)
+	ret := m.ctrl.Call(m, "UpdateWebsite", arg0, arg1)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
 // UpdateWebsite indicates an expected call of UpdateWebsite.
-func (mr *MockRepostoryMockRecorder) UpdateWebsite(arg0 interface{}) *gomock.Call {
+func (mr *MockRepostoryMockRecorder) UpdateWebsite(arg0, arg1 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateWebsite", reflect.TypeOf((*MockRepostory)(nil).UpdateWebsite), arg0)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateWebsite", reflect.TypeOf((*MockRepostory)(nil).UpdateWebsite), arg0, arg1)
 }

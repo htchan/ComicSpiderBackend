@@ -18,6 +18,7 @@ import (
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/codes"
+	"go.opentelemetry.io/otel/trace"
 	"golang.org/x/sync/semaphore"
 )
 
@@ -39,6 +40,10 @@ const (
 	Host       = "manhuagui.com"
 	dateFormat = "2006-01-02"
 )
+
+func getTracer() trace.Tracer {
+	return otel.GetTracerProvider().Tracer("htchan/WebHistory/vendors/manhuagui")
+}
 
 func NewVendorService(
 	cli *http.Client,
@@ -112,9 +117,7 @@ func (serv *VendorService) fetchWebsite(ctx context.Context, web *model.Website)
 }
 
 func (serv *VendorService) isUpdated(ctx context.Context, web *model.Website, body string) bool {
-	tr := otel.Tracer("htchan/WebHistory/vendors/manhuagui")
-
-	_, checkUpdateSpan := tr.Start(ctx, "check update")
+	_, checkUpdateSpan := getTracer().Start(ctx, "check update")
 	defer checkUpdateSpan.End()
 
 	oldTitle := web.Title
@@ -182,9 +185,7 @@ func (serv *VendorService) Support(web *model.Website) bool {
 }
 
 func (serv *VendorService) Update(ctx context.Context, web *model.Website) error {
-	tr := otel.Tracer("htchan/WebHistory/vendors/manhuagui")
-
-	_, fetchWebSpan := tr.Start(ctx, "fetch website")
+	_, fetchWebSpan := getTracer().Start(ctx, "fetch website")
 	defer fetchWebSpan.End()
 
 	fetchWebSpan.SetAttributes(
@@ -204,7 +205,7 @@ func (serv *VendorService) Update(ctx context.Context, web *model.Website) error
 	fetchWebSpan.End()
 
 	if serv.isUpdated(ctx, web, body) {
-		_, repoSpan := tr.Start(ctx, "update db record")
+		repoCtx, repoSpan := getTracer().Start(ctx, "update db record")
 		defer repoSpan.End()
 
 		repoSpan.SetAttributes(
@@ -213,7 +214,7 @@ func (serv *VendorService) Update(ctx context.Context, web *model.Website) error
 			attribute.String("updated_time", web.UpdateTime.String()),
 		)
 
-		repoErr := serv.repo.UpdateWebsite(web)
+		repoErr := serv.repo.UpdateWebsite(repoCtx, web)
 		if repoErr != nil {
 			repoSpan.SetStatus(codes.Error, repoErr.Error())
 			repoSpan.RecordError(repoErr)

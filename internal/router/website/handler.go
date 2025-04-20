@@ -46,7 +46,7 @@ func getAllWebsiteGroupsHandler(r repository.Repostory) http.HandlerFunc {
 		defer dbSpan.End()
 
 		userUUID := req.Context().Value(ContextKeyUserUUID).(string)
-		webs, err := r.FindUserWebsites(userUUID)
+		webs, err := r.FindUserWebsites(req.Context(), userUUID)
 
 		if err != nil {
 			dbSpan.SetStatus(codes.Error, err.Error())
@@ -83,7 +83,7 @@ func getWebsiteGroupHandler(r repository.Repostory) http.HandlerFunc {
 		dbCtx, dbSpan := tr.Start(req.Context(), "User Website Group Query")
 		defer dbSpan.End()
 
-		webs, err := r.FindUserWebsitesByGroup(userUUID, groupName)
+		webs, err := r.FindUserWebsitesByGroup(req.Context(), userUUID, groupName)
 		if err != nil || len(webs) == 0 {
 			dbSpan.SetStatus(codes.Error, err.Error())
 			dbSpan.RecordError(err)
@@ -122,7 +122,7 @@ func createWebsiteHandler(r repository.Repostory, conf *config.WebsiteConfig, ta
 		dbCtx, dbSpan := tr.Start(req.Context(), "Website Record Creation")
 		defer dbSpan.End()
 
-		err := r.CreateWebsite(&web)
+		err := r.CreateWebsite(req.Context(), &web)
 		if err != nil {
 			dbSpan.SetStatus(codes.Error, err.Error())
 			dbSpan.RecordError(err)
@@ -138,7 +138,7 @@ func createWebsiteHandler(r repository.Repostory, conf *config.WebsiteConfig, ta
 		defer dbSpan.End()
 
 		userWeb := model.NewUserWebsite(web, userUUID)
-		err = r.CreateUserWebsite(&userWeb)
+		err = r.CreateUserWebsite(req.Context(), &userWeb)
 		if err != nil {
 			dbSpan.SetStatus(codes.Error, err.Error())
 			dbSpan.RecordError(err)
@@ -221,7 +221,7 @@ func refreshWebsiteHandler(r repository.Repostory) http.HandlerFunc {
 		dbCtx, dbSpan := tr.Start(req.Context(), "Refresh User Website")
 		defer dbSpan.End()
 
-		err := r.UpdateUserWebsite(&web)
+		err := r.UpdateUserWebsite(req.Context(), &web)
 		if err != nil {
 			dbSpan.SetStatus(codes.Error, err.Error())
 			dbSpan.RecordError(err)
@@ -259,7 +259,7 @@ func deleteWebsiteHandler(r repository.Repostory) http.HandlerFunc {
 		dbCtx, dbSpan := tr.Start(req.Context(), "Delete User Website")
 		defer dbSpan.End()
 
-		err := r.DeleteUserWebsite(&web)
+		err := r.DeleteUserWebsite(req.Context(), &web)
 		if err != nil {
 			dbSpan.SetStatus(codes.Error, err.Error())
 			dbSpan.RecordError(err)
@@ -314,7 +314,7 @@ func changeWebsiteGroupHandler(r repository.Repostory) http.HandlerFunc {
 		dbCtx, dbSpan := tr.Start(req.Context(), "Update User Website Group")
 		defer dbSpan.End()
 
-		err := r.UpdateUserWebsite(&web)
+		err := r.UpdateUserWebsite(req.Context(), &web)
 		if err != nil {
 			dbSpan.SetStatus(codes.Error, err.Error())
 			dbSpan.RecordError(err)

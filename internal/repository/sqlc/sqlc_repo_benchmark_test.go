@@ -1,6 +1,7 @@
 package sqlc
 
 import (
+	"context"
 	"database/sql"
 	"fmt"
 	"testing"
@@ -37,7 +38,7 @@ func BenchmarkPsqlRepo_CreateWebsite(b *testing.B) {
 			UpdateTime: updateTime,
 		}
 		b.StartTimer()
-		err := r.CreateWebsite(&web)
+		err := r.CreateWebsite(context.Background(), &web)
 		b.StopTimer()
 		if err != nil {
 			b.Errorf("iteration-%d: create website return %v", n, err)
@@ -76,7 +77,7 @@ func BenchmarkPsqlRepo_UpdateWebsite(b *testing.B) {
 	for n := 0; n < b.N; n++ {
 		web.RawContent = fmt.Sprintf("content %v", n)
 		b.StartTimer()
-		err := r.UpdateWebsite(&web)
+		err := r.UpdateWebsite(context.Background(), &web)
 		b.StopTimer()
 		if err != nil {
 			b.Errorf("iteration-%d: update website return %v", n, err)
@@ -106,7 +107,7 @@ func BenchmarkPsqlRepo_DeleteWebsite(b *testing.B) {
 	for n := 0; n < b.N; n++ {
 		populateData(db, uuid, title, userUUID)
 		b.StartTimer()
-		err := r.DeleteWebsite(&model.Website{UUID: uuid})
+		err := r.DeleteWebsite(context.Background(), &model.Website{UUID: uuid})
 		b.StopTimer()
 		if err != nil {
 			b.Errorf("iteration-%d: delete website return %v", n, err)
@@ -136,7 +137,7 @@ func BenchmarkPsqlRepo_FindWebsites(b *testing.B) {
 	b.StopTimer()
 	for n := 0; n < b.N; n++ {
 		b.StartTimer()
-		webs, err := r.FindWebsites()
+		webs, err := r.FindWebsites(context.Background())
 		b.StopTimer()
 		if len(webs) == 0 || err != nil {
 			b.Errorf("iteration-%d: find websites return %v; web count: %d", n, err, len(webs))
@@ -166,7 +167,7 @@ func BenchmarkPsqlRepo_FindWebsite(b *testing.B) {
 	b.StopTimer()
 	for n := 0; n < b.N; n++ {
 		b.StartTimer()
-		web, err := r.FindWebsite(uuid)
+		web, err := r.FindWebsite(context.Background(), uuid)
 		b.StopTimer()
 		if web == nil || err != nil {
 			b.Errorf("iteration-%d: find websites return %v; web: %v", n, err, web)
@@ -204,7 +205,7 @@ func BenchmarkPsqlRepo_CreateUserWebsite(b *testing.B) {
 			AccessTime:  accessTime,
 		}
 		b.StartTimer()
-		err := r.CreateUserWebsite(&web)
+		err := r.CreateUserWebsite(context.Background(), &web)
 		b.StopTimer()
 		if err != nil {
 			b.Errorf("iteration-%d: create user website return %v", n, err)
@@ -242,7 +243,7 @@ func BenchmarkPsqlRepo_UpdateUserWebsite(b *testing.B) {
 	for n := 0; n < b.N; n++ {
 		web.GroupName = fmt.Sprintf("group %v", n)
 		b.StartTimer()
-		err := r.UpdateUserWebsite(&web)
+		err := r.UpdateUserWebsite(context.Background(), &web)
 		b.StopTimer()
 		if err != nil {
 			b.Errorf("iteration-%d: update user website return %v", n, err)
@@ -272,7 +273,7 @@ func BenchmarkPsqlRepo_DeleteUserWebsite(b *testing.B) {
 	for n := 0; n < b.N; n++ {
 		populateData(db, uuid, title, userUUID)
 		b.StartTimer()
-		err := r.DeleteUserWebsite(&model.UserWebsite{WebsiteUUID: uuid, UserUUID: userUUID})
+		err := r.DeleteUserWebsite(context.Background(), &model.UserWebsite{WebsiteUUID: uuid, UserUUID: userUUID})
 		b.StopTimer()
 		if err != nil {
 			b.Errorf("iteration-%d: delete website return %v", n, err)
@@ -302,7 +303,7 @@ func BenchmarkPsqlRepo_FindUserWebsites(b *testing.B) {
 	b.StopTimer()
 	for n := 0; n < b.N; n++ {
 		b.StartTimer()
-		webs, err := r.FindUserWebsites(userUUID)
+		webs, err := r.FindUserWebsites(context.Background(), userUUID)
 		b.StopTimer()
 		if len(webs) == 0 || err != nil {
 			b.Errorf("iteration-%d: find user websites return %v; web count: %d", n, err, len(webs))
@@ -332,7 +333,7 @@ func BenchmarkPsqlRepo_FindUserWebsitesByGroup(b *testing.B) {
 	b.StopTimer()
 	for n := 0; n < b.N; n++ {
 		b.StartTimer()
-		webs, err := r.FindUserWebsitesByGroup(userUUID, title)
+		webs, err := r.FindUserWebsitesByGroup(context.Background(), userUUID, title)
 		b.StopTimer()
 		if len(webs) == 0 || err != nil {
 			b.Errorf("iteration-%d: find user websites by group return %v; web count: %d", n, err, len(webs))
@@ -362,7 +363,7 @@ func BenchmarkPsqlRepo_FindUserWebsite(b *testing.B) {
 	b.StopTimer()
 	for n := 0; n < b.N; n++ {
 		b.StartTimer()
-		web, err := r.FindUserWebsite(userUUID, uuid)
+		web, err := r.FindUserWebsite(context.Background(), userUUID, uuid)
 		b.StopTimer()
 		if web == nil || err != nil {
 			b.Errorf("iteration-%d: find websites return %v; web: %v", n, err, web)

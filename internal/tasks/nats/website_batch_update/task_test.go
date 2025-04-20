@@ -137,7 +137,7 @@ func TestWebsiteBatchUpdateTask_handler(t *testing.T) {
 			},
 			getRpo: func(ctrl *gomock.Controller) repository.Repostory {
 				rpo := mockrepo.NewMockRepostory(ctrl)
-				rpo.EXPECT().FindWebsites().Return(
+				rpo.EXPECT().FindWebsites(gomock.Any()).Return(
 					[]model.Website{web},
 					nil,
 				).Times(1)
@@ -178,7 +178,7 @@ func TestWebsiteBatchUpdateTask_handler(t *testing.T) {
 			},
 			getRpo: func(ctrl *gomock.Controller) repository.Repostory {
 				rpo := mockrepo.NewMockRepostory(ctrl)
-				rpo.EXPECT().FindWebsites().Return(
+				rpo.EXPECT().FindWebsites(gomock.Any()).Return(
 					nil,
 					errors.New("fail to query website"),
 				).AnyTimes()
@@ -206,7 +206,7 @@ func TestWebsiteBatchUpdateTask_handler(t *testing.T) {
 			},
 			getRpo: func(ctrl *gomock.Controller) repository.Repostory {
 				rpo := mockrepo.NewMockRepostory(ctrl)
-				rpo.EXPECT().FindWebsites().Return(
+				rpo.EXPECT().FindWebsites(gomock.Any()).Return(
 					[]model.Website{web},
 					nil,
 				).Times(1)

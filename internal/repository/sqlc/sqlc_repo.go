@@ -3,6 +3,7 @@ package sqlc
 import (
 	"context"
 	"database/sql"
+	"encoding/json"
 	"fmt"
 	"time"
 
@@ -10,10 +11,13 @@ import (
 	"github.com/htchan/WebHistory/internal/model"
 	"github.com/htchan/WebHistory/internal/repository"
 	"github.com/htchan/WebHistory/internal/sqlc"
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/codes"
 )
 
+const MinTimeUnit = 5 * time.Second
+
 type SqlcRepo struct {
-	ctx   context.Context
 	db    *sqlc.Queries
 	stats func() sql.DBStats
 	conf  *config.WebsiteConfig
@@ -23,7 +27,6 @@ var _ repository.Repostory = &SqlcRepo{}
 
 func NewRepo(db *sql.DB, conf *config.WebsiteConfig) *SqlcRepo {
 	return &SqlcRepo{
-		ctx:   context.Background(),
 		db:    sqlc.New(db),
 		stats: db.Stats,
 		conf:  conf,
@@ -44,7 +47,7 @@ func fromSqlcWebsite(webModel sqlc.Website) model.Website {
 		URL:        webModel.Url.String,
 		Title:      webModel.Title.String,
 		RawContent: webModel.Content.String,
-		UpdateTime: webModel.UpdateTime.Time.UTC().Truncate(5 * time.Second),
+		UpdateTime: webModel.UpdateTime.Time.UTC().Truncate(MinTimeUnit),
 	}
 }
 
@@ -53,12 +56,12 @@ func fromSqlcListUserWebsitesRow(userWebModel sqlc.ListUserWebsitesRow) model.Us
 		WebsiteUUID: userWebModel.WebsiteUuid.String,
 		UserUUID:    userWebModel.UserUuid.String,
 		GroupName:   userWebModel.GroupName.String,
-		AccessTime:  userWebModel.AccessTime.Time.UTC().Truncate(5 * time.Second),
+		AccessTime:  userWebModel.AccessTime.Time.UTC().Truncate(MinTimeUnit),
 		Website: model.Website{
 			UUID:       userWebModel.WebsiteUuid.String,
 			URL:        userWebModel.Url.String,
 			Title:      userWebModel.Title.String,
-			UpdateTime: userWebModel.UpdateTime.Time.UTC().Truncate(5 * time.Second),
+			UpdateTime: userWebModel.UpdateTime.Time.UTC().Truncate(MinTimeUnit),
 		},
 	}
 }
@@ -68,12 +71,12 @@ func fromSqlcListUserWebsitesByGroupRow(userWebModel sqlc.ListUserWebsitesByGrou
 		WebsiteUUID: userWebModel.WebsiteUuid.String,
 		UserUUID:    userWebModel.UserUuid.String,
 		GroupName:   userWebModel.GroupName.String,
-		AccessTime:  userWebModel.AccessTime.Time.UTC().Truncate(5 * time.Second),
+		AccessTime:  userWebModel.AccessTime.Time.UTC().Truncate(MinTimeUnit),
 		Website: model.Website{
 			UUID:       userWebModel.WebsiteUuid.String,
 			URL:        userWebModel.Url.String,
 			Title:      userWebModel.Title.String,
-			UpdateTime: userWebModel.UpdateTime.Time.UTC().Truncate(5 * time.Second),
+			UpdateTime: userWebModel.UpdateTime.Time.UTC().Truncate(MinTimeUnit),
 		},
 	}
 }
@@ -83,12 +86,12 @@ func fromSqlcGetUserWebsiteRow(userWebModel sqlc.GetUserWebsiteRow) model.UserWe
 		WebsiteUUID: userWebModel.WebsiteUuid.String,
 		UserUUID:    userWebModel.UserUuid.String,
 		GroupName:   userWebModel.GroupName.String,
-		AccessTime:  userWebModel.AccessTime.Time.UTC().Truncate(5 * time.Second),
+		AccessTime:  userWebModel.AccessTime.Time.UTC().Truncate(MinTimeUnit),
 		Website: model.Website{
 			UUID:       userWebModel.WebsiteUuid.String,
 			URL:        userWebModel.Url.String,
 			Title:      userWebModel.Title.String,
-			UpdateTime: userWebModel.UpdateTime.Time.UTC().Truncate(5 * time.Second),
+			UpdateTime: userWebModel.UpdateTime.Time.UTC().Truncate(MinTimeUnit),
 		},
 	}
 }
@@ -152,51 +155,82 @@ func toSqlcDeleteUserWebsiteParams(userWeb *model.UserWebsite) sqlc.DeleteUserWe
 	}
 }
 
-func (r *SqlcRepo) CreateWebsite(web *model.Website) error {
+func (r *SqlcRepo) CreateWebsite(ctx context.Context, web *model.Website) error {
+	_, createWebsiteSpan := repository.GetTracer().Start(ctx, "create website")
+	defer createWebsiteSpan.End()
+
+	params := toSqlcCreateWebsiteParams(web)
+	jsonByte, jsonErr := json.Marshal(params)
+	if jsonErr == nil {
+		createWebsiteSpan.SetAttributes(attribute.String("params", string(jsonByte)))
+	}
+
 	// return web if url exist
-	webModel, err := r.db.CreateWebsite(
-		r.ctx,
-		toSqlcCreateWebsiteParams(web),
-	)
+	webModel, err := r.db.CreateWebsite(ctx, params)
 	if err != nil {
+		if err != sql.ErrNoRows {
+			createWebsiteSpan.SetStatus(codes.Error, err.Error())
+			createWebsiteSpan.RecordError(err)
+		}
+
 		return err
 	}
 
 	web.UUID = webModel.Uuid.String
 	web.Title, web.RawContent = webModel.Title.String, webModel.Content.String
-	web.UpdateTime = webModel.UpdateTime.Time.UTC().Truncate(5 * time.Second)
+	web.UpdateTime = webModel.UpdateTime.Time.UTC().Truncate(MinTimeUnit)
 	web.Conf = r.conf
 
 	return nil
 }
 
-func (r *SqlcRepo) UpdateWebsite(web *model.Website) error {
-	_, err := r.db.UpdateWebsite(
-		r.ctx,
-		toSqlcUpdateWebsiteParams(web),
-	)
+func (r *SqlcRepo) UpdateWebsite(ctx context.Context, web *model.Website) error {
+	_, updateWebsiteSpan := repository.GetTracer().Start(ctx, "update website")
+	defer updateWebsiteSpan.End()
+
+	params := toSqlcUpdateWebsiteParams(web)
+	jsonByte, jsonErr := json.Marshal(params)
+	if jsonErr == nil {
+		updateWebsiteSpan.SetAttributes(attribute.String("params", string(jsonByte)))
+	}
+
+	_, err := r.db.UpdateWebsite(ctx, params)
 	if err != nil {
+		updateWebsiteSpan.SetStatus(codes.Error, err.Error())
+		updateWebsiteSpan.RecordError(err)
+
 		return fmt.Errorf("update website fail: %w", err)
 	}
 
 	return nil
 }
 
-func (r *SqlcRepo) DeleteWebsite(web *model.Website) error {
-	err := r.db.DeleteWebsite(
-		r.ctx,
-		toSqlString(web.UUID),
-	)
+func (r *SqlcRepo) DeleteWebsite(ctx context.Context, web *model.Website) error {
+	_, deleteWebsiteSpan := repository.GetTracer().Start(ctx, "delete website")
+	defer deleteWebsiteSpan.End()
+
+	deleteWebsiteSpan.SetAttributes(attribute.String("params.website_uuid", web.UUID))
+
+	err := r.db.DeleteWebsite(ctx, toSqlString(web.UUID))
 	if err != nil {
+		deleteWebsiteSpan.SetStatus(codes.Error, err.Error())
+		deleteWebsiteSpan.RecordError(err)
+
 		return fmt.Errorf("fail to delete website: %w", err)
 	}
 
 	return nil
 }
 
-func (r *SqlcRepo) FindWebsites() ([]model.Website, error) {
-	webModels, err := r.db.ListWebsites(r.ctx)
+func (r *SqlcRepo) FindWebsites(ctx context.Context) ([]model.Website, error) {
+	_, listWebsitesSpan := repository.GetTracer().Start(ctx, "find websites")
+	defer listWebsitesSpan.End()
+
+	webModels, err := r.db.ListWebsites(ctx)
 	if err != nil {
+		listWebsitesSpan.SetStatus(codes.Error, err.Error())
+		listWebsitesSpan.RecordError(err)
+
 		return nil, fmt.Errorf("list websites fail: %w", err)
 	}
 
@@ -209,27 +243,49 @@ func (r *SqlcRepo) FindWebsites() ([]model.Website, error) {
 	return webs, nil
 }
 
-func (r *SqlcRepo) FindWebsite(uuid string) (*model.Website, error) {
-	webModel, err := r.db.GetWebsite(r.ctx, sql.NullString{String: uuid, Valid: true})
+func (r *SqlcRepo) FindWebsite(ctx context.Context, uuid string) (*model.Website, error) {
+	_, findWebsiteSpan := repository.GetTracer().Start(ctx, "find website")
+	defer findWebsiteSpan.End()
+
+	findWebsiteSpan.SetAttributes(attribute.String("params.website_uuid", uuid))
+
+	webModel, err := r.db.GetWebsite(ctx, toSqlString(uuid))
 	if err != nil {
 		return nil, fmt.Errorf("get website fail: %w", err)
 	}
 
 	web := fromSqlcWebsite(webModel)
 	web.Conf = r.conf
+
 	return &web, nil
 }
 
-func (r *SqlcRepo) CreateUserWebsite(web *model.UserWebsite) error {
-	userWebModel, err := r.db.CreateUserWebsite(r.ctx, toSqlcCreateUserWebsiteParams(web))
+func (r *SqlcRepo) CreateUserWebsite(ctx context.Context, web *model.UserWebsite) error {
+	_, createUserWebsiteSpan := repository.GetTracer().Start(ctx, "create user website")
+	defer createUserWebsiteSpan.End()
+
+	params := toSqlcCreateUserWebsiteParams(web)
+
+	jsonByte, jsonErr := json.Marshal(params)
+	if jsonErr == nil {
+		createUserWebsiteSpan.SetAttributes(attribute.String("params", string(jsonByte)))
+	}
+
+	userWebModel, err := r.db.CreateUserWebsite(ctx, params)
 	if err != nil {
+		createUserWebsiteSpan.SetStatus(codes.Error, fmt.Errorf("create user website fail:%w", err).Error())
+		createUserWebsiteSpan.RecordError(err)
+
 		return fmt.Errorf("create user website fail: %w", err)
 	}
 
 	web.GroupName = userWebModel.GroupName.String
-	web.AccessTime = userWebModel.AccessTime.Time.UTC().Truncate(5 * time.Second)
-	tempWeb, err := r.FindWebsite(web.WebsiteUUID)
+	web.AccessTime = userWebModel.AccessTime.Time.UTC().Truncate(MinTimeUnit)
+	tempWeb, err := r.FindWebsite(ctx, web.WebsiteUUID)
 	if err != nil {
+		createUserWebsiteSpan.SetStatus(codes.Error, fmt.Errorf("assign website fail:%w", err).Error())
+		createUserWebsiteSpan.RecordError(err)
+
 		return fmt.Errorf("assign website fail: %w", err)
 	}
 
@@ -238,27 +294,59 @@ func (r *SqlcRepo) CreateUserWebsite(web *model.UserWebsite) error {
 	return nil
 }
 
-func (r *SqlcRepo) UpdateUserWebsite(web *model.UserWebsite) error {
-	_, err := r.db.UpdateUserWebsite(r.ctx, toSqlcUpdateUserWebsiteParams(web))
+func (r *SqlcRepo) UpdateUserWebsite(ctx context.Context, web *model.UserWebsite) error {
+	_, updateUserWebsiteSpan := repository.GetTracer().Start(ctx, "update user website")
+	defer updateUserWebsiteSpan.End()
+
+	params := toSqlcUpdateUserWebsiteParams(web)
+	jsonByte, jsonErr := json.Marshal(params)
+	if jsonErr == nil {
+		updateUserWebsiteSpan.SetAttributes(attribute.String("params", string(jsonByte)))
+	}
+
+	_, err := r.db.UpdateUserWebsite(ctx, params)
 	if err != nil {
+		updateUserWebsiteSpan.SetStatus(codes.Error, err.Error())
+		updateUserWebsiteSpan.RecordError(err)
+
 		return fmt.Errorf("fail to update user website: %w", err)
 	}
 
 	return nil
 }
 
-func (r *SqlcRepo) DeleteUserWebsite(web *model.UserWebsite) error {
-	err := r.db.DeleteUserWebsite(r.ctx, toSqlcDeleteUserWebsiteParams(web))
+func (r *SqlcRepo) DeleteUserWebsite(ctx context.Context, web *model.UserWebsite) error {
+	_, deleteUserWebsiteSpan := repository.GetTracer().Start(ctx, "delete user website")
+	defer deleteUserWebsiteSpan.End()
+
+	params := toSqlcDeleteUserWebsiteParams(web)
+	jsonByte, jsonErr := json.Marshal(params)
+	if jsonErr == nil {
+		deleteUserWebsiteSpan.SetAttributes(attribute.String("params", string(jsonByte)))
+	}
+
+	err := r.db.DeleteUserWebsite(ctx, params)
 	if err != nil {
+		deleteUserWebsiteSpan.SetStatus(codes.Error, err.Error())
+		deleteUserWebsiteSpan.RecordError(err)
+
 		return fmt.Errorf("delete user website fail: %w", err)
 	}
 
 	return nil
 }
 
-func (r *SqlcRepo) FindUserWebsites(userUUID string) (model.UserWebsites, error) {
-	userWebModels, err := r.db.ListUserWebsites(r.ctx, toSqlString(userUUID))
+func (r *SqlcRepo) FindUserWebsites(ctx context.Context, userUUID string) (model.UserWebsites, error) {
+	_, listUserWebsitesSpan := repository.GetTracer().Start(ctx, "find user websites")
+	defer listUserWebsitesSpan.End()
+
+	listUserWebsitesSpan.SetAttributes(attribute.String("params.user_uuid", userUUID))
+
+	userWebModels, err := r.db.ListUserWebsites(ctx, toSqlString(userUUID))
 	if err != nil {
+		listUserWebsitesSpan.SetStatus(codes.Error, err.Error())
+		listUserWebsitesSpan.RecordError(err)
+
 		return nil, fmt.Errorf("list user websites fail: %w", err)
 	}
 
@@ -271,9 +359,21 @@ func (r *SqlcRepo) FindUserWebsites(userUUID string) (model.UserWebsites, error)
 	return webs, nil
 }
 
-func (r *SqlcRepo) FindUserWebsitesByGroup(userUUID, groupName string) (model.WebsiteGroup, error) {
-	userWebModels, err := r.db.ListUserWebsitesByGroup(r.ctx, toSqlcListUserWebsitesByGroupParams(userUUID, groupName))
+func (r *SqlcRepo) FindUserWebsitesByGroup(ctx context.Context, userUUID, groupName string) (model.WebsiteGroup, error) {
+	_, listUserWebsitesByGroupSpan := repository.GetTracer().Start(ctx, "find user websites by group")
+	defer listUserWebsitesByGroupSpan.End()
+
+	params := toSqlcListUserWebsitesByGroupParams(userUUID, groupName)
+	jsonByte, jsonErr := json.Marshal(params)
+	if jsonErr == nil {
+		listUserWebsitesByGroupSpan.SetAttributes(attribute.String("params", string(jsonByte)))
+	}
+
+	userWebModels, err := r.db.ListUserWebsitesByGroup(ctx, params)
 	if err != nil {
+		listUserWebsitesByGroupSpan.SetStatus(codes.Error, err.Error())
+		listUserWebsitesByGroupSpan.RecordError(err)
+
 		return nil, fmt.Errorf("find user websites by group fail: %w", err)
 	}
 
@@ -286,9 +386,17 @@ func (r *SqlcRepo) FindUserWebsitesByGroup(userUUID, groupName string) (model.We
 	return group, nil
 }
 
-func (r *SqlcRepo) FindUserWebsite(userUUID, websiteUUID string) (*model.UserWebsite, error) {
-	userWebModel, err := r.db.GetUserWebsite(r.ctx, toSqlcGetUserWebsitesParams(userUUID, websiteUUID))
+func (r *SqlcRepo) FindUserWebsite(ctx context.Context, userUUID, websiteUUID string) (*model.UserWebsite, error) {
+	_, findUserWebsiteSpan := repository.GetTracer().Start(ctx, "find user website")
+	defer findUserWebsiteSpan.End()
+
+	findUserWebsiteSpan.SetAttributes(attribute.String("params.user_uuid", userUUID), attribute.String("params.website_uuid", websiteUUID))
+
+	userWebModel, err := r.db.GetUserWebsite(ctx, toSqlcGetUserWebsitesParams(userUUID, websiteUUID))
 	if err != nil {
+		findUserWebsiteSpan.SetStatus(codes.Error, err.Error())
+		findUserWebsiteSpan.RecordError(err)
+
 		return nil, fmt.Errorf("get user website fail: %w", err)
 	}
 
