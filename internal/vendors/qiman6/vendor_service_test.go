@@ -364,7 +364,7 @@ func TestVendorService_Update(t *testing.T) {
 			},
 			getRepo: func(ctrl *gomock.Controller) repository.Repostory {
 				repo := mockrepo.NewMockRepostory(ctrl)
-				repo.EXPECT().UpdateWebsite(&model.Website{
+				repo.EXPECT().UpdateWebsite(gomock.Any(), &model.Website{
 					URL:        serv.URL + "/success",
 					Title:      "title",
 					RawContent: "content 1\ncontent 2",
@@ -432,7 +432,7 @@ func TestVendorService_Update(t *testing.T) {
 			},
 			getRepo: func(ctrl *gomock.Controller) repository.Repostory {
 				repo := mockrepo.NewMockRepostory(ctrl)
-				repo.EXPECT().UpdateWebsite(&model.Website{
+				repo.EXPECT().UpdateWebsite(gomock.Any(), &model.Website{
 					URL:        serv.URL + "/success",
 					Title:      "title",
 					RawContent: "content 1\ncontent 2",
