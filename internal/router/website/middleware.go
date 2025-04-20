@@ -160,7 +160,7 @@ func QueryUserWebsite(r repository.Repostory) func(http.Handler) http.Handler {
 				_, dbSpan := tr.Start(req.Context(), "query user website")
 				defer dbSpan.End()
 
-				web, err := r.FindUserWebsite(userUUID, webUUID)
+				web, err := r.FindUserWebsite(req.Context(), userUUID, webUUID)
 				if err != nil {
 					dbSpan.SetStatus(codes.Error, ErrInvalidParams.Error())
 					dbSpan.RecordError(ErrInvalidParams)
