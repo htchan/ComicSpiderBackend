@@ -17,7 +17,7 @@ import (
 )
 
 func Migrate(conf *config.DatabaseConfig) error {
-	tr := otel.Tracer("process")
+	tr := otel.Tracer("github.com/htchan/WebHistory/migrate")
 	_, span := tr.Start(context.Background(), "migrate")
 	defer span.End()
 

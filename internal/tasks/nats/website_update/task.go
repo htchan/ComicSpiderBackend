@@ -17,6 +17,7 @@ import (
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/codes"
+	"go.opentelemetry.io/otel/trace"
 )
 
 type WebsiteUpdateTask struct {
@@ -24,6 +25,10 @@ type WebsiteUpdateTask struct {
 	Service     vendors.VendorService
 	rpo         repository.Repostory
 	websiteConf *config.WebsiteConfig
+}
+
+func getTracer() trace.Tracer {
+	return otel.Tracer("htchan/WebHistory/website-update")
 }
 
 func NewTask(
@@ -94,10 +99,8 @@ func (task *WebsiteUpdateTask) Subscribe(ctx context.Context) (jetstream.Consume
 }
 
 func (task *WebsiteUpdateTask) Validate(ctx context.Context, params *WebsiteUpdateParams) error {
-	tr := otel.Tracer("htchan/WebHistory/website-update")
-
 	// validate params
-	_, validateSpan := tr.Start(ctx, "Validate Params")
+	_, validateSpan := getTracer().Start(ctx, "Validate Params")
 	defer validateSpan.End()
 
 	validateSpan.SetAttributes(
@@ -128,8 +131,6 @@ func (task *WebsiteUpdateTask) handler(msg jetstream.Msg) {
 		}
 	}()
 
-	tr := otel.Tracer("htchan/WebHistory/website-update")
-
 	// parse message body
 	ctx, params, err := ParamsFromData(ctx, msg.Data(), task.websiteConf)
 	if err != nil {
@@ -140,7 +141,7 @@ func (task *WebsiteUpdateTask) handler(msg jetstream.Msg) {
 		return
 	}
 
-	ctx, span := tr.Start(ctx, "Website Update")
+	ctx, span := getTracer().Start(ctx, "Website Update")
 	defer span.End()
 
 	span.SetAttributes(
@@ -164,7 +165,7 @@ func (task *WebsiteUpdateTask) handler(msg jetstream.Msg) {
 	}()
 
 	// call vendor service to update website
-	updateCtx, updateSpan := tr.Start(ctx, "Vendor Service Call")
+	updateCtx, updateSpan := getTracer().Start(ctx, "Vendor Service Call")
 	defer updateSpan.End()
 
 	updateErr := task.Service.Update(updateCtx, &params.Website)

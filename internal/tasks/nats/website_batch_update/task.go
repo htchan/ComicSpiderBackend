@@ -17,12 +17,17 @@ import (
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/codes"
+	"go.opentelemetry.io/otel/trace"
 )
 
 type WebsiteBatchUpdateTask struct {
 	nc                 *nats.Conn
 	websiteUpdateTasks websiteupdate.WebsiteUpdateTasks
 	rpo                repository.Repostory
+}
+
+func getTracer() trace.Tracer {
+	return otel.Tracer("htchan/WebHistory/website-batch-update")
 }
 
 func NewTask(
@@ -82,12 +87,11 @@ func (task *WebsiteBatchUpdateTask) handler(msg jetstream.Msg) {
 		}
 	}()
 
-	tr := otel.Tracer("htchan/WebHistory/website-batch-update")
-	ctx, span := tr.Start(ctx, "Website Batch Update")
+	ctx, span := getTracer().Start(ctx, "Website Batch Update")
 	defer span.End()
 
 	// load all webstes from db
-	_, dbSpan := tr.Start(ctx, "Load Websites From DB")
+	_, dbSpan := getTracer().Start(ctx, "Load Websites From DB")
 	defer dbSpan.End()
 
 	websites, err := task.rpo.FindWebsites(ctx)
@@ -102,7 +106,7 @@ func (task *WebsiteBatchUpdateTask) handler(msg jetstream.Msg) {
 	dbSpan.End()
 
 	// publish update job for all website
-	iterateCtx, iterateSpan := tr.Start(ctx, "Iterate Websites")
+	iterateCtx, iterateSpan := getTracer().Start(ctx, "Iterate Websites")
 	for _, web := range websites {
 		task.publishWebsiteUpdateTask(iterateCtx, &web)
 	}
@@ -110,8 +114,6 @@ func (task *WebsiteBatchUpdateTask) handler(msg jetstream.Msg) {
 }
 
 func (task *WebsiteBatchUpdateTask) publishWebsiteUpdateTask(ctx context.Context, web *model.Website) {
-	tr := otel.Tracer("htchan/WebHistory/website-batch-update")
-
 	loggingCtx := log.With().
 		Str("host", web.Host()).
 		Str("website_uuid", web.UUID).
@@ -119,7 +121,7 @@ func (task *WebsiteBatchUpdateTask) publishWebsiteUpdateTask(ctx context.Context
 		Str("website_title", web.Title).
 		Logger().WithContext(ctx)
 
-	websiteCtx, websiteSpan := tr.Start(loggingCtx, "Publish Update Website")
+	websiteCtx, websiteSpan := getTracer().Start(loggingCtx, "Publish Update Website")
 	defer websiteSpan.End()
 
 	supportedTasks := make([]string, 0, len(task.websiteUpdateTasks))

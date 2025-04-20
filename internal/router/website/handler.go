@@ -12,6 +12,7 @@ import (
 	"github.com/rs/zerolog"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/codes"
+	"go.opentelemetry.io/otel/trace"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/htchan/WebHistory/internal/config"
@@ -20,10 +21,13 @@ import (
 	websiteupdate "github.com/htchan/WebHistory/internal/tasks/nats/website_update"
 )
 
-func encodeJsonResp(ctx context.Context, res http.ResponseWriter, body any) {
-	tr := otel.Tracer("htchan/WebHistory/api")
+func getTracer() trace.Tracer {
+	tracer := otel.Tracer("htchan/WebHistory/api")
+	return tracer
+}
 
-	_, encodeSpan := tr.Start(ctx, "Encode response")
+func encodeJsonResp(ctx context.Context, res http.ResponseWriter, body any) {
+	_, encodeSpan := getTracer().Start(ctx, "Encode response")
 	defer encodeSpan.End()
 
 	json.NewEncoder(res).Encode(body)
@@ -40,9 +44,7 @@ func encodeJsonResp(ctx context.Context, res http.ResponseWriter, body any) {
 // @Router			/api/web-watcher/websites/groups [get]
 func getAllWebsiteGroupsHandler(r repository.Repostory) http.HandlerFunc {
 	return func(res http.ResponseWriter, req *http.Request) {
-		tr := otel.Tracer("htchan/WebHistory/api")
-
-		dbCtx, dbSpan := tr.Start(req.Context(), "User Website Query")
+		dbCtx, dbSpan := getTracer().Start(req.Context(), "User Website Query")
 		defer dbSpan.End()
 
 		userUUID := req.Context().Value(ContextKeyUserUUID).(string)
@@ -75,12 +77,10 @@ func getAllWebsiteGroupsHandler(r repository.Repostory) http.HandlerFunc {
 // @Router			/api/web-watcher/websites/groups/{groupName} [get]
 func getWebsiteGroupHandler(r repository.Repostory) http.HandlerFunc {
 	return func(res http.ResponseWriter, req *http.Request) {
-		tr := otel.Tracer("htchan/WebHistory/api")
-
 		userUUID := req.Context().Value(ContextKeyUserUUID).(string)
 		groupName := chi.URLParam(req, "groupName")
 
-		dbCtx, dbSpan := tr.Start(req.Context(), "User Website Group Query")
+		dbCtx, dbSpan := getTracer().Start(req.Context(), "User Website Group Query")
 		defer dbSpan.End()
 
 		webs, err := r.FindUserWebsitesByGroup(req.Context(), userUUID, groupName)
@@ -111,15 +111,13 @@ func getWebsiteGroupHandler(r repository.Repostory) http.HandlerFunc {
 // @Router			/api/web-watcher/websites [post]
 func createWebsiteHandler(r repository.Repostory, conf *config.WebsiteConfig, tasks websiteupdate.WebsiteUpdateTasks) http.HandlerFunc {
 	return func(res http.ResponseWriter, req *http.Request) {
-		tr := otel.Tracer("htchan/WebHistory/api")
-
 		// userUUID, err := UserUUID(req)
 		userUUID := req.Context().Value(ContextKeyUserUUID).(string)
 		url := req.Context().Value(ContextKeyWebURL).(string)
 
 		web := model.NewWebsite(url, conf)
 
-		dbCtx, dbSpan := tr.Start(req.Context(), "Website Record Creation")
+		dbCtx, dbSpan := getTracer().Start(req.Context(), "Website Record Creation")
 		defer dbSpan.End()
 
 		err := r.CreateWebsite(req.Context(), &web)
@@ -134,7 +132,7 @@ func createWebsiteHandler(r repository.Repostory, conf *config.WebsiteConfig, ta
 
 		dbSpan.End()
 
-		dbCtx, dbSpan = tr.Start(req.Context(), "User Website Record Creation")
+		dbCtx, dbSpan = getTracer().Start(req.Context(), "User Website Record Creation")
 		defer dbSpan.End()
 
 		userWeb := model.NewUserWebsite(web, userUUID)
@@ -152,7 +150,7 @@ func createWebsiteHandler(r repository.Repostory, conf *config.WebsiteConfig, ta
 
 		// only publish job it website is updated more than 24 hr ago
 		if time.Since(web.UpdateTime) > 24*time.Hour {
-			jobCtx, jobSpan := tr.Start(req.Context(), "Website Update Job Creation")
+			jobCtx, jobSpan := getTracer().Start(req.Context(), "Website Update Job Creation")
 			defer jobSpan.End()
 
 			supportedList, err := tasks.Publish(jobCtx, &web)
@@ -213,12 +211,10 @@ func getUserWebsiteHandler() http.HandlerFunc {
 // @Router			/api/web-watcher/websites/{websiteUUID}/refresh [put]
 func refreshWebsiteHandler(r repository.Repostory) http.HandlerFunc {
 	return func(res http.ResponseWriter, req *http.Request) {
-		tr := otel.Tracer("htchan/WebHistory/api")
-
 		web := req.Context().Value(ContextKeyWebsite).(model.UserWebsite)
 		web.AccessTime = time.Now().UTC().Truncate(5 * time.Second)
 
-		dbCtx, dbSpan := tr.Start(req.Context(), "Refresh User Website")
+		dbCtx, dbSpan := getTracer().Start(req.Context(), "Refresh User Website")
 		defer dbSpan.End()
 
 		err := r.UpdateUserWebsite(req.Context(), &web)
@@ -252,11 +248,9 @@ func refreshWebsiteHandler(r repository.Repostory) http.HandlerFunc {
 //	@Router			/api/web-watcher/websites/{websiteUUID} [delete]
 func deleteWebsiteHandler(r repository.Repostory) http.HandlerFunc {
 	return func(res http.ResponseWriter, req *http.Request) {
-		tr := otel.Tracer("htchan/WebHistory/api")
-
 		web := req.Context().Value(ContextKeyWebsite).(model.UserWebsite)
 
-		dbCtx, dbSpan := tr.Start(req.Context(), "Delete User Website")
+		dbCtx, dbSpan := getTracer().Start(req.Context(), "Delete User Website")
 		defer dbSpan.End()
 
 		err := r.DeleteUserWebsite(req.Context(), &web)
@@ -300,8 +294,6 @@ func validGroupName(web model.UserWebsite, groupName string) bool {
 //	@Router			/api/web-watcher/websites/{websiteUUID}/change-group [put]
 func changeWebsiteGroupHandler(r repository.Repostory) http.HandlerFunc {
 	return func(res http.ResponseWriter, req *http.Request) {
-		tr := otel.Tracer("htchan/WebHistory/api")
-
 		web := req.Context().Value(ContextKeyWebsite).(model.UserWebsite)
 		groupName := req.Context().Value(ContextKeyGroup).(string)
 		if !validGroupName(web, groupName) {
@@ -311,7 +303,7 @@ func changeWebsiteGroupHandler(r repository.Repostory) http.HandlerFunc {
 
 		web.GroupName = groupName
 
-		dbCtx, dbSpan := tr.Start(req.Context(), "Update User Website Group")
+		dbCtx, dbSpan := getTracer().Start(req.Context(), "Update User Website Group")
 		defer dbSpan.End()
 
 		err := r.UpdateUserWebsite(req.Context(), &web)

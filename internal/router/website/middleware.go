@@ -13,7 +13,6 @@ import (
 	"github.com/htchan/WebHistory/internal/repository"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
-	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/codes"
 )
 
@@ -55,8 +54,7 @@ func logRequest() func(next http.Handler) http.Handler {
 func TraceMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(
 		func(res http.ResponseWriter, req *http.Request) {
-			tr := otel.Tracer("htchan/WebHistory/api")
-			ctx, span := tr.Start(req.Context(), fmt.Sprintf("%s %s", req.Method, req.RequestURI))
+			ctx, span := getTracer().Start(req.Context(), fmt.Sprintf("%s %s", req.Method, req.RequestURI))
 			defer span.End()
 
 			next.ServeHTTP(res, req.WithContext(ctx))
@@ -73,9 +71,7 @@ func AuthenticateMiddleware(conf *config.UserServiceConfig) func(next http.Handl
 					return
 				}
 
-				tr := otel.Tracer("htchan/WebHistory/api")
-
-				_, authSpan := tr.Start(req.Context(), "authentication")
+				_, authSpan := getTracer().Start(req.Context(), "authentication")
 				defer authSpan.End()
 
 				userUUID := req.Header.Get(HeaderKeyUserUUID)
@@ -112,9 +108,7 @@ func SetContentType(next http.Handler) http.Handler {
 func WebsiteParams(next http.Handler) http.Handler {
 	return http.HandlerFunc(
 		func(res http.ResponseWriter, req *http.Request) {
-			tr := otel.Tracer("htchan/WebHistory/api")
-
-			_, paramsSpan := tr.Start(req.Context(), "parse website params")
+			_, paramsSpan := getTracer().Start(req.Context(), "parse website params")
 			defer paramsSpan.End()
 
 			err := req.ParseForm()
@@ -152,12 +146,10 @@ func QueryUserWebsite(r repository.Repostory) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(
 			func(res http.ResponseWriter, req *http.Request) {
-				tr := otel.Tracer("htchan/WebHistory/api")
-
 				userUUID := req.Context().Value(ContextKeyUserUUID).(string)
 				webUUID := chi.URLParam(req, "webUUID")
 
-				_, dbSpan := tr.Start(req.Context(), "query user website")
+				_, dbSpan := getTracer().Start(req.Context(), "query user website")
 				defer dbSpan.End()
 
 				web, err := r.FindUserWebsite(req.Context(), userUUID, webUUID)
@@ -185,8 +177,7 @@ func QueryUserWebsite(r repository.Repostory) func(http.Handler) http.Handler {
 func GroupNameParams(next http.Handler) http.Handler {
 	return http.HandlerFunc(
 		func(res http.ResponseWriter, req *http.Request) {
-			tr := otel.Tracer("htchan/WebHistory/api")
-			_, paramsSpan := tr.Start(req.Context(), "parse website params")
+			_, paramsSpan := getTracer().Start(req.Context(), "parse website params")
 			defer paramsSpan.End()
 
 			err := req.ParseForm()
