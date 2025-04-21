@@ -4,10 +4,11 @@ import (
 	"context"
 	"net/http"
 	"os"
-	"os/signal"
+	"syscall"
 	"time"
 
 	"github.com/go-chi/chi/v5"
+	shutdown "github.com/htchan/goshutdown"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 	"go.opentelemetry.io/otel"
@@ -102,14 +103,8 @@ func main() {
 		log.Fatal().Err(err).Msg("create vendor services failed")
 	}
 
-	// redisClient, err := rueidis.NewClient(rueidis.ClientOption{
-	// 	InitAddress: []string{conf.RedisStreamConfig.Addr},
-	// })
-	// if err != nil {
-	// 	log.Fatal().Err(err).Msg("failed to create redis client")
-	// }
-
-	// updateTasks := websiteupdate.NewTaskSet(redisClient, services, rpo, &conf.WebsiteConfig)
+	shutdown.LogEnabled = true
+	shutdownHandler := shutdown.New(syscall.SIGINT, syscall.SIGTERM)
 
 	websiteUpdateTasks := websiteupdate.NewTaskSet(nc, services, rpo, &conf.WebsiteConfig)
 
@@ -132,14 +127,23 @@ func main() {
 		}
 	}()
 
-	sigChan := make(chan os.Signal, 1)
-	signal.Notify(sigChan, os.Interrupt)
-	<-sigChan
-	log.Debug().Msg("received interrupt signal")
+	shutdownHandler.Register("api server", func() error {
+		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+		defer cancel()
 
-	// Setup graceful shutdown
-	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
-	defer cancel()
-	server.Shutdown(ctx)
-	tp.Shutdown(ctx)
+		server.Shutdown(ctx)
+
+		return nil
+	})
+	shutdownHandler.Register("nats connection", func() error {
+		nc.Close()
+
+		return nil
+	})
+	shutdownHandler.Register("database", db.Close)
+	shutdownHandler.Register("tracer", func() error {
+		return tp.Shutdown(context.Background())
+	})
+
+	shutdownHandler.Listen(60 * time.Second)
 }
