@@ -128,10 +128,7 @@ func main() {
 	}()
 
 	shutdownHandler.Register("api server", func() error {
-		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-		defer cancel()
-
-		server.Shutdown(ctx)
+		server.Shutdown(context.Background())
 
 		return nil
 	})
