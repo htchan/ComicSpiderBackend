@@ -7,6 +7,7 @@ import (
 	"log"
 	"os"
 	"testing"
+	"time"
 
 	"github.com/ory/dockertest/v3"
 	"github.com/ory/dockertest/v3/docker"
@@ -46,6 +47,8 @@ func TestMain(m *testing.M) {
 		purge()
 		log.Fatalf("fail to setup docker: %v", err)
 	}
+
+	time.Sleep(100 * time.Millisecond)
 
 	connString = sqlcConnString
 
