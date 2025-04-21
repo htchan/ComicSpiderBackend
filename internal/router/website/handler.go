@@ -44,22 +44,15 @@ func encodeJsonResp(ctx context.Context, res http.ResponseWriter, body any) {
 // @Router			/api/web-watcher/websites/groups [get]
 func getAllWebsiteGroupsHandler(r repository.Repostory) http.HandlerFunc {
 	return func(res http.ResponseWriter, req *http.Request) {
-		dbCtx, dbSpan := getTracer().Start(req.Context(), "User Website Query")
-		defer dbSpan.End()
-
 		userUUID := req.Context().Value(ContextKeyUserUUID).(string)
 		webs, err := r.FindUserWebsites(req.Context(), userUUID)
 
 		if err != nil {
-			dbSpan.SetStatus(codes.Error, err.Error())
-			dbSpan.RecordError(err)
-
-			zerolog.Ctx(dbCtx).Error().Err(err).Msg("find user websites failed")
+			zerolog.Ctx(req.Context()).Error().Err(err).Msg("find user websites failed")
 			writeError(res, http.StatusBadRequest, ErrRecordNotFound)
+
 			return
 		}
-
-		dbSpan.End()
 
 		encodeJsonResp(req.Context(), res, listAllWebsiteGroupsResp{fromModelWebsiteGroups(webs.WebsiteGroups())})
 	}
@@ -80,20 +73,14 @@ func getWebsiteGroupHandler(r repository.Repostory) http.HandlerFunc {
 		userUUID := req.Context().Value(ContextKeyUserUUID).(string)
 		groupName := chi.URLParam(req, "groupName")
 
-		dbCtx, dbSpan := getTracer().Start(req.Context(), "User Website Group Query")
-		defer dbSpan.End()
-
 		webs, err := r.FindUserWebsitesByGroup(req.Context(), userUUID, groupName)
 		if err != nil || len(webs) == 0 {
-			dbSpan.SetStatus(codes.Error, err.Error())
-			dbSpan.RecordError(err)
 
-			zerolog.Ctx(dbCtx).Error().Err(err).Msg("find user websites by group failed")
+			zerolog.Ctx(req.Context()).Error().Err(err).Msg("find user websites by group failed")
 			writeError(res, http.StatusBadRequest, ErrRecordNotFound)
+
 			return
 		}
-
-		dbSpan.End()
 
 		encodeJsonResp(req.Context(), res, getWebsiteGroupResp{fromModelWebsiteGroup(webs)})
 	}
@@ -117,36 +104,22 @@ func createWebsiteHandler(r repository.Repostory, conf *config.WebsiteConfig, ta
 
 		web := model.NewWebsite(url, conf)
 
-		dbCtx, dbSpan := getTracer().Start(req.Context(), "Website Record Creation")
-		defer dbSpan.End()
-
 		err := r.CreateWebsite(req.Context(), &web)
 		if err != nil {
-			dbSpan.SetStatus(codes.Error, err.Error())
-			dbSpan.RecordError(err)
-
-			zerolog.Ctx(dbCtx).Error().Err(err).Msg("create website failed")
+			zerolog.Ctx(req.Context()).Error().Err(err).Msg("create website failed")
 			writeError(res, http.StatusBadRequest, err)
+
 			return
 		}
-
-		dbSpan.End()
-
-		dbCtx, dbSpan = getTracer().Start(req.Context(), "User Website Record Creation")
-		defer dbSpan.End()
 
 		userWeb := model.NewUserWebsite(web, userUUID)
 		err = r.CreateUserWebsite(req.Context(), &userWeb)
 		if err != nil {
-			dbSpan.SetStatus(codes.Error, err.Error())
-			dbSpan.RecordError(err)
-
-			zerolog.Ctx(dbCtx).Error().Err(err).Msg("create user website failed")
+			zerolog.Ctx(req.Context()).Error().Err(err).Msg("create user website failed")
 			writeError(res, http.StatusBadRequest, err)
+
 			return
 		}
-
-		dbSpan.End()
 
 		// only publish job it website is updated more than 24 hr ago
 		if time.Since(web.UpdateTime) > 24*time.Hour {
@@ -214,21 +187,13 @@ func refreshWebsiteHandler(r repository.Repostory) http.HandlerFunc {
 		web := req.Context().Value(ContextKeyWebsite).(model.UserWebsite)
 		web.AccessTime = time.Now().UTC().Truncate(5 * time.Second)
 
-		dbCtx, dbSpan := getTracer().Start(req.Context(), "Refresh User Website")
-		defer dbSpan.End()
-
 		err := r.UpdateUserWebsite(req.Context(), &web)
 		if err != nil {
-			dbSpan.SetStatus(codes.Error, err.Error())
-			dbSpan.RecordError(err)
-
-			zerolog.Ctx(dbCtx).Error().Err(err).Msg("refresh user website failed")
+			zerolog.Ctx(req.Context()).Error().Err(err).Msg("refresh user website failed")
 			writeError(res, http.StatusInternalServerError, err)
 
 			return
 		}
-
-		dbSpan.End()
 
 		encodeJsonResp(req.Context(), res, refreshWebsiteResp{fromModelUserWebsite(web)})
 	}
@@ -250,21 +215,13 @@ func deleteWebsiteHandler(r repository.Repostory) http.HandlerFunc {
 	return func(res http.ResponseWriter, req *http.Request) {
 		web := req.Context().Value(ContextKeyWebsite).(model.UserWebsite)
 
-		dbCtx, dbSpan := getTracer().Start(req.Context(), "Delete User Website")
-		defer dbSpan.End()
-
 		err := r.DeleteUserWebsite(req.Context(), &web)
 		if err != nil {
-			dbSpan.SetStatus(codes.Error, err.Error())
-			dbSpan.RecordError(err)
-
-			zerolog.Ctx(dbCtx).Error().Err(err).Msg("delete user website failed")
+			zerolog.Ctx(req.Context()).Error().Err(err).Msg("delete user website failed")
 			writeError(res, http.StatusInternalServerError, err)
 
 			return
 		}
-
-		dbSpan.End()
 
 		encodeJsonResp(req.Context(), res, deleteWebsiteResp{fmt.Sprintf("website <%v> deleted", web.Website.Title)})
 	}
@@ -303,21 +260,13 @@ func changeWebsiteGroupHandler(r repository.Repostory) http.HandlerFunc {
 
 		web.GroupName = groupName
 
-		dbCtx, dbSpan := getTracer().Start(req.Context(), "Update User Website Group")
-		defer dbSpan.End()
-
 		err := r.UpdateUserWebsite(req.Context(), &web)
 		if err != nil {
-			dbSpan.SetStatus(codes.Error, err.Error())
-			dbSpan.RecordError(err)
-
-			zerolog.Ctx(dbCtx).Error().Err(err).Str("group_name", groupName).Msg("update user website group failed")
+			zerolog.Ctx(req.Context()).Error().Err(err).Str("group_name", groupName).Msg("update user website group failed")
 			writeError(res, http.StatusBadRequest, err)
 
 			return
 		}
-
-		dbSpan.End()
 
 		encodeJsonResp(req.Context(), res, changeWebsiteGroupResp{fromModelUserWebsite(web)})
 	}
