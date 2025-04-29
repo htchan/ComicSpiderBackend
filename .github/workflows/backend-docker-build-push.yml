@@ -4,6 +4,9 @@ run-name: ${{github.actor}} trigger docker image build and push for BE
 on:
   workflow_dispatch:
 
+env:
+  GO_VERSION: 1.24.2
+
 jobs:
   Build-Push-Backend-Image:
     if: contains('["htchan"]', github.actor)
@@ -20,7 +23,7 @@ jobs:
       # - name: Set up Go
       #   uses: actions/setup-go@v4
       #   with:
-      #     go-version: '1.24.1'
+      #     go-version: ${{ env.GO_VERSION }}
           
       # - name: Go Cache
       #   uses: actions/cache@v3
