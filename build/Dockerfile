@@ -1,4 +1,6 @@
-FROM golang:1.24.2-alpine AS builder
+ARG GO_VERSION
+
+FROM golang:${GO_VERSION}-alpine AS builder
 
 ARG SERVICE
 

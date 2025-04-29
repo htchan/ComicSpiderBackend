@@ -70,6 +70,7 @@ jobs:
           BRANCH: ${{ github.ref_name }}
           DOCKER_BUILDKIT: 1
           BUILDKIT_PROGRESS: plain
+          GO_VERSION: ${{ env.GO_VERSION }}
         with:
           targets: ${{ matrix.target }}
           files: ./docker-bake.hcl
