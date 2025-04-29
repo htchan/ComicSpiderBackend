@@ -25,7 +25,6 @@ jobs:
       - name: Install Trivy
         run: |
           curl -sfL https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh | sh -s -- -b /usr/local/bin ${{ env.TRIVY_VERSION }}
-          sudo mv trivy /usr/local/bin/
       - name: Trivy Scan
         run: |
           trivy fs --exit-code 1 --no-progress  --severity CRITICAL ./
