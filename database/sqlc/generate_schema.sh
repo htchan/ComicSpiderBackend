@@ -1,6 +1,6 @@
 docker run --rm -d --name webhistory-sqlc-generator \
   -e POSTGRES_USER=web_history -e POSTGRES_PASSWORD=password -e POSTGRES_DB=db \
-  -v ${PWD}/../migrations:/migrations -v ./:/sqlc/ postgres
+  -v ${PWD}/../migrations:/migrations -v ./:/sqlc/ postgres:17.5-alpine
 
 # check if the container is ready
 while ! docker exec -i webhistory-sqlc-generator pg_isready -U web_history; do sleep 1; done
