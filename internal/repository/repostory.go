@@ -9,7 +9,7 @@ import (
 	"go.opentelemetry.io/otel/trace"
 )
 
-//go:generate mockgen -destination=../mock/repository/repository.go -package=mockrepo . Repostory
+//go:generate go tool mockgen -destination=../mock/repository/repository.go -package=mockrepo . Repostory
 type Repostory interface {
 	CreateWebsite(context.Context, *model.Website) error
 	UpdateWebsite(context.Context, *model.Website) error

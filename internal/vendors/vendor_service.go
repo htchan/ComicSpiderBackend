@@ -10,7 +10,7 @@ import (
 var ErrInvalidStatusCode = fmt.Errorf("invalid status code")
 var ErrUnknownHost = fmt.Errorf("unknown host")
 
-//go:generate mockgen -destination=../mock/vendor/vendor_service.go -package=mockvendor . VendorService
+//go:generate go tool mockgen -destination=../mock/vendor/vendor_service.go -package=mockvendor . VendorService
 type VendorService interface {
 	Support(*model.Website) bool
 	Update(context.Context, *model.Website) error

@@ -8,13 +8,13 @@ import (
 	"testing"
 	"time"
 
-	"github.com/golang/mock/gomock"
 	"github.com/htchan/WebHistory/internal/config"
 	mockrepo "github.com/htchan/WebHistory/internal/mock/repository"
 	"github.com/htchan/WebHistory/internal/model"
 	"github.com/htchan/WebHistory/internal/repository"
 	"github.com/htchan/WebHistory/internal/vendors"
 	"github.com/stretchr/testify/assert"
+	"go.uber.org/mock/gomock"
 	"golang.org/x/sync/semaphore"
 )
 

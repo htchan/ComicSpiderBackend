@@ -14,7 +14,6 @@ import (
 	"time"
 
 	"github.com/go-chi/chi/v5"
-	"github.com/golang/mock/gomock"
 	"github.com/google/uuid"
 	"github.com/htchan/WebHistory/internal/config"
 	mockrepo "github.com/htchan/WebHistory/internal/mock/repository"
@@ -24,6 +23,7 @@ import (
 	websiteupdate "github.com/htchan/WebHistory/internal/tasks/nats/website_update"
 	"github.com/nats-io/nats.go"
 	"github.com/stretchr/testify/assert"
+	"go.uber.org/mock/gomock"
 )
 
 func Test_getAllWebsiteGroupsHandler(t *testing.T) {

@@ -5,7 +5,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/golang/mock/gomock"
 	"github.com/htchan/WebHistory/internal/config"
 	mocknats "github.com/htchan/WebHistory/internal/mock/nats"
 	mockvendor "github.com/htchan/WebHistory/internal/mock/vendor"
@@ -15,6 +14,7 @@ import (
 	"github.com/nats-io/nats.go"
 	"github.com/nats-io/nats.go/jetstream"
 	"github.com/stretchr/testify/assert"
+	"go.uber.org/mock/gomock"
 )
 
 func TestNewTask(t *testing.T) {
