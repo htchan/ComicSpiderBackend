@@ -177,7 +177,17 @@ func (serv *VendorService) isUpdated(ctx context.Context, web *model.Website, bo
 		return isUpdated
 	}
 
-	if strings.Contains(updateTimeStr[1], "小時前") {
+	if strings.Contains(updateTimeStr[1], "分鐘前") {
+		minutesAgo, err := strconv.Atoi(strings.Trim(updateTimeStr[1], "分鐘前"))
+		if err != nil {
+			zerolog.Ctx(ctx).Error().Err(err).Str("date", updateTimeStr[1]).Msg("Failed to parse update time")
+			checkUpdateSpan.SetStatus(codes.Error, err.Error())
+			checkUpdateSpan.RecordError(err)
+		} else {
+			updateTime = time.Now().
+				Add(time.Duration(-minutesAgo) * time.Minute)
+		}
+	} else if strings.Contains(updateTimeStr[1], "小時前") {
 		hoursAgo, err := strconv.Atoi(strings.Trim(updateTimeStr[1], "小時前"))
 		if err != nil {
 			zerolog.Ctx(ctx).Error().Err(err).Str("date", updateTimeStr[1]).Msg("Failed to parse update time")

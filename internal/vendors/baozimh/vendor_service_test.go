@@ -258,7 +258,7 @@ func TestVendorService_isUpdated(t *testing.T) {
 			},
 		},
 		{
-			name: "date updated by a related date",
+			name: "date updated by a related date with hour",
 			serv: &VendorService{},
 			getCtx: func() context.Context {
 				return context.Background()
@@ -276,6 +276,28 @@ func TestVendorService_isUpdated(t *testing.T) {
 			want: true,
 			wantWeb: &model.Website{
 				UpdateTime: time.Now().Add(-5 * time.Hour).UTC().Truncate(24 * time.Hour),
+				Conf:       &config.WebsiteConfig{Separator: "\n"},
+			},
+		},
+		{
+			name: "date updated by a related date with minute",
+			serv: &VendorService{},
+			getCtx: func() context.Context {
+				return context.Background()
+			},
+			web: &model.Website{
+				Conf: &config.WebsiteConfig{Separator: "\n"},
+			},
+			body: `<html>
+				<div class="supporting-text"><div><span>
+				<em style="color:var(--link-hover-color);" data-v-6191a505="">
+					(5分鐘前 更新)
+				</em>
+				</div></div></span>
+		</html>`,
+			want: true,
+			wantWeb: &model.Website{
+				UpdateTime: time.Now().Add(-5 * time.Minute).UTC().Truncate(24 * time.Hour),
 				Conf:       &config.WebsiteConfig{Separator: "\n"},
 			},
 		},
