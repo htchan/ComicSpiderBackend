@@ -8,7 +8,7 @@ on:
     - cron: '0 0 * * 6'
 
 env:
-  GO_VERSION: 1.24.4
+  GO_VERSION: 1.24.6
   TRIVY_VERSION: v0.61.1
 
 jobs:
