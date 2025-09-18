@@ -24,6 +24,7 @@ func TestNewVendorService(t *testing.T) {
 	t.Parallel()
 
 	type params struct {
+		cli  *http.Client
 		repo repository.Repostory
 		cfg  *config.VendorServiceConfig
 	}
@@ -36,6 +37,7 @@ func TestNewVendorService(t *testing.T) {
 		{
 			name: "happy flow",
 			params: params{
+				cli:  nil,
 				repo: nil,
 				cfg: &config.VendorServiceConfig{
 					MaxConcurrency: 10,
@@ -43,6 +45,7 @@ func TestNewVendorService(t *testing.T) {
 				},
 			},
 			want: &VendorService{
+				cli:  nil,
 				repo: nil,
 				lock: semaphore.NewWeighted(10),
 				cfg: &config.VendorServiceConfig{
@@ -58,7 +61,7 @@ func TestNewVendorService(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 
-			get := NewVendorService(tt.params.repo, tt.params.cfg)
+			get := NewVendorService(tt.params.cli, tt.params.repo, tt.params.cfg)
 			assert.Equal(t, tt.want.repo, get.repo)
 			assert.Equal(t, tt.want.lock, get.lock)
 			assert.Equal(t, tt.want.cfg, get.cfg)
@@ -388,6 +391,16 @@ func TestVendorService_Update(t *testing.T) {
 	t.Parallel()
 
 	testError := fmt.Errorf("testing")
+	testClient := goclient.NewClient(
+		goclient.WithMiddlewares(
+			retry.NewRetryMiddleware(
+				1,
+				retry.RetryForError,
+				retry.StaticRetryInterval(0),
+			),
+			vendors.RaiseStatusCodeErrorMiddleware,
+		),
+	)
 
 	serv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if r.URL.Path == "/fail" {
@@ -421,16 +434,7 @@ func TestVendorService_Update(t *testing.T) {
 		{
 			name: "update web successfully",
 			serv: &VendorService{
-				cli: goclient.NewClient(
-					goclient.WithMiddlewares(
-						retry.NewRetryMiddleware(
-							1,
-							retry.RetryForError,
-							retry.StaticRetryInterval(0),
-						),
-						vendors.RaiseStatusCodeErrorMiddleware,
-					),
-				),
+				cli:  testClient,
 				lock: semaphore.NewWeighted(1),
 				cfg: &config.VendorServiceConfig{
 					MaxConcurrency: 1,
@@ -466,16 +470,7 @@ func TestVendorService_Update(t *testing.T) {
 		{
 			name: "fetch info but not update web",
 			serv: &VendorService{
-				cli: goclient.NewClient(
-					goclient.WithMiddlewares(
-						retry.NewRetryMiddleware(
-							1,
-							retry.RetryForError,
-							retry.StaticRetryInterval(0),
-						),
-						vendors.RaiseStatusCodeErrorMiddleware,
-					),
-				),
+				cli:  testClient,
 				lock: semaphore.NewWeighted(1),
 				cfg: &config.VendorServiceConfig{
 					MaxConcurrency: 1,
@@ -505,16 +500,7 @@ func TestVendorService_Update(t *testing.T) {
 		{
 			name: "repo returning error",
 			serv: &VendorService{
-				cli: goclient.NewClient(
-					goclient.WithMiddlewares(
-						retry.NewRetryMiddleware(
-							1,
-							retry.RetryForError,
-							retry.StaticRetryInterval(0),
-						),
-						vendors.RaiseStatusCodeErrorMiddleware,
-					),
-				),
+				cli:  testClient,
 				lock: semaphore.NewWeighted(1),
 				cfg: &config.VendorServiceConfig{
 					MaxConcurrency: 1,
@@ -550,16 +536,7 @@ func TestVendorService_Update(t *testing.T) {
 		{
 			name: "send request returning error",
 			serv: &VendorService{
-				cli: goclient.NewClient(
-					goclient.WithMiddlewares(
-						retry.NewRetryMiddleware(
-							1,
-							retry.RetryForError,
-							retry.StaticRetryInterval(0),
-						),
-						vendors.RaiseStatusCodeErrorMiddleware,
-					),
-				),
+				cli:  testClient,
 				lock: semaphore.NewWeighted(1),
 				cfg: &config.VendorServiceConfig{
 					MaxConcurrency: 1,
@@ -585,16 +562,7 @@ func TestVendorService_Update(t *testing.T) {
 		{
 			name: "context was cancelled",
 			serv: &VendorService{
-				cli: goclient.NewClient(
-					goclient.WithMiddlewares(
-						retry.NewRetryMiddleware(
-							1,
-							retry.RetryForError,
-							retry.StaticRetryInterval(0),
-						),
-						vendors.RaiseStatusCodeErrorMiddleware,
-					),
-				),
+				cli:  testClient,
 				lock: semaphore.NewWeighted(1),
 				cfg: &config.VendorServiceConfig{
 					MaxConcurrency: 1,

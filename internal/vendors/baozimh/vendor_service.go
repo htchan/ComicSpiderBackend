@@ -52,21 +52,26 @@ func getTracer() trace.Tracer {
 }
 
 func NewVendorService(
+	cli *http.Client,
 	repo repository.Repostory,
 	cfg *config.VendorServiceConfig,
 ) *VendorService {
-	cli := goclient.NewClient(
-		goclient.WithMiddlewares(
-			retry.NewRetryMiddleware(
-				cfg.MaxRetry,
-				retry.RetryForError,
-				retry.LinearRetryInterval(cfg.RetryInterval),
-			),
-			vendors.RaiseStatusCodeErrorMiddleware,
-		),
-	)
 	return &VendorService{
-		cli:  cli,
+		cli: goclient.NewClient(
+			goclient.WithMiddlewares(
+				retry.NewRetryMiddleware(
+					cfg.MaxRetry,
+					retry.RetryForError,
+					retry.LinearRetryInterval(cfg.RetryInterval),
+				),
+				vendors.RaiseStatusCodeErrorMiddleware,
+			),
+			goclient.WithRequester(
+				func(req *http.Request) (*http.Response, error) {
+					return cli.Do(req)
+				},
+			),
+		),
 		repo: repo,
 		lock: semaphore.NewWeighted(cfg.MaxConcurrency),
 		cfg:  cfg,
@@ -93,11 +98,8 @@ func (serv *VendorService) fetchWebsite(ctx context.Context, web *model.Website)
 		return "", reqErr
 	}
 
-	var resp *http.Response
-	var respErr error
-
 	// send request with basic retry
-	resp, respErr = serv.cli.Do(req.WithContext(ctx))
+	resp, respErr := serv.cli.Do(req.WithContext(ctx))
 	defer func(resp *http.Response) {
 		if resp != nil {
 			resp.Body.Close()
