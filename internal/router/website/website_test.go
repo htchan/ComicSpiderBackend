@@ -6,13 +6,22 @@ import (
 	"log"
 	"os"
 	"testing"
+	"time"
 
+	"github.com/nats-io/nats.go"
 	"github.com/ory/dockertest/v3"
 	"github.com/ory/dockertest/v3/docker"
 	"go.uber.org/goleak"
 )
 
 var connString string
+
+func isNatsConnected() bool {
+	nc, err := nats.Connect(connString)
+	defer nc.Close()
+
+	return err == nil && nc.IsConnected()
+}
 
 func TestMain(m *testing.M) {
 
@@ -26,6 +35,22 @@ func TestMain(m *testing.M) {
 	}
 
 	connString = sqlcConnString
+
+	// Wait for NATS to be ready
+	natsConnected := false
+	for range 100 {
+		natsConnected = isNatsConnected()
+		if natsConnected {
+			break
+		}
+		time.Sleep(100 * time.Millisecond)
+	}
+
+	if !natsConnected {
+		log.Printf("NATS container failed to connect")
+		purge()
+		os.Exit(1)
+	}
 
 	if *leak {
 		goleak.VerifyTestMain(m)
