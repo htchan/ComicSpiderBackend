@@ -1,6 +1,6 @@
 module github.com/htchan/WebHistory
 
-go 1.24.6
+go 1.25.1
 
 require (
 	github.com/PuerkitoBio/goquery v1.8.0
@@ -9,12 +9,13 @@ require (
 	github.com/go-chi/cors v1.2.1
 	github.com/golang-migrate/migrate/v4 v4.15.2
 	github.com/google/uuid v1.6.0
+	github.com/htchan/goclient v0.0.4
 	github.com/htchan/goshutdown v0.0.0-20231003015559-4aa563eafbb1
 	github.com/lib/pq v1.10.9
 	github.com/nats-io/nats.go v1.39.1
 	github.com/ory/dockertest/v3 v3.10.0
 	github.com/rs/zerolog v1.29.0
-	github.com/stretchr/testify v1.10.0
+	github.com/stretchr/testify v1.11.1
 	github.com/swaggo/http-swagger/v2 v2.0.2
 	github.com/swaggo/swag v1.16.4
 	go.opentelemetry.io/otel v1.34.0

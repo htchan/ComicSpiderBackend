@@ -13,6 +13,8 @@ import (
 	"github.com/htchan/WebHistory/internal/model"
 	"github.com/htchan/WebHistory/internal/repository"
 	"github.com/htchan/WebHistory/internal/vendors"
+	"github.com/htchan/goclient"
+	"github.com/htchan/goclient/middlewares/retry"
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/mock/gomock"
 	"golang.org/x/sync/semaphore"
@@ -60,7 +62,9 @@ func TestNewVendorService(t *testing.T) {
 			t.Parallel()
 
 			get := NewVendorService(tt.params.cli, tt.params.repo, tt.params.cfg)
-			assert.Equal(t, tt.want, get)
+			assert.Equal(t, tt.want.repo, get.repo)
+			assert.Equal(t, tt.want.lock, get.lock)
+			assert.Equal(t, tt.want.cfg, get.cfg)
 		})
 	}
 }
@@ -95,7 +99,16 @@ func TestVendorService_fetchWebsite(t *testing.T) {
 		{
 			name: "send request success",
 			serv: &VendorService{
-				cli:  http.DefaultClient,
+				cli: goclient.NewClient(
+					goclient.WithMiddlewares(
+						retry.NewRetryMiddleware(
+							1,
+							retry.RetryForError,
+							retry.StaticRetryInterval(0),
+						),
+						vendors.RaiseStatusCodeErrorMiddleware,
+					),
+				),
 				repo: nil,
 				lock: semaphore.NewWeighted(1),
 				cfg: &config.VendorServiceConfig{
@@ -116,7 +129,16 @@ func TestVendorService_fetchWebsite(t *testing.T) {
 		{
 			name: "send request failed",
 			serv: &VendorService{
-				cli:  http.DefaultClient,
+				cli: goclient.NewClient(
+					goclient.WithMiddlewares(
+						retry.NewRetryMiddleware(
+							3,
+							retry.RetryForError,
+							retry.LinearRetryInterval(5*time.Millisecond),
+						),
+						vendors.RaiseStatusCodeErrorMiddleware,
+					),
+				),
 				repo: nil,
 				lock: semaphore.NewWeighted(1),
 				cfg: &config.VendorServiceConfig{
@@ -138,7 +160,16 @@ func TestVendorService_fetchWebsite(t *testing.T) {
 		{
 			name: "cancelled context",
 			serv: &VendorService{
-				cli:  http.DefaultClient,
+				cli: goclient.NewClient(
+					goclient.WithMiddlewares(
+						retry.NewRetryMiddleware(
+							1,
+							retry.RetryForError,
+							retry.StaticRetryInterval(0),
+						),
+						vendors.RaiseStatusCodeErrorMiddleware,
+					),
+				),
 				repo: nil,
 				lock: semaphore.NewWeighted(1),
 				cfg: &config.VendorServiceConfig{
@@ -321,6 +352,16 @@ func TestVendorService_Update(t *testing.T) {
 	t.Parallel()
 
 	testError := fmt.Errorf("testing")
+	testClient := goclient.NewClient(
+		goclient.WithMiddlewares(
+			retry.NewRetryMiddleware(
+				1,
+				retry.RetryForError,
+				retry.StaticRetryInterval(0),
+			),
+			vendors.RaiseStatusCodeErrorMiddleware,
+		),
+	)
 
 	serv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if r.URL.Path == "/fail" {
@@ -352,7 +393,7 @@ func TestVendorService_Update(t *testing.T) {
 		{
 			name: "update web successfully",
 			serv: &VendorService{
-				cli:  http.DefaultClient,
+				cli:  testClient,
 				lock: semaphore.NewWeighted(1),
 				cfg: &config.VendorServiceConfig{
 					MaxConcurrency: 1,
@@ -390,7 +431,7 @@ func TestVendorService_Update(t *testing.T) {
 		{
 			name: "fetch info but not update web",
 			serv: &VendorService{
-				cli:  http.DefaultClient,
+				cli:  testClient,
 				lock: semaphore.NewWeighted(1),
 				cfg: &config.VendorServiceConfig{
 					MaxConcurrency: 1,
@@ -420,7 +461,7 @@ func TestVendorService_Update(t *testing.T) {
 		{
 			name: "repo returning error",
 			serv: &VendorService{
-				cli:  http.DefaultClient,
+				cli:  testClient,
 				lock: semaphore.NewWeighted(1),
 				cfg: &config.VendorServiceConfig{
 					MaxConcurrency: 1,
@@ -458,7 +499,7 @@ func TestVendorService_Update(t *testing.T) {
 		{
 			name: "send request returning error",
 			serv: &VendorService{
-				cli:  http.DefaultClient,
+				cli:  testClient,
 				lock: semaphore.NewWeighted(1),
 				cfg: &config.VendorServiceConfig{
 					MaxConcurrency: 1,
@@ -484,7 +525,7 @@ func TestVendorService_Update(t *testing.T) {
 		{
 			name: "context was cancelled",
 			serv: &VendorService{
-				cli:  http.DefaultClient,
+				cli:  testClient,
 				lock: semaphore.NewWeighted(1),
 				cfg: &config.VendorServiceConfig{
 					MaxConcurrency: 1,

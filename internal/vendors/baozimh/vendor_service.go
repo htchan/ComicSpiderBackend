@@ -2,6 +2,7 @@ package baozimh
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -15,6 +16,9 @@ import (
 	"github.com/htchan/WebHistory/internal/model"
 	"github.com/htchan/WebHistory/internal/repository"
 	"github.com/htchan/WebHistory/internal/vendors"
+
+	"github.com/htchan/goclient"
+	"github.com/htchan/goclient/middlewares/retry"
 	"github.com/rs/zerolog"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/attribute"
@@ -24,7 +28,7 @@ import (
 )
 
 type VendorService struct {
-	cli  *http.Client
+	cli  *goclient.Client
 	repo repository.Repostory
 	lock *semaphore.Weighted
 	cfg  *config.VendorServiceConfig
@@ -53,7 +57,21 @@ func NewVendorService(
 	cfg *config.VendorServiceConfig,
 ) *VendorService {
 	return &VendorService{
-		cli:  cli,
+		cli: goclient.NewClient(
+			goclient.WithMiddlewares(
+				retry.NewRetryMiddleware(
+					cfg.MaxRetry,
+					retry.RetryForError,
+					retry.LinearRetryInterval(cfg.RetryInterval),
+				),
+				vendors.RaiseStatusCodeErrorMiddleware,
+			),
+			goclient.WithRequester(
+				func(req *http.Request) (*http.Response, error) {
+					return cli.Do(req)
+				},
+			),
+		),
 		repo: repo,
 		lock: semaphore.NewWeighted(cfg.MaxConcurrency),
 		cfg:  cfg,
@@ -80,32 +98,13 @@ func (serv *VendorService) fetchWebsite(ctx context.Context, web *model.Website)
 		return "", reqErr
 	}
 
-	var resp *http.Response
-	var respErr error
-
 	// send request with basic retry
-	for i := 0; i < serv.cfg.MaxRetry; i++ {
-		resp, respErr = serv.cli.Do(req.WithContext(ctx))
-		defer func(resp *http.Response) {
-			if resp != nil {
-				resp.Body.Close()
-			}
-		}(resp)
-
-		if respErr == nil && (resp.StatusCode >= 200 && resp.StatusCode < 300) {
-			break
+	resp, respErr := serv.cli.Do(req.WithContext(ctx))
+	defer func(resp *http.Response) {
+		if resp != nil {
+			resp.Body.Close()
 		}
-
-		if respErr == nil {
-			if !(resp.StatusCode >= 200 && resp.StatusCode < 300) {
-				respErr = fmt.Errorf("fetch website failed: %w (%d)", vendors.ErrInvalidStatusCode, resp.StatusCode)
-			} else {
-				respErr = fmt.Errorf("fetch website failed: unknown error")
-			}
-		}
-
-		time.Sleep(time.Duration(i+1) * serv.cfg.RetryInterval)
-	}
+	}(resp)
 	if respErr != nil {
 		return "", respErr
 	}
@@ -171,8 +170,8 @@ func (serv *VendorService) isUpdated(ctx context.Context, web *model.Website, bo
 
 	if len(updateTimeStr) < 2 {
 		zerolog.Ctx(ctx).Warn().Str("update_time_str", doc.Find(dateGoQuery).Text()).Msg("cannot find update time str")
-		checkUpdateSpan.SetStatus(codes.Error, err.Error())
-		checkUpdateSpan.RecordError(err)
+		checkUpdateSpan.SetStatus(codes.Error, "cannot find update time str")
+		checkUpdateSpan.RecordError(errors.New("cannot find update time str"))
 
 		return isUpdated
 	}
