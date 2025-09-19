@@ -19,6 +19,7 @@ import (
 
 	"github.com/htchan/goclient"
 	"github.com/htchan/goclient/middlewares/retry"
+	customclient "github.com/htchan/goclient/requester/custom_client"
 	"github.com/rs/zerolog"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/attribute"
@@ -67,9 +68,7 @@ func NewVendorService(
 				vendors.RaiseStatusCodeErrorMiddleware,
 			),
 			goclient.WithRequester(
-				func(req *http.Request) (*http.Response, error) {
-					return cli.Do(req)
-				},
+				customclient.NewCustomClientRequester(cli),
 			),
 		),
 		repo: repo,
