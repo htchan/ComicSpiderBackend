@@ -123,11 +123,12 @@ func setupContainer() (string, func(), error) {
 	return connString, purge, nil
 }
 
-func populateData(db *sql.DB, uuid, title, userUUID string) error {
-	_, err := db.Exec("insert into websites (uuid, url, title, content, update_time) values ($1, $2, $3, 'content', $4)", uuid, "http://example.com/"+title, title, time.Date(2020, 1, 2, 3, 4, 5, 0, time.UTC))
+func populateData(db *sql.DB, uuid, title, userUUID, status string) error {
+	_, err := db.Exec("insert into websites (uuid, url, title, content, update_time, status) values ($1, $2, $3, 'content', $4, $5)", uuid, "http://example.com/"+title, title, time.Date(2020, 1, 2, 3, 4, 5, 0, time.UTC), status)
 	if err != nil {
 		return err
 	}
+
 	_, err = db.Exec("insert into user_websites (website_uuid, user_uuid, group_name, access_time) values ($1, $2, $3, $4)", uuid, userUUID, title, time.Date(2020, 1, 2, 3, 4, 5, 0, time.UTC))
 	return err
 }

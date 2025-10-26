@@ -16,11 +16,11 @@ RETURNING *;
 -- name: DeleteWebsite :exec
 DELETE FROM websites WHERE uuid=$1;
 
--- name: ListWebsites :many
-SELECT * FROM websites;
+-- name: ListActiveWebsites :many
+SELECT * FROM websites WHERE status='active';
 
 -- name: GetWebsite :one
-SELECT * from websites WHERE uuid=$1;
+SELECT * from websites WHERE uuid=$1 and status != 'inactive';
 
 -- name: CreateUserWebsite :one
 INSERT INTO user_websites
@@ -45,17 +45,17 @@ where user_uuid=$1 and website_uuid=$2;
 SELECT website_uuid, user_uuid, access_time, group_name,
 uuid, url, title, update_time 
 FROM user_websites JOIN websites ON user_websites.website_uuid=websites.uuid 
-WHERE user_uuid=$1
+WHERE user_uuid=$1 and websites.status != 'inactive'
 ORDER BY (update_time > access_time) DESC, update_time DESC, access_time DESC;
 
 -- name: ListUserWebsitesByGroup :many
 SELECT website_uuid, user_uuid, access_time, group_name ,
 uuid, url, title, update_time 
 FROM user_websites JOIN websites ON user_websites.website_uuid=websites.uuid 
-WHERE user_uuid=$1 and group_name=$2;
+WHERE user_uuid=$1 and group_name=$2 and websites.status != 'inactive';
 
 -- name: GetUserWebsite :one
 SELECT website_uuid, user_uuid, access_time, group_name ,
 uuid, url, title, update_time 
 FROM user_websites JOIN websites ON user_websites.website_uuid=websites.uuid 
-WHERE user_uuid=$1 and website_uuid=$2;
+WHERE user_uuid=$1 and website_uuid=$2 and websites.status != 'inactive';

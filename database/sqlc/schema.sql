@@ -44,11 +44,19 @@ CREATE TABLE public.websites (
     url text,
     title text,
     content text,
-    update_time timestamp without time zone
+    update_time timestamp without time zone,
+    status text DEFAULT 'active'::text NOT NULL
 );
 
 
 ALTER TABLE public.websites OWNER TO web_history;
+
+--
+-- Name: idx_websites_status; Type: INDEX; Schema: public; Owner: web_history
+--
+
+CREATE INDEX idx_websites_status ON public.websites USING btree (status);
+
 
 --
 -- Name: user_websites__user_and_uuid; Type: INDEX; Schema: public; Owner: web_history
