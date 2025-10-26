@@ -87,7 +87,7 @@ func (task *WebsiteBatchUpdateTask) handler(msg jetstream.Msg) {
 		}
 	}()
 
-	ctx, span := getTracer().Start(ctx, "Website Batch Update")
+	ctx, span := getTracer().Start(ctx, "Website Batch Update", trace.WithSpanKind(trace.SpanKindConsumer))
 	defer span.End()
 
 	// load all webstes from db

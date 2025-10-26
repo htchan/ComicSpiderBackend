@@ -141,7 +141,7 @@ func (task *WebsiteUpdateTask) handler(msg jetstream.Msg) {
 		return
 	}
 
-	ctx, span := getTracer().Start(ctx, "Website Update")
+	ctx, span := getTracer().Start(ctx, "Website Update", trace.WithSpanKind(trace.SpanKindConsumer))
 	defer span.End()
 
 	span.SetAttributes(

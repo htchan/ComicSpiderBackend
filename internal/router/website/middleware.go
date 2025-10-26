@@ -14,6 +14,7 @@ import (
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 	"go.opentelemetry.io/otel/codes"
+	"go.opentelemetry.io/otel/trace"
 )
 
 type ContextKey string
@@ -54,7 +55,7 @@ func logRequest() func(next http.Handler) http.Handler {
 func TraceMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(
 		func(res http.ResponseWriter, req *http.Request) {
-			ctx, span := getTracer().Start(req.Context(), fmt.Sprintf("%s %s", req.Method, req.RequestURI))
+			ctx, span := getTracer().Start(req.Context(), fmt.Sprintf("%s %s", req.Method, req.RequestURI), trace.WithSpanKind(trace.SpanKindServer))
 			defer span.End()
 
 			next.ServeHTTP(res, req.WithContext(ctx))

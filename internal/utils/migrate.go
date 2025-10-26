@@ -8,8 +8,9 @@ import (
 
 	"github.com/htchan/WebHistory/internal/config"
 	_ "github.com/lib/pq"
-	"github.com/rs/zerolog/log"
 	"go.opentelemetry.io/otel"
+	"go.opentelemetry.io/otel/codes"
+	"go.opentelemetry.io/otel/trace"
 
 	"github.com/golang-migrate/migrate/v4"
 	"github.com/golang-migrate/migrate/v4/database/postgres"
@@ -18,7 +19,7 @@ import (
 
 func Migrate(conf *config.DatabaseConfig) error {
 	tr := otel.Tracer("github.com/htchan/WebHistory/migrate")
-	_, span := tr.Start(context.Background(), "migrate")
+	_, span := tr.Start(context.Background(), "migrate", trace.WithSpanKind(trace.SpanKindServer))
 	defer span.End()
 
 	connString := fmt.Sprintf(
@@ -28,22 +29,30 @@ func Migrate(conf *config.DatabaseConfig) error {
 
 	db, err := sql.Open(conf.Driver, connString)
 	if err != nil {
+		span.SetStatus(codes.Error, err.Error())
+		span.RecordError(err)
 		return fmt.Errorf("migrate fail: %w", err)
 	}
 
 	driver, err := postgres.WithInstance(db, &postgres.Config{})
 	if err != nil {
+		span.SetStatus(codes.Error, err.Error())
+		span.RecordError(err)
 		return fmt.Errorf("migrate fail: %w", err)
 	}
 
 	m, err := migrate.NewWithDatabaseInstance("file:///migrations", conf.Driver, driver)
 	if err != nil {
+		span.SetStatus(codes.Error, err.Error())
+		span.RecordError(err)
 		return fmt.Errorf("migrate fail: %w", err)
 	}
 
 	err = m.Up()
-	if err != nil {
-		log.Warn().Err(err).Msg("migrate fail")
+	if err != nil && err != migrate.ErrNoChange {
+		span.SetStatus(codes.Error, err.Error())
+		span.RecordError(err)
+		return fmt.Errorf("migrate fail: %w", err)
 	}
 
 	defer m.Close()
