@@ -48,6 +48,7 @@ func fromSqlcWebsite(webModel sqlc.Website) model.Website {
 		Title:      webModel.Title.String,
 		RawContent: webModel.Content.String,
 		UpdateTime: webModel.UpdateTime.Time.UTC().Truncate(MinTimeUnit),
+		Status:     webModel.Status,
 	}
 }
 
@@ -226,7 +227,7 @@ func (r *SqlcRepo) FindWebsites(ctx context.Context) ([]model.Website, error) {
 	_, listWebsitesSpan := repository.GetTracer().Start(ctx, "find websites")
 	defer listWebsitesSpan.End()
 
-	webModels, err := r.db.ListWebsites(ctx)
+	webModels, err := r.db.ListActiveWebsites(ctx)
 	if err != nil {
 		listWebsitesSpan.SetStatus(codes.Error, err.Error())
 		listWebsitesSpan.RecordError(err)

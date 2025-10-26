@@ -55,7 +55,7 @@ func BenchmarkPsqlRepo_UpdateWebsite(b *testing.B) {
 	title := "benchmark-update-website"
 	uuid := "benchmark-update-website-uuid"
 	userUUID := "benchmark-update-website-user-uuid"
-	populateData(db, uuid, title, userUUID)
+	populateData(db, uuid, title, userUUID, "active")
 
 	r := NewRepo(db, &config.WebsiteConfig{})
 	b.Cleanup(func() {
@@ -105,7 +105,7 @@ func BenchmarkPsqlRepo_DeleteWebsite(b *testing.B) {
 	b.ResetTimer()
 	b.StopTimer()
 	for n := 0; n < b.N; n++ {
-		populateData(db, uuid, title, userUUID)
+		populateData(db, uuid, title, userUUID, "active")
 		b.StartTimer()
 		err := r.DeleteWebsite(context.Background(), &model.Website{UUID: uuid})
 		b.StopTimer()
@@ -124,7 +124,7 @@ func BenchmarkPsqlRepo_FindWebsites(b *testing.B) {
 	title := "benchmark-find-websites"
 	uuid := "benchmark-find-websites-uuid"
 	userUUID := "benchmark-find-websites-user-uuid"
-	populateData(db, uuid, title, userUUID)
+	populateData(db, uuid, title, userUUID, "active")
 
 	r := NewRepo(db, &config.WebsiteConfig{})
 	b.Cleanup(func() {
@@ -154,7 +154,7 @@ func BenchmarkPsqlRepo_FindWebsite(b *testing.B) {
 	title := "benchmark-find-website"
 	uuid := "benchmark-find-website-uuid"
 	userUUID := "benchmark-find-website-user-uuid"
-	populateData(db, uuid, title, userUUID)
+	populateData(db, uuid, title, userUUID, "active")
 
 	r := NewRepo(db, &config.WebsiteConfig{})
 	b.Cleanup(func() {
@@ -184,7 +184,7 @@ func BenchmarkPsqlRepo_CreateUserWebsite(b *testing.B) {
 	uuid := "benchmark-create-user-website-uuid"
 	title := "benchmark create user website"
 	userUUID := "benchmark-create-user-website-user-uuid"
-	populateData(db, uuid, title, userUUID)
+	populateData(db, uuid, title, userUUID, "active")
 
 	r := NewRepo(db, &config.WebsiteConfig{})
 	b.Cleanup(func() {
@@ -222,7 +222,7 @@ func BenchmarkPsqlRepo_UpdateUserWebsite(b *testing.B) {
 	title := "benchmark-update-user-website"
 	userUUID := "benchmark-update-user-website-user-uuid"
 	uuid := "benchmark-update-user-website-uuid"
-	populateData(db, uuid, title, userUUID)
+	populateData(db, uuid, title, userUUID, "active")
 
 	r := NewRepo(db, &config.WebsiteConfig{})
 	b.Cleanup(func() {
@@ -271,7 +271,7 @@ func BenchmarkPsqlRepo_DeleteUserWebsite(b *testing.B) {
 	b.ResetTimer()
 	b.StopTimer()
 	for n := 0; n < b.N; n++ {
-		populateData(db, uuid, title, userUUID)
+		populateData(db, uuid, title, userUUID, "active")
 		b.StartTimer()
 		err := r.DeleteUserWebsite(context.Background(), &model.UserWebsite{WebsiteUUID: uuid, UserUUID: userUUID})
 		b.StopTimer()
@@ -290,7 +290,7 @@ func BenchmarkPsqlRepo_FindUserWebsites(b *testing.B) {
 	title := "benchmark-find-user-websites"
 	uuid := "benchmark-find-user-websites-uuid"
 	userUUID := "benchmark-find-user-websites-user-uuid"
-	populateData(db, uuid, title, userUUID)
+	populateData(db, uuid, title, userUUID, "active")
 
 	r := NewRepo(db, &config.WebsiteConfig{})
 	b.Cleanup(func() {
@@ -320,7 +320,7 @@ func BenchmarkPsqlRepo_FindUserWebsitesByGroup(b *testing.B) {
 	title := "benchmark-find-user-websites-by-group"
 	uuid := "benchmark-find-user-websites-by-group-uuid"
 	userUUID := "benchmark-find-user-websites-by-group-user-uuid"
-	populateData(db, uuid, title, userUUID)
+	populateData(db, uuid, title, userUUID, "active")
 
 	r := NewRepo(db, &config.WebsiteConfig{})
 	b.Cleanup(func() {
@@ -350,7 +350,7 @@ func BenchmarkPsqlRepo_FindUserWebsite(b *testing.B) {
 	title := "benchmark-find-user-website"
 	uuid := "benchmark-find-user-website-uuid"
 	userUUID := "benchmark-find-user-website-user-uuid"
-	populateData(db, uuid, title, userUUID)
+	populateData(db, uuid, title, userUUID, "active")
 
 	r := NewRepo(db, &config.WebsiteConfig{})
 	b.Cleanup(func() {

@@ -67,7 +67,7 @@ func TestSqlcRepo_CreateWebsite(t *testing.T) {
 	uuid := "create-website-uuid"
 	userUUID := "create-website-user-uuid"
 	title := "create website"
-	populateData(db, uuid, title, userUUID)
+	populateData(db, uuid, title, userUUID, "active")
 
 	tests := []struct {
 		name        string
@@ -140,7 +140,7 @@ func TestSqlcRepo_UpdateWebsite(t *testing.T) {
 	uuid := "update-website-uuid"
 	userUUID := "update-website-user-uuid"
 	title := "update website"
-	populateData(db, uuid, title, userUUID)
+	populateData(db, uuid, title, userUUID, "active")
 
 	t.Cleanup(func() {
 		db.Exec("delete from websites where uuid=$1", title)
@@ -169,6 +169,7 @@ func TestSqlcRepo_UpdateWebsite(t *testing.T) {
 				Title:      title,
 				RawContent: "content new",
 				UpdateTime: time.Date(2020, 1, 1, 0, 0, 0, 0, time.UTC),
+				Status:     "active",
 				Conf:       &config.WebsiteConfig{},
 			},
 			expectError: nil,
@@ -214,7 +215,7 @@ func TestSqlcRepo_DeleteWebsite(t *testing.T) {
 	uuid := "delete-website-uuid"
 	userUUID := "delete-website-user-uuid"
 	title := "delete website"
-	populateData(db, uuid, title, userUUID)
+	populateData(db, uuid, title, userUUID, "active")
 	t.Cleanup(func() {
 		db.Exec("delete from websites where uuid=$1", uuid)
 		db.Exec("delete from user_websites where website_uuid=$1", uuid)
@@ -266,27 +267,57 @@ func TestSqlcRepo_FindWebsites(t *testing.T) {
 	uuid := "find-websites-uuid"
 	userUUID := "find-websites-user-uuid"
 	title := "find websites"
-	populateData(db, uuid, title, userUUID)
+	populateData(db, uuid, title, userUUID, "active")
+	uuidReadOnly := "find-websites-readonly-uuid"
+	populateData(db, uuidReadOnly, title+"-readonly", userUUID, "read_only")
+	uuidInactive := "find-websites-inactive-uuid"
+	populateData(db, uuidInactive, title+"-inactive", userUUID, "inactive")
 	t.Cleanup(func() {
 		db.Exec("delete from websites where uuid=$1", uuid)
+		db.Exec("delete from websites where uuid=$1", uuidReadOnly)
+		db.Exec("delete from websites where uuid=$1", uuidInactive)
 		db.Exec("delete from user_websites where website_uuid=$1", uuid)
 		db.Close()
 	})
 
 	tests := []struct {
-		name        string
-		expect      model.Website
-		expectError error
+		name          string
+		expectInclude []model.Website
+		expectExclude []model.Website
+		expectError   error
 	}{
 		{
 			name: "happy flow",
-			expect: model.Website{
-				UUID:       uuid,
-				URL:        "http://example.com/" + title,
-				Title:      title,
-				RawContent: "content",
-				UpdateTime: time.Date(2020, 1, 2, 3, 4, 5, 0, time.UTC),
-				Conf:       &config.WebsiteConfig{},
+			expectInclude: []model.Website{
+				{
+					UUID:       uuid,
+					URL:        "http://example.com/" + title,
+					Title:      title,
+					RawContent: "content",
+					UpdateTime: time.Date(2020, 1, 2, 3, 4, 5, 0, time.UTC),
+					Status:     "active",
+					Conf:       &config.WebsiteConfig{},
+				},
+			},
+			expectExclude: []model.Website{
+				{
+					UUID:       uuidReadOnly,
+					URL:        "http://example.com/" + title + "-readonly",
+					Title:      title + "-readonly",
+					RawContent: "content",
+					UpdateTime: time.Date(2020, 1, 2, 3, 4, 5, 0, time.UTC),
+					Status:     "read_only",
+					Conf:       &config.WebsiteConfig{},
+				},
+				{
+					UUID:       uuidInactive,
+					URL:        "http://example.com/" + title + "-inactive",
+					Title:      title + "-inactive",
+					RawContent: "content",
+					UpdateTime: time.Date(2020, 1, 2, 3, 4, 5, 0, time.UTC),
+					Status:     "inactive",
+					Conf:       &config.WebsiteConfig{},
+				},
 			},
 			expectError: nil,
 		},
@@ -299,7 +330,12 @@ func TestSqlcRepo_FindWebsites(t *testing.T) {
 
 			result, err := r.FindWebsites(context.Background())
 			assert.ErrorIs(t, err, test.expectError)
-			assert.Contains(t, result, test.expect)
+			for _, expect := range test.expectInclude {
+				assert.Contains(t, result, expect)
+			}
+			for _, exclude := range test.expectExclude {
+				assert.NotContains(t, result, exclude)
+			}
 		})
 	}
 }
@@ -317,9 +353,15 @@ func TestSqlcRepo_FindWebsite(t *testing.T) {
 	uuid := "find-website-uuid"
 	userUUID := "find-website-user-uuid"
 	title := "find website"
-	populateData(db, uuid, title, userUUID)
+	populateData(db, uuid, title, userUUID, "active")
+	uuidReadOnly := "find-website-readonly-uuid"
+	populateData(db, uuidReadOnly, title+"-readonly", userUUID, "read_only")
+	uuidInactive := "find-website-inactive-uuid"
+	populateData(db, uuidInactive, title+"-inactive", userUUID, "inactive")
 	t.Cleanup(func() {
 		db.Exec("delete from websites where uuid=$1", uuid)
+		db.Exec("delete from websites where uuid=$1", uuidReadOnly)
+		db.Exec("delete from websites where uuid=$1", uuidInactive)
 		db.Exec("delete from user_websites where website_uuid=$1", uuid)
 		db.Close()
 	})
@@ -331,7 +373,7 @@ func TestSqlcRepo_FindWebsite(t *testing.T) {
 		expectError error
 	}{
 		{
-			name:    "find exist website",
+			name:    "find active website",
 			webUUID: uuid,
 			expect: &model.Website{
 				UUID:       uuid,
@@ -339,9 +381,29 @@ func TestSqlcRepo_FindWebsite(t *testing.T) {
 				Title:      title,
 				RawContent: "content",
 				UpdateTime: time.Date(2020, 1, 2, 3, 4, 5, 0, time.UTC),
+				Status:     "active",
 				Conf:       &config.WebsiteConfig{},
 			},
 			expectError: nil,
+		},
+		{
+			name:    "find read-only website",
+			webUUID: uuidReadOnly,
+			expect: &model.Website{
+				UUID:       uuidReadOnly,
+				URL:        "http://example.com/" + title + "-readonly",
+				Title:      title + "-readonly",
+				RawContent: "content",
+				UpdateTime: time.Date(2020, 1, 2, 3, 4, 5, 0, time.UTC),
+				Status:     "read_only",
+				Conf:       &config.WebsiteConfig{},
+			},
+		},
+		{
+			name:        "find inactive website",
+			webUUID:     uuidInactive,
+			expect:      nil,
+			expectError: sql.ErrNoRows,
 		},
 		{
 			name:        "find not exist website",
@@ -376,7 +438,7 @@ func TestSqlcRepo_CreateUserWebsite(t *testing.T) {
 	uuid := "create-user-website-uuid"
 	userUUID := "create-user-website-user-uuid"
 	title := "create user website"
-	populateData(db, uuid, title, userUUID)
+	populateData(db, uuid, title, userUUID, "active")
 	t.Cleanup(func() {
 		db.Exec("delete from websites where uuid=$1", uuid)
 		db.Exec("delete from user_websites where website_uuid=$1", uuid)
@@ -408,6 +470,7 @@ func TestSqlcRepo_CreateUserWebsite(t *testing.T) {
 					Title:      title,
 					UpdateTime: time.Date(2020, 1, 2, 3, 4, 5, 0, time.UTC),
 					RawContent: "content",
+					Status:     "active",
 					Conf:       &config.WebsiteConfig{},
 				},
 			},
@@ -430,6 +493,7 @@ func TestSqlcRepo_CreateUserWebsite(t *testing.T) {
 					Title:      title,
 					UpdateTime: time.Date(2020, 1, 2, 3, 4, 5, 0, time.UTC),
 					RawContent: "content",
+					Status:     "active",
 					Conf:       &config.WebsiteConfig{},
 				},
 			},
@@ -478,7 +542,7 @@ func TestSqlcRepo_UpdateUserWebsite(t *testing.T) {
 	uuid := "update-user-website-uuid"
 	userUUID := "update-user-website-user-uuid"
 	title := "update user website"
-	populateData(db, uuid, title, userUUID)
+	populateData(db, uuid, title, userUUID, "active")
 	t.Cleanup(func() {
 		db.Exec("delete from websites where uuid=$1", uuid)
 		db.Exec("delete from user_websites where website_uuid=$1", uuid)
@@ -550,7 +614,7 @@ func TestSqlcRepo_DeleteUserWebsite(t *testing.T) {
 	uuid := "delete-user-website-uuid"
 	userUUID := "delete-user-website-user-uuid"
 	title := "delete user website"
-	populateData(db, uuid, title, userUUID)
+	populateData(db, uuid, title, userUUID, "active")
 	t.Cleanup(func() {
 		db.Exec("delete from websites where uuid=$1", uuid)
 		db.Exec("delete from user_websites where website_uuid=$1", uuid)
@@ -606,9 +670,15 @@ func TestSqlcRepo_FindUserWebsites(t *testing.T) {
 	uuid := "find-user-websites-uuid"
 	userUUID := "find-user-websites-user-uuid"
 	title := "find user websites"
-	populateData(db, uuid, title, userUUID)
+	populateData(db, uuid, title, userUUID, "active")
+	uuidReadOnly := "find-user-websites-readonly-uuid"
+	populateData(db, uuidReadOnly, title+"-readonly", userUUID, "read_only")
+	uuidInactive := "find-user-websites-inactive-uuid"
+	populateData(db, uuidInactive, title+"-inactive", userUUID, "inactive")
 	t.Cleanup(func() {
 		db.Exec("delete from websites where uuid=$1", uuid)
+		db.Exec("delete from websites where uuid=$1", uuidReadOnly)
+		db.Exec("delete from websites where uuid=$1", uuidInactive)
 		db.Exec("delete from user_websites where website_uuid=$1", uuid)
 		db.Close()
 	})
@@ -623,6 +693,19 @@ func TestSqlcRepo_FindUserWebsites(t *testing.T) {
 			name:     "find web of existing user",
 			userUUID: userUUID,
 			expect: model.UserWebsites{
+				{
+					UserUUID:    userUUID,
+					WebsiteUUID: uuidReadOnly,
+					GroupName:   title + "-readonly",
+					AccessTime:  time.Date(2020, 1, 2, 3, 4, 5, 0, time.UTC),
+					Website: model.Website{
+						UUID:       uuidReadOnly,
+						URL:        "http://example.com/" + title + "-readonly",
+						Title:      title + "-readonly",
+						UpdateTime: time.Date(2020, 1, 2, 3, 4, 5, 0, time.UTC),
+						Conf:       &config.WebsiteConfig{},
+					},
+				},
 				{
 					UserUUID:    userUUID,
 					WebsiteUUID: uuid,
@@ -670,9 +753,15 @@ func TestSqlcRepo_FindUserWebsitesByGroup(t *testing.T) {
 	uuid := "find-user-websites-group-uuid"
 	userUUID := "find-user-websites-group-user-uuid"
 	title := "find user websites group"
-	populateData(db, uuid, title, userUUID)
+	populateData(db, uuid, title, userUUID, "active")
+	uuidReadOnly := "find-user-websites-group-readonly-uuid"
+	populateData(db, uuidReadOnly, title+"-readonly", userUUID, "read_only")
+	uuidInactive := "find-user-websites-group-inactive-uuid"
+	populateData(db, uuidInactive, title+"-inactive", userUUID, "inactive")
 	t.Cleanup(func() {
 		db.Exec("delete from websites where uuid=$1", uuid)
+		db.Exec("delete from websites where uuid=$1", uuidReadOnly)
+		db.Exec("delete from websites where uuid=$1", uuidInactive)
 		db.Exec("delete from user_websites where website_uuid=$1", uuid)
 		db.Close()
 	})
@@ -685,7 +774,7 @@ func TestSqlcRepo_FindUserWebsitesByGroup(t *testing.T) {
 		expectError error
 	}{
 		{
-			name:     "find web of existing group and user",
+			name:     "find active web of existing group and user",
 			userUUID: userUUID,
 			group:    title,
 			expect: model.WebsiteGroup{
@@ -703,6 +792,34 @@ func TestSqlcRepo_FindUserWebsitesByGroup(t *testing.T) {
 					},
 				},
 			},
+			expectError: nil,
+		},
+		{
+			name:     "find read-only web of existing group and user",
+			userUUID: userUUID,
+			group:    title + "-readonly",
+			expect: model.WebsiteGroup{
+				{
+					UserUUID:    userUUID,
+					WebsiteUUID: uuidReadOnly,
+					GroupName:   title + "-readonly",
+					AccessTime:  time.Date(2020, 1, 2, 3, 4, 5, 0, time.UTC),
+					Website: model.Website{
+						UUID:       uuidReadOnly,
+						URL:        "http://example.com/" + title + "-readonly",
+						Title:      title + "-readonly",
+						UpdateTime: time.Date(2020, 1, 2, 3, 4, 5, 0, time.UTC),
+						Conf:       &config.WebsiteConfig{},
+					},
+				},
+			},
+			expectError: nil,
+		},
+		{
+			name:        "find inactive web of existing group and user",
+			userUUID:    userUUID,
+			group:       title + "-inactive",
+			expect:      model.WebsiteGroup{},
 			expectError: nil,
 		},
 		{
@@ -744,9 +861,15 @@ func TestSqlcRepo_FindUserWebsite(t *testing.T) {
 	uuid := "find-user-website-uuid"
 	userUUID := "find-user-website-user-uuid"
 	title := "find user website"
-	populateData(db, uuid, title, userUUID)
+	populateData(db, uuid, title, userUUID, "active")
+	uuidReadOnly := "find-user-website-readonly-uuid"
+	populateData(db, uuidReadOnly, title+"-readonly", userUUID, "read_only")
+	uuidInactive := "find-user-website-inactive-uuid"
+	populateData(db, uuidInactive, title+"-inactive", userUUID, "inactive")
 	t.Cleanup(func() {
 		db.Exec("delete from websites where uuid=$1", uuid)
+		db.Exec("delete from websites where uuid=$1", uuidReadOnly)
+		db.Exec("delete from websites where uuid=$1", uuidInactive)
 		db.Exec("delete from user_websites where website_uuid=$1", uuid)
 		db.Close()
 	})
@@ -759,7 +882,7 @@ func TestSqlcRepo_FindUserWebsite(t *testing.T) {
 		expectError error
 	}{
 		{
-			name:     "find web of existing group and user",
+			name:     "find active web of existing group and user",
 			userUUID: userUUID,
 			webUUID:  uuid,
 			expect: &model.UserWebsite{
@@ -776,6 +899,32 @@ func TestSqlcRepo_FindUserWebsite(t *testing.T) {
 				},
 			},
 			expectError: nil,
+		},
+		{
+			name:     "find read-only web of existing group and user",
+			userUUID: userUUID,
+			webUUID:  uuidReadOnly,
+			expect: &model.UserWebsite{
+				UserUUID:    userUUID,
+				WebsiteUUID: uuidReadOnly,
+				GroupName:   title + "-readonly",
+				AccessTime:  time.Date(2020, 1, 2, 3, 4, 5, 0, time.UTC),
+				Website: model.Website{
+					UUID:       uuidReadOnly,
+					URL:        "http://example.com/" + title + "-readonly",
+					Title:      title + "-readonly",
+					UpdateTime: time.Date(2020, 1, 2, 3, 4, 5, 0, time.UTC),
+					Conf:       &config.WebsiteConfig{},
+				},
+			},
+			expectError: nil,
+		},
+		{
+			name:        "find inactive web of existing group and user",
+			userUUID:    userUUID,
+			webUUID:     uuidInactive,
+			expect:      nil,
+			expectError: sql.ErrNoRows,
 		},
 		{
 			name:        "find web of not existing web uuid",

@@ -51,7 +51,7 @@ VALUES
 ($1, $2, $3, $4, $5)
 ON CONFLICT (url) DO
 UPDATE SET url=$2
-RETURNING uuid, url, title, content, update_time
+RETURNING uuid, url, title, content, update_time, status
 `
 
 type CreateWebsiteParams struct {
@@ -77,6 +77,7 @@ func (q *Queries) CreateWebsite(ctx context.Context, arg CreateWebsiteParams) (W
 		&i.Title,
 		&i.Content,
 		&i.UpdateTime,
+		&i.Status,
 	)
 	return i, err
 }
@@ -109,7 +110,7 @@ const getUserWebsite = `-- name: GetUserWebsite :one
 SELECT website_uuid, user_uuid, access_time, group_name ,
 uuid, url, title, update_time 
 FROM user_websites JOIN websites ON user_websites.website_uuid=websites.uuid 
-WHERE user_uuid=$1 and website_uuid=$2
+WHERE user_uuid=$1 and website_uuid=$2 and websites.status != 'inactive'
 `
 
 type GetUserWebsiteParams struct {
@@ -145,7 +146,7 @@ func (q *Queries) GetUserWebsite(ctx context.Context, arg GetUserWebsiteParams) 
 }
 
 const getWebsite = `-- name: GetWebsite :one
-SELECT uuid, url, title, content, update_time from websites WHERE uuid=$1
+SELECT uuid, url, title, content, update_time, status from websites WHERE uuid=$1 and status != 'inactive'
 `
 
 func (q *Queries) GetWebsite(ctx context.Context, uuid sql.NullString) (Website, error) {
@@ -157,15 +158,50 @@ func (q *Queries) GetWebsite(ctx context.Context, uuid sql.NullString) (Website,
 		&i.Title,
 		&i.Content,
 		&i.UpdateTime,
+		&i.Status,
 	)
 	return i, err
+}
+
+const listActiveWebsites = `-- name: ListActiveWebsites :many
+SELECT uuid, url, title, content, update_time, status FROM websites WHERE status='active'
+`
+
+func (q *Queries) ListActiveWebsites(ctx context.Context) ([]Website, error) {
+	rows, err := q.db.QueryContext(ctx, listActiveWebsites)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []Website
+	for rows.Next() {
+		var i Website
+		if err := rows.Scan(
+			&i.Uuid,
+			&i.Url,
+			&i.Title,
+			&i.Content,
+			&i.UpdateTime,
+			&i.Status,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
 }
 
 const listUserWebsites = `-- name: ListUserWebsites :many
 SELECT website_uuid, user_uuid, access_time, group_name,
 uuid, url, title, update_time 
 FROM user_websites JOIN websites ON user_websites.website_uuid=websites.uuid 
-WHERE user_uuid=$1
+WHERE user_uuid=$1 and websites.status != 'inactive'
 ORDER BY (update_time > access_time) DESC, update_time DESC, access_time DESC
 `
 
@@ -216,7 +252,7 @@ const listUserWebsitesByGroup = `-- name: ListUserWebsitesByGroup :many
 SELECT website_uuid, user_uuid, access_time, group_name ,
 uuid, url, title, update_time 
 FROM user_websites JOIN websites ON user_websites.website_uuid=websites.uuid 
-WHERE user_uuid=$1 and group_name=$2
+WHERE user_uuid=$1 and group_name=$2 and websites.status != 'inactive'
 `
 
 type ListUserWebsitesByGroupParams struct {
@@ -267,39 +303,6 @@ func (q *Queries) ListUserWebsitesByGroup(ctx context.Context, arg ListUserWebsi
 	return items, nil
 }
 
-const listWebsites = `-- name: ListWebsites :many
-SELECT uuid, url, title, content, update_time FROM websites
-`
-
-func (q *Queries) ListWebsites(ctx context.Context) ([]Website, error) {
-	rows, err := q.db.QueryContext(ctx, listWebsites)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	var items []Website
-	for rows.Next() {
-		var i Website
-		if err := rows.Scan(
-			&i.Uuid,
-			&i.Url,
-			&i.Title,
-			&i.Content,
-			&i.UpdateTime,
-		); err != nil {
-			return nil, err
-		}
-		items = append(items, i)
-	}
-	if err := rows.Close(); err != nil {
-		return nil, err
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	return items, nil
-}
-
 const updateUserWebsite = `-- name: UpdateUserWebsite :one
 UPDATE user_websites SET
 access_time=$1, group_name=$2
@@ -335,7 +338,7 @@ const updateWebsite = `-- name: UpdateWebsite :one
 UPDATE websites SET
 url=$1, title=$2, content=$3, update_time=$4
 WHERE uuid=$5
-RETURNING uuid, url, title, content, update_time
+RETURNING uuid, url, title, content, update_time, status
 `
 
 type UpdateWebsiteParams struct {
@@ -361,6 +364,7 @@ func (q *Queries) UpdateWebsite(ctx context.Context, arg UpdateWebsiteParams) (W
 		&i.Title,
 		&i.Content,
 		&i.UpdateTime,
+		&i.Status,
 	)
 	return i, err
 }

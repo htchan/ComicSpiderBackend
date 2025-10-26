@@ -21,4 +21,5 @@ type Website struct {
 	Title      sql.NullString
 	Content    sql.NullString
 	UpdateTime sql.NullTime
+	Status     string
 }

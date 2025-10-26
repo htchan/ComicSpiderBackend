@@ -16,6 +16,7 @@ type Website struct {
 	Title      string                `json:"title"`
 	RawContent string                `json:"raw_content"`
 	UpdateTime time.Time             `json:"update_time"`
+	Status     string                `json:"-"`
 	Conf       *config.WebsiteConfig `json:"-"`
 }
 
