@@ -194,6 +194,7 @@ func (serv *VendorService) Update(ctx context.Context, web *model.Website) error
 
 	body, fetchErr := serv.fetchWebsite(ctx, web)
 	if fetchErr != nil {
+		fetchWebSpan.SetStatus(codes.Error, fetchErr.Error())
 		fetchWebSpan.RecordError(fetchErr)
 
 		return fetchErr
