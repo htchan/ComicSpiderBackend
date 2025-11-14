@@ -138,7 +138,7 @@ func (serv *VendorService) isUpdated(ctx context.Context, web *model.Website, bo
 
 	doc, err := goquery.NewDocumentFromReader(strings.NewReader(body))
 	if err != nil {
-		zerolog.Ctx(ctx).Error().Err(err).Msg("Failed to parse HTML")
+		zerolog.Ctx(ctx).Error().Err(err).Str("body", body).Msg("Failed to parse HTML")
 		checkUpdateSpan.SetStatus(codes.Error, err.Error())
 		checkUpdateSpan.RecordError(err)
 
