@@ -8,8 +8,8 @@ on:
     - cron: "0 0 * * 6"
 
 env:
-  GO_VERSION: 1.25.7
-  TRIVY_VERSION: v0.61.1
+  GO_VERSION: 1.26.1
+  TRIVY_VERSION: v0.69.3
 
 jobs:
   security-scan:
@@ -17,9 +17,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
       - name: Set up Go
-        uses: actions/setup-go@v4
+        uses: actions/setup-go@v5
         with:
           go-version: ${{ env.GO_VERSION }}
       - name: Install Trivy
