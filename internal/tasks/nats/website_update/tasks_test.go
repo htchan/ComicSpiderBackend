@@ -89,15 +89,20 @@ func TestWebsiteUpdateTasks_Publish(t *testing.T) {
 			expect:    []string{"set_publish.happy_flow_one_supported"},
 			expectErr: nil,
 			expectSubscribe: func(t *testing.T, nc *nats.Conn) {
-				var gotMsg *nats.Msg
+				received := make(chan *nats.Msg, 1)
 				sub, err := nc.Subscribe("web_history.websites.update.set_publish_happy_flow_one_supported", func(msg *nats.Msg) {
-					gotMsg = msg
 					assert.Equal(t, `{"website":{"uuid":"some uuid","url":"https://example.com","title":"","raw_content":"","update_time":"0001-01-01T00:00:00Z"},"trace_id":"00000000000000000000000000000000","span_id":"0000000000000000","trace_flags":0}`, string(msg.Data))
+					received <- msg
 				})
 				assert.NoError(t, err)
-				time.Sleep(20 * time.Millisecond)
-				sub.Unsubscribe()
-				assert.NotNil(t, gotMsg, "no message received")
+				defer sub.Unsubscribe()
+
+				select {
+				case msg := <-received:
+					assert.NotNil(t, msg, "no message received")
+				case <-time.After(500 * time.Millisecond):
+					t.Fatal("timed out waiting for published message")
+				}
 			},
 		},
 		{
@@ -121,23 +126,34 @@ func TestWebsiteUpdateTasks_Publish(t *testing.T) {
 			expect:    []string{"set_publish.happy_flow_multi_supported_1", "set_publish.happy_flow_multi_supported_2"},
 			expectErr: nil,
 			expectSubscribe: func(t *testing.T, nc *nats.Conn) {
-				var gotMsg1, gotMsg2 *nats.Msg
+				received1 := make(chan *nats.Msg, 1)
+				received2 := make(chan *nats.Msg, 1)
 				sub1, err1 := nc.Subscribe("web_history.websites.update.set_publish_happy_flow_multi_supported_1", func(msg *nats.Msg) {
-					gotMsg1 = msg
 					assert.Equal(t, `{"website":{"uuid":"some uuid","url":"https://example.com","title":"","raw_content":"","update_time":"0001-01-01T00:00:00Z"},"trace_id":"00000000000000000000000000000000","span_id":"0000000000000000","trace_flags":0}`, string(msg.Data))
+					received1 <- msg
 				})
 				sub2, err2 := nc.Subscribe("web_history.websites.update.set_publish_happy_flow_multi_supported_2", func(msg *nats.Msg) {
-					gotMsg2 = msg
 					assert.Equal(t, `{"website":{"uuid":"some uuid","url":"https://example.com","title":"","raw_content":"","update_time":"0001-01-01T00:00:00Z"},"trace_id":"00000000000000000000000000000000","span_id":"0000000000000000","trace_flags":0}`, string(msg.Data))
+					received2 <- msg
 				})
 
 				assert.NoError(t, err1)
 				assert.NoError(t, err2)
-				time.Sleep(50 * time.Millisecond)
-				sub1.Unsubscribe()
-				sub2.Unsubscribe()
-				assert.NotNil(t, gotMsg1, "no message received in first queue")
-				assert.NotNil(t, gotMsg2, "no message received in second queue")
+				defer sub1.Unsubscribe()
+				defer sub2.Unsubscribe()
+
+				select {
+				case msg := <-received1:
+					assert.NotNil(t, msg, "no message received in first queue")
+				case <-time.After(500 * time.Millisecond):
+					t.Fatal("timed out waiting for first published message")
+				}
+				select {
+				case msg := <-received2:
+					assert.NotNil(t, msg, "no message received in second queue")
+				case <-time.After(500 * time.Millisecond):
+					t.Fatal("timed out waiting for second published message")
+				}
 			},
 		},
 		{
