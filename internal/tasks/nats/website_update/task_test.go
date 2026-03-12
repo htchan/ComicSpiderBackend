@@ -1,6 +1,7 @@
 package websiteupdate
 
 import (
+	"context"
 	"errors"
 	"testing"
 	"time"
@@ -128,16 +129,20 @@ func TestWebsiteUpdateTask_Publish(t *testing.T) {
 				URL:  "https://example.com",
 			},
 			expectSubscribe: func(t *testing.T, nc *nats.Conn) {
-				var gotMsg *nats.Msg
+				received := make(chan *nats.Msg, 1)
 				sub, err := nc.Subscribe("web_history.websites.update.publish_success", func(msg *nats.Msg) {
-					gotMsg = msg
 					assert.Equal(t, `{"website":{"uuid":"some uuid","url":"https://example.com","title":"","raw_content":"","update_time":"0001-01-01T00:00:00Z"},"trace_id":"00000000000000000000000000000000","span_id":"0000000000000000","trace_flags":0}`, string(msg.Data))
+					received <- msg
 				})
 				assert.NoError(t, err)
-				time.Sleep(time.Millisecond)
-				sub.Unsubscribe()
+				defer sub.Unsubscribe()
 
-				assert.NotNil(t, gotMsg)
+				select {
+				case msg := <-received:
+					assert.NotNil(t, msg)
+				case <-time.After(500 * time.Millisecond):
+					t.Fatal("timed out waiting for published message")
+				}
 			},
 			expectErr: nil,
 		},
@@ -170,13 +175,13 @@ func TestWebsiteUpdateTask_Subscribe(t *testing.T) {
 
 	tests := []struct {
 		name      string
-		getServ   func(*gomock.Controller) vendors.VendorService
+		getServ   func(*gomock.Controller, chan struct{}) vendors.VendorService
 		publish   func(*testing.T, *nats.Conn)
 		expectErr error
 	}{
 		{
 			name: "happy flow",
-			getServ: func(ctrl *gomock.Controller) vendors.VendorService {
+			getServ: func(ctrl *gomock.Controller, done chan struct{}) vendors.VendorService {
 				serv := mockvendor.NewMockVendorService(ctrl)
 				web := &model.Website{
 					UUID:       "",
@@ -186,7 +191,10 @@ func TestWebsiteUpdateTask_Subscribe(t *testing.T) {
 				}
 				serv.EXPECT().Name().Return("subscribe.happy_flow").AnyTimes()
 				serv.EXPECT().Support(web).Return(true)
-				serv.EXPECT().Update(gomock.Any(), web).Return(nil)
+				serv.EXPECT().Update(gomock.Any(), web).DoAndReturn(func(_ context.Context, _ *model.Website) error {
+					close(done)
+					return nil
+				})
 
 				return serv
 			},
@@ -204,15 +212,22 @@ func TestWebsiteUpdateTask_Subscribe(t *testing.T) {
 			ctrl := gomock.NewController(t)
 			defer ctrl.Finish()
 
-			task := NewTask(nc, test.getServ(ctrl), nil, nil)
+			done := make(chan struct{})
+			task := NewTask(nc, test.getServ(ctrl, done), nil, nil)
 
 			ctx, err := task.Subscribe(t.Context())
 			assert.ErrorIs(t, err, test.expectErr)
 
 			test.publish(t, nc)
-			time.Sleep(100 * time.Millisecond)
+
+			select {
+			case <-done:
+			case <-time.After(500 * time.Millisecond):
+				t.Fatal("timed out waiting for message consumption")
+			}
+
 			if err == nil {
-				defer ctx.Stop()
+				ctx.Stop()
 			}
 		})
 	}
@@ -234,12 +249,22 @@ func TestWebsiteUpdateTask_Subscribe(t *testing.T) {
 			Title:      "test2",
 			UpdateTime: time.Date(2020, 5, 2, 0, 0, 0, 0, time.UTC),
 		}
+
+		done1 := make(chan struct{})
+		done2 := make(chan struct{})
+
 		serv := mockvendor.NewMockVendorService(ctrl)
 		serv.EXPECT().Name().Return("subscribe.each_message_once").AnyTimes()
 		serv.EXPECT().Support(web).Return(true).Times(1)
-		serv.EXPECT().Update(gomock.Any(), web).Return(nil).Times(1)
+		serv.EXPECT().Update(gomock.Any(), web).DoAndReturn(func(_ context.Context, _ *model.Website) error {
+			close(done1)
+			return nil
+		}).Times(1)
 		serv.EXPECT().Support(web2).Return(true).Times(1)
-		serv.EXPECT().Update(gomock.Any(), web2).Return(nil).Times(1)
+		serv.EXPECT().Update(gomock.Any(), web2).DoAndReturn(func(_ context.Context, _ *model.Website) error {
+			close(done2)
+			return nil
+		}).Times(1)
 
 		task := NewTask(nc, serv, nil, nil)
 
@@ -247,14 +272,24 @@ func TestWebsiteUpdateTask_Subscribe(t *testing.T) {
 		assert.NoError(t, err)
 		err = nc.Publish("web_history.websites.update.subscribe_each_message_once", []byte(`{"website":{"uuid":"", "url":"https://example.com", "title":"test", "update_time":"2020-05-01T00:00:00Z"}, "trace_id":"XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX", "span_id":"XXXXXXXXXXXXXXXX", "trace_flags":1}`))
 		assert.NoError(t, err)
-		time.Sleep(time.Millisecond)
+
+		select {
+		case <-done1:
+		case <-time.After(500 * time.Millisecond):
+			t.Fatal("timed out waiting for first message consumption")
+		}
 		ctx.Stop()
 
 		ctx2, err := task.Subscribe(t.Context())
 		assert.NoError(t, err)
 		err = nc.Publish("web_history.websites.update.subscribe_each_message_once", []byte(`{"website":{"uuid":"", "url":"https://example2.com", "title":"test2", "update_time":"2020-05-02T00:00:00Z"}, "trace_id":"XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX", "span_id":"XXXXXXXXXXXXXXXX", "trace_flags":1}`))
 		assert.NoError(t, err)
-		time.Sleep(time.Millisecond)
+
+		select {
+		case <-done2:
+		case <-time.After(500 * time.Millisecond):
+			t.Fatal("timed out waiting for second message consumption")
+		}
 
 		ctx2.Stop()
 	})
