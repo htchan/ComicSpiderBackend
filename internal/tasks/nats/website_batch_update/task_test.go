@@ -24,7 +24,7 @@ func TestNewTask(t *testing.T) {
 		name   string
 		nc     *nats.Conn
 		tasks  websiteupdate.WebsiteUpdateTasks
-		rpo    repository.Repostory
+		rpo    repository.Repository
 		expect WebsiteBatchUpdateTask
 	}{
 		{
@@ -79,7 +79,7 @@ func TestWebsiteBatchUpdateTask_Subscribe(t *testing.T) {
 	tests := []struct {
 		name      string
 		getTasks  func(*gomock.Controller) websiteupdate.WebsiteUpdateTasks
-		getRpo    func(*gomock.Controller) repository.Repostory
+		getRpo    func(*gomock.Controller) repository.Repository
 		publish   func(*testing.T, *nats.Conn)
 		expectErr error
 	}{}
@@ -120,7 +120,7 @@ func TestWebsiteBatchUpdateTask_handler(t *testing.T) {
 	tests := []struct {
 		name            string
 		getTasks        func(*gomock.Controller) websiteupdate.WebsiteUpdateTasks
-		getRpo          func(*gomock.Controller) repository.Repostory
+		getRpo          func(*gomock.Controller) repository.Repository
 		getMsg          func(*gomock.Controller) jetstream.Msg
 		expectSubscribe func(*testing.T, *nats.Conn)
 	}{
@@ -135,8 +135,8 @@ func TestWebsiteBatchUpdateTask_handler(t *testing.T) {
 					websiteupdate.NewTask(nc, serv, nil, nil),
 				}
 			},
-			getRpo: func(ctrl *gomock.Controller) repository.Repostory {
-				rpo := mockrepo.NewMockRepostory(ctrl)
+			getRpo: func(ctrl *gomock.Controller) repository.Repository {
+				rpo := mockrepo.NewMockRepository(ctrl)
 				rpo.EXPECT().FindWebsites(gomock.Any()).Return(
 					[]model.Website{web},
 					nil,
@@ -176,8 +176,8 @@ func TestWebsiteBatchUpdateTask_handler(t *testing.T) {
 					websiteupdate.NewTask(nil, serv, nil, nil),
 				}
 			},
-			getRpo: func(ctrl *gomock.Controller) repository.Repostory {
-				rpo := mockrepo.NewMockRepostory(ctrl)
+			getRpo: func(ctrl *gomock.Controller) repository.Repository {
+				rpo := mockrepo.NewMockRepository(ctrl)
 				rpo.EXPECT().FindWebsites(gomock.Any()).Return(
 					nil,
 					errors.New("fail to query website"),
@@ -204,8 +204,8 @@ func TestWebsiteBatchUpdateTask_handler(t *testing.T) {
 					websiteupdate.NewTask(nc, serv, nil, nil),
 				}
 			},
-			getRpo: func(ctrl *gomock.Controller) repository.Repostory {
-				rpo := mockrepo.NewMockRepostory(ctrl)
+			getRpo: func(ctrl *gomock.Controller) repository.Repository {
+				rpo := mockrepo.NewMockRepository(ctrl)
 				rpo.EXPECT().FindWebsites(gomock.Any()).Return(
 					[]model.Website{web},
 					nil,

@@ -31,7 +31,7 @@ func redirectLogin(res http.ResponseWriter, req *http.Request) {
 	http.Redirect(res, req, fmt.Sprintf("%v?service=%v", loginURL, serviceUUID), 302)
 }
 
-func AddRoutes(router chi.Router, r repository.Repostory, tasks websiteupdate.WebsiteUpdateTasks, conf *config.APIConfig) {
+func AddRoutes(router chi.Router, r repository.Repository, tasks websiteupdate.WebsiteUpdateTasks, conf *config.APIConfig) {
 	router.Use(logRequest())
 	router.Use(TraceMiddleware)
 

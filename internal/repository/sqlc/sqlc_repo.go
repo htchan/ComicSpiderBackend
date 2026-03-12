@@ -23,7 +23,7 @@ type SqlcRepo struct {
 	conf  *config.WebsiteConfig
 }
 
-var _ repository.Repostory = &SqlcRepo{}
+var _ repository.Repository = &SqlcRepo{}
 
 func NewRepo(db *sql.DB, conf *config.WebsiteConfig) *SqlcRepo {
 	return &SqlcRepo{

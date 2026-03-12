@@ -23,7 +23,7 @@ import (
 type WebsiteBatchUpdateTask struct {
 	nc                 *nats.Conn
 	websiteUpdateTasks websiteupdate.WebsiteUpdateTasks
-	rpo                repository.Repostory
+	rpo                repository.Repository
 }
 
 func getTracer() trace.Tracer {
@@ -33,7 +33,7 @@ func getTracer() trace.Tracer {
 func NewTask(
 	nc *nats.Conn,
 	tasks websiteupdate.WebsiteUpdateTasks,
-	rpo repository.Repostory,
+	rpo repository.Repository,
 ) WebsiteBatchUpdateTask {
 	return WebsiteBatchUpdateTask{
 		nc:                 nc,
