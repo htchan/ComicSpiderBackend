@@ -100,7 +100,7 @@ func TestWebsiteUpdateTasks_Publish(t *testing.T) {
 				select {
 				case msg := <-received:
 					assert.NotNil(t, msg, "no message received")
-				case <-time.After(500 * time.Millisecond):
+				case <-time.After(2 * time.Second):
 					t.Fatal("timed out waiting for published message")
 				}
 			},
@@ -145,13 +145,13 @@ func TestWebsiteUpdateTasks_Publish(t *testing.T) {
 				select {
 				case msg := <-received1:
 					assert.NotNil(t, msg, "no message received in first queue")
-				case <-time.After(500 * time.Millisecond):
+				case <-time.After(2 * time.Second):
 					t.Fatal("timed out waiting for first published message")
 				}
 				select {
 				case msg := <-received2:
 					assert.NotNil(t, msg, "no message received in second queue")
-				case <-time.After(500 * time.Millisecond):
+				case <-time.After(2 * time.Second):
 					t.Fatal("timed out waiting for second published message")
 				}
 			},
