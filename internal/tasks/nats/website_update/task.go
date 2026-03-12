@@ -23,7 +23,7 @@ import (
 type WebsiteUpdateTask struct {
 	nc          *nats.Conn
 	Service     vendors.VendorService
-	rpo         repository.Repostory
+	rpo         repository.Repository
 	websiteConf *config.WebsiteConfig
 }
 
@@ -34,7 +34,7 @@ func getTracer() trace.Tracer {
 func NewTask(
 	nc *nats.Conn,
 	service vendors.VendorService,
-	rpo repository.Repostory,
+	rpo repository.Repository,
 	websiteConf *config.WebsiteConfig,
 ) *WebsiteUpdateTask {
 	return &WebsiteUpdateTask{

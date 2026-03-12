@@ -20,7 +20,7 @@ func TestNewTaskSet(t *testing.T) {
 		name   string
 		nc     *nats.Conn
 		serv   []vendors.VendorService
-		rpo    repository.Repostory
+		rpo    repository.Repository
 		conf   *config.WebsiteConfig
 		expect WebsiteUpdateTasks
 	}{

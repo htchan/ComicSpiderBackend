@@ -25,7 +25,7 @@ func TestNewVendorService(t *testing.T) {
 
 	type params struct {
 		cli  *http.Client
-		repo repository.Repostory
+		repo repository.Repository
 		cfg  *config.VendorServiceConfig
 	}
 
@@ -385,7 +385,7 @@ func TestVendorService_Update(t *testing.T) {
 		name    string
 		serv    *VendorService
 		getCtx  func() context.Context
-		getRepo func(ctrl *gomock.Controller) repository.Repostory
+		getRepo func(ctrl *gomock.Controller) repository.Repository
 		web     *model.Website
 		wantWeb *model.Website
 		wantErr error
@@ -403,8 +403,8 @@ func TestVendorService_Update(t *testing.T) {
 			getCtx: func() context.Context {
 				return context.Background()
 			},
-			getRepo: func(ctrl *gomock.Controller) repository.Repostory {
-				repo := mockrepo.NewMockRepostory(ctrl)
+			getRepo: func(ctrl *gomock.Controller) repository.Repository {
+				repo := mockrepo.NewMockRepository(ctrl)
 				repo.EXPECT().UpdateWebsite(gomock.Any(), &model.Website{
 					URL:        serv.URL + "/success",
 					Title:      "title",
@@ -441,8 +441,8 @@ func TestVendorService_Update(t *testing.T) {
 			getCtx: func() context.Context {
 				return context.Background()
 			},
-			getRepo: func(ctrl *gomock.Controller) repository.Repostory {
-				return mockrepo.NewMockRepostory(ctrl)
+			getRepo: func(ctrl *gomock.Controller) repository.Repository {
+				return mockrepo.NewMockRepository(ctrl)
 			},
 			web: &model.Website{
 				URL:        serv.URL + "/success",
@@ -471,8 +471,8 @@ func TestVendorService_Update(t *testing.T) {
 			getCtx: func() context.Context {
 				return context.Background()
 			},
-			getRepo: func(ctrl *gomock.Controller) repository.Repostory {
-				repo := mockrepo.NewMockRepostory(ctrl)
+			getRepo: func(ctrl *gomock.Controller) repository.Repository {
+				repo := mockrepo.NewMockRepository(ctrl)
 				repo.EXPECT().UpdateWebsite(gomock.Any(), &model.Website{
 					URL:        serv.URL + "/success",
 					Title:      "title",
@@ -509,8 +509,8 @@ func TestVendorService_Update(t *testing.T) {
 			getCtx: func() context.Context {
 				return context.Background()
 			},
-			getRepo: func(ctrl *gomock.Controller) repository.Repostory {
-				return mockrepo.NewMockRepostory(ctrl)
+			getRepo: func(ctrl *gomock.Controller) repository.Repository {
+				return mockrepo.NewMockRepository(ctrl)
 			},
 			web: &model.Website{
 				URL:  serv.URL + "/fail",
@@ -538,8 +538,8 @@ func TestVendorService_Update(t *testing.T) {
 
 				return ctx
 			},
-			getRepo: func(ctrl *gomock.Controller) repository.Repostory {
-				return mockrepo.NewMockRepostory(ctrl)
+			getRepo: func(ctrl *gomock.Controller) repository.Repository {
+				return mockrepo.NewMockRepository(ctrl)
 			},
 			web: &model.Website{
 				URL:  serv.URL + "/fail",

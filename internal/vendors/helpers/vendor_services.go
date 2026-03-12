@@ -17,7 +17,7 @@ import (
 	"github.com/htchan/WebHistory/internal/vendors/webtoons"
 )
 
-func NewServiceSet(cli *http.Client, rpo repository.Repostory, cfgs map[string]config.VendorServiceConfig) ([]vendors.VendorService, error) {
+func NewServiceSet(cli *http.Client, rpo repository.Repository, cfgs map[string]config.VendorServiceConfig) ([]vendors.VendorService, error) {
 	var services []vendors.VendorService
 	var err error
 	for key, cfg := range cfgs {

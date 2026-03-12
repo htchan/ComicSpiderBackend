@@ -12,7 +12,7 @@ import (
 
 type WebsiteUpdateTasks []*WebsiteUpdateTask
 
-func NewTaskSet(nc *nats.Conn, services []vendors.VendorService, rpo repository.Repostory, conf *config.WebsiteConfig) WebsiteUpdateTasks {
+func NewTaskSet(nc *nats.Conn, services []vendors.VendorService, rpo repository.Repository, conf *config.WebsiteConfig) WebsiteUpdateTasks {
 	updateTasks := make(WebsiteUpdateTasks, 0, len(services))
 	for _, service := range services {
 		updateTasks = append(updateTasks, NewTask(nc, service, rpo, conf))

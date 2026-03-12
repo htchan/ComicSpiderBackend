@@ -42,7 +42,7 @@ func encodeJsonResp(ctx context.Context, res http.ResponseWriter, body any) {
 // @Success		200			{object}	listAllWebsiteGroupsResp
 // @Failure		400			{object}	errResp
 // @Router			/api/web-watcher/websites/groups [get]
-func getAllWebsiteGroupsHandler(r repository.Repostory) http.HandlerFunc {
+func getAllWebsiteGroupsHandler(r repository.Repository) http.HandlerFunc {
 	return func(res http.ResponseWriter, req *http.Request) {
 		userUUID := req.Context().Value(ContextKeyUserUUID).(string)
 		webs, err := r.FindUserWebsites(req.Context(), userUUID)
@@ -68,7 +68,7 @@ func getAllWebsiteGroupsHandler(r repository.Repostory) http.HandlerFunc {
 // @Success		200			{object}	getWebsiteGroupResp
 // @Failure		400			{object}	errResp
 // @Router			/api/web-watcher/websites/groups/{groupName} [get]
-func getWebsiteGroupHandler(r repository.Repostory) http.HandlerFunc {
+func getWebsiteGroupHandler(r repository.Repository) http.HandlerFunc {
 	return func(res http.ResponseWriter, req *http.Request) {
 		userUUID := req.Context().Value(ContextKeyUserUUID).(string)
 		groupName := chi.URLParam(req, "groupName")
@@ -96,7 +96,7 @@ func getWebsiteGroupHandler(r repository.Repostory) http.HandlerFunc {
 // @Success		200			{object}	createWebsiteResp
 // @Failure		400			{object}	errResp
 // @Router			/api/web-watcher/websites [post]
-func createWebsiteHandler(r repository.Repostory, conf *config.WebsiteConfig, tasks websiteupdate.WebsiteUpdateTasks) http.HandlerFunc {
+func createWebsiteHandler(r repository.Repository, conf *config.WebsiteConfig, tasks websiteupdate.WebsiteUpdateTasks) http.HandlerFunc {
 	return func(res http.ResponseWriter, req *http.Request) {
 		// userUUID, err := UserUUID(req)
 		userUUID := req.Context().Value(ContextKeyUserUUID).(string)
@@ -182,7 +182,7 @@ func getUserWebsiteHandler() http.HandlerFunc {
 // @Success		200			{object}	refreshWebsiteResp
 // @Failure		400			{object}	errResp
 // @Router			/api/web-watcher/websites/{websiteUUID}/refresh [put]
-func refreshWebsiteHandler(r repository.Repostory) http.HandlerFunc {
+func refreshWebsiteHandler(r repository.Repository) http.HandlerFunc {
 	return func(res http.ResponseWriter, req *http.Request) {
 		web := req.Context().Value(ContextKeyWebsite).(model.UserWebsite)
 		web.AccessTime = time.Now().UTC().Truncate(5 * time.Second)
@@ -211,7 +211,7 @@ func refreshWebsiteHandler(r repository.Repostory) http.HandlerFunc {
 //	@Success		200			{object}	deleteWebsiteResp
 //	@Failure		400			{object}	errResp
 //	@Router			/api/web-watcher/websites/{websiteUUID} [delete]
-func deleteWebsiteHandler(r repository.Repostory) http.HandlerFunc {
+func deleteWebsiteHandler(r repository.Repository) http.HandlerFunc {
 	return func(res http.ResponseWriter, req *http.Request) {
 		web := req.Context().Value(ContextKeyWebsite).(model.UserWebsite)
 
@@ -249,7 +249,7 @@ func validGroupName(web model.UserWebsite, groupName string) bool {
 //	@Success		200			{object}	changeWebsiteGroupResp
 //	@Failure		400			{object}	errResp
 //	@Router			/api/web-watcher/websites/{websiteUUID}/change-group [put]
-func changeWebsiteGroupHandler(r repository.Repostory) http.HandlerFunc {
+func changeWebsiteGroupHandler(r repository.Repository) http.HandlerFunc {
 	return func(res http.ResponseWriter, req *http.Request) {
 		web := req.Context().Value(ContextKeyWebsite).(model.UserWebsite)
 		groupName := req.Context().Value(ContextKeyGroup).(string)
@@ -272,7 +272,7 @@ func changeWebsiteGroupHandler(r repository.Repostory) http.HandlerFunc {
 	}
 }
 
-func dbStatsHandler(r repository.Repostory) http.HandlerFunc {
+func dbStatsHandler(r repository.Repository) http.HandlerFunc {
 	return func(res http.ResponseWriter, req *http.Request) {
 		json.NewEncoder(res).Encode(r.Stats())
 	}

@@ -23,7 +23,7 @@ func TestNewServiceSet(t *testing.T) {
 
 	type params struct {
 		cli  *http.Client
-		repo repository.Repostory
+		repo repository.Repository
 		cfg  map[string]config.VendorServiceConfig
 	}
 

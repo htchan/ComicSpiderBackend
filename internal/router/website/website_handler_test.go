@@ -29,15 +29,15 @@ import (
 func Test_getAllWebsiteGroupsHandler(t *testing.T) {
 	tests := []struct {
 		name         string
-		getRepo      func(*gomock.Controller) repository.Repostory
+		getRepo      func(*gomock.Controller) repository.Repository
 		userUUID     string
 		expectStatus int
 		expectRes    string
 	}{
 		{
 			name: "get all user websites of specific user in group array format",
-			getRepo: func(ctrl *gomock.Controller) repository.Repostory {
-				rpo := mockrepo.NewMockRepostory(ctrl)
+			getRepo: func(ctrl *gomock.Controller) repository.Repository {
+				rpo := mockrepo.NewMockRepository(ctrl)
 				rpo.EXPECT().FindUserWebsites(gomock.Any(), "abc").Return(
 					model.UserWebsites{
 						{
@@ -84,8 +84,8 @@ func Test_getAllWebsiteGroupsHandler(t *testing.T) {
 		},
 		{
 			name: "return error if findUserWebsites return error",
-			getRepo: func(ctrl *gomock.Controller) repository.Repostory {
-				rpo := mockrepo.NewMockRepostory(ctrl)
+			getRepo: func(ctrl *gomock.Controller) repository.Repository {
+				rpo := mockrepo.NewMockRepository(ctrl)
 				rpo.EXPECT().FindUserWebsites(gomock.Any(), "unknown").Return(
 					nil, errors.New("some error"),
 				)
@@ -124,7 +124,7 @@ func Test_getWebsiteGroupHandler(t *testing.T) {
 	t.Parallel()
 	tests := []struct {
 		name         string
-		r            func(*gomock.Controller) repository.Repostory
+		r            func(*gomock.Controller) repository.Repository
 		userUUID     string
 		group        string
 		expectStatus int
@@ -132,8 +132,8 @@ func Test_getWebsiteGroupHandler(t *testing.T) {
 	}{
 		{
 			name: "get user websites of existing user and group",
-			r: func(c *gomock.Controller) repository.Repostory {
-				rpo := mockrepo.NewMockRepostory(c)
+			r: func(c *gomock.Controller) repository.Repository {
+				rpo := mockrepo.NewMockRepository(c)
 				rpo.EXPECT().FindUserWebsitesByGroup(gomock.Any(), "abc", "group 1").Return(
 					model.WebsiteGroup{
 						{
@@ -170,8 +170,8 @@ func Test_getWebsiteGroupHandler(t *testing.T) {
 		},
 		{
 			name: "return error if user not exist",
-			r: func(c *gomock.Controller) repository.Repostory {
-				rpo := mockrepo.NewMockRepostory(c)
+			r: func(c *gomock.Controller) repository.Repository {
+				rpo := mockrepo.NewMockRepository(c)
 				rpo.EXPECT().FindUserWebsitesByGroup(gomock.Any(), "unknown", "group 1").Return(
 					nil, errors.New("some error"),
 				)
@@ -185,8 +185,8 @@ func Test_getWebsiteGroupHandler(t *testing.T) {
 		},
 		{
 			name: "return error if group not exist",
-			r: func(c *gomock.Controller) repository.Repostory {
-				rpo := mockrepo.NewMockRepostory(c)
+			r: func(c *gomock.Controller) repository.Repository {
+				rpo := mockrepo.NewMockRepository(c)
 				rpo.EXPECT().FindUserWebsitesByGroup(gomock.Any(), "abc", "group not exist").Return(
 					nil, errors.New("some error"),
 				)
@@ -240,7 +240,7 @@ func Test_createWebsiteHandler(t *testing.T) {
 	tests := []struct {
 		name            string
 		conf            *config.WebsiteConfig
-		mockRepo        func(*gomock.Controller) repository.Repostory
+		mockRepo        func(*gomock.Controller) repository.Repository
 		mockTasks       func(*gomock.Controller) websiteupdate.WebsiteUpdateTasks
 		userUUID        string
 		url             string
@@ -250,8 +250,8 @@ func Test_createWebsiteHandler(t *testing.T) {
 	}{
 		{
 			name: "happy flow/within 24 hrs",
-			mockRepo: func(ctrl *gomock.Controller) repository.Repostory {
-				rpo := mockrepo.NewMockRepostory(ctrl)
+			mockRepo: func(ctrl *gomock.Controller) repository.Repository {
+				rpo := mockrepo.NewMockRepository(ctrl)
 				rpo.EXPECT().CreateWebsite(gomock.Any(),
 					&model.Website{
 						UUID:       "30303030-3030-4030-b030-303030303030",
@@ -293,8 +293,8 @@ func Test_createWebsiteHandler(t *testing.T) {
 		},
 		{
 			name: "happy flow/more than 24 hrs",
-			mockRepo: func(ctrl *gomock.Controller) repository.Repostory {
-				rpo := mockrepo.NewMockRepostory(ctrl)
+			mockRepo: func(ctrl *gomock.Controller) repository.Repository {
+				rpo := mockrepo.NewMockRepository(ctrl)
 				rpo.EXPECT().CreateWebsite(gomock.Any(),
 					&model.Website{
 						UUID:       "30303030-3030-4030-b030-303030303030",
@@ -357,8 +357,8 @@ func Test_createWebsiteHandler(t *testing.T) {
 		},
 		{
 			name: "error/not supported web",
-			mockRepo: func(ctrl *gomock.Controller) repository.Repostory {
-				rpo := mockrepo.NewMockRepostory(ctrl)
+			mockRepo: func(ctrl *gomock.Controller) repository.Repository {
+				rpo := mockrepo.NewMockRepository(ctrl)
 				rpo.EXPECT().CreateWebsite(gomock.Any(),
 					&model.Website{
 						UUID:       "30303030-3030-4030-b030-303030303030",
@@ -421,8 +421,8 @@ func Test_createWebsiteHandler(t *testing.T) {
 		},
 		{
 			name: "error/repo return error",
-			mockRepo: func(ctrl *gomock.Controller) repository.Repostory {
-				rpo := mockrepo.NewMockRepostory(ctrl)
+			mockRepo: func(ctrl *gomock.Controller) repository.Repository {
+				rpo := mockrepo.NewMockRepository(ctrl)
 				rpo.EXPECT().CreateWebsite(gomock.Any(),
 					&model.Website{
 						UUID:       "30303030-3030-4030-b030-303030303030",
@@ -532,15 +532,15 @@ func Test_refreshWebsiteHandler(t *testing.T) {
 	t.Parallel()
 	tests := []struct {
 		name         string
-		mockRepo     func(*gomock.Controller) repository.Repostory
+		mockRepo     func(*gomock.Controller) repository.Repository
 		web          model.UserWebsite
 		expectStatus int
 		expectResp   string
 	}{
 		{
 			name: "return website with updated AccessTime",
-			mockRepo: func(ctrl *gomock.Controller) repository.Repostory {
-				rpo := mockrepo.NewMockRepostory(ctrl)
+			mockRepo: func(ctrl *gomock.Controller) repository.Repository {
+				rpo := mockrepo.NewMockRepository(ctrl)
 				rpo.EXPECT().UpdateUserWebsite(gomock.Any(),
 					&model.UserWebsite{
 						WebsiteUUID: "web_uuid",
@@ -601,15 +601,15 @@ func Test_deleteWebsiteHandler(t *testing.T) {
 	t.Parallel()
 	tests := []struct {
 		name         string
-		mockRepo     func(*gomock.Controller) repository.Repostory
+		mockRepo     func(*gomock.Controller) repository.Repository
 		web          model.UserWebsite
 		expectStatus int
 		expectResp   string
 	}{
 		{
 			name: "return website of deleted content",
-			mockRepo: func(ctrl *gomock.Controller) repository.Repostory {
-				rpo := mockrepo.NewMockRepostory(ctrl)
+			mockRepo: func(ctrl *gomock.Controller) repository.Repository {
+				rpo := mockrepo.NewMockRepository(ctrl)
 				rpo.EXPECT().DeleteUserWebsite(gomock.Any(),
 					&model.UserWebsite{
 						WebsiteUUID: "web_uuid",
@@ -671,7 +671,7 @@ func Test_changeWebsiteGroupHandler(t *testing.T) {
 	t.Parallel()
 	tests := []struct {
 		name         string
-		getRepo      func(*gomock.Controller) repository.Repostory
+		getRepo      func(*gomock.Controller) repository.Repository
 		web          model.UserWebsite
 		group        string
 		expectStatus int
@@ -679,8 +679,8 @@ func Test_changeWebsiteGroupHandler(t *testing.T) {
 	}{
 		{
 			name: "return website of deleted content",
-			getRepo: func(c *gomock.Controller) repository.Repostory {
-				rpo := mockrepo.NewMockRepostory(c)
+			getRepo: func(c *gomock.Controller) repository.Repository {
+				rpo := mockrepo.NewMockRepository(c)
 				rpo.EXPECT().UpdateUserWebsite(gomock.Any(),
 					&model.UserWebsite{
 						WebsiteUUID: "web_uuid",

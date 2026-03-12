@@ -29,7 +29,7 @@ import (
 
 type VendorService struct {
 	cli  *goclient.Client
-	repo repository.Repostory
+	repo repository.Repository
 	lock *semaphore.Weighted
 	cfg  *config.VendorServiceConfig
 }
@@ -53,7 +53,7 @@ func getTracer() trace.Tracer {
 
 func NewVendorService(
 	cli *http.Client,
-	repo repository.Repostory,
+	repo repository.Repository,
 	cfg *config.VendorServiceConfig,
 ) *VendorService {
 	return &VendorService{
