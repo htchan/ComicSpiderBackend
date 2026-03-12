@@ -247,14 +247,14 @@ func TestWebsiteUpdateTask_Subscribe(t *testing.T) {
 		assert.NoError(t, err)
 		err = nc.Publish("web_history.websites.update.subscribe_each_message_once", []byte(`{"website":{"uuid":"", "url":"https://example.com", "title":"test", "update_time":"2020-05-01T00:00:00Z"}, "trace_id":"XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX", "span_id":"XXXXXXXXXXXXXXXX", "trace_flags":1}`))
 		assert.NoError(t, err)
-		time.Sleep(time.Millisecond)
+		time.Sleep(20 * time.Millisecond)
 		ctx.Stop()
 
 		ctx2, err := task.Subscribe(t.Context())
 		assert.NoError(t, err)
 		err = nc.Publish("web_history.websites.update.subscribe_each_message_once", []byte(`{"website":{"uuid":"", "url":"https://example2.com", "title":"test2", "update_time":"2020-05-02T00:00:00Z"}, "trace_id":"XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX", "span_id":"XXXXXXXXXXXXXXXX", "trace_flags":1}`))
 		assert.NoError(t, err)
-		time.Sleep(time.Millisecond)
+		time.Sleep(20 * time.Millisecond)
 
 		ctx2.Stop()
 	})
