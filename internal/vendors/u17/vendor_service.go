@@ -224,3 +224,9 @@ func (serv *VendorService) Update(ctx context.Context, web *model.Website) error
 
 	return nil
 }
+
+func init() {
+	vendors.RegisterFactory(Host, func(cli *http.Client, rpo repository.Repository, cfg *config.VendorServiceConfig) vendors.VendorService {
+		return NewVendorService(cli, rpo, cfg)
+	})
+}
