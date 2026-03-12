@@ -22,8 +22,8 @@ func openPostgresDatabase(conf *config.DatabaseConfig) (*sql.DB, error) {
 	}
 	database.SetMaxIdleConns(5)
 	database.SetMaxOpenConns(10)
-	database.SetConnMaxIdleTime(5 * time.Second)
-	database.SetConnMaxLifetime(5 * time.Second)
+	database.SetConnMaxIdleTime(5 * time.Minute)
+	database.SetConnMaxLifetime(5 * time.Minute)
 	return database, err
 }
 
