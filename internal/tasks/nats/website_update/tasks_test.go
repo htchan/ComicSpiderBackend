@@ -95,7 +95,7 @@ func TestWebsiteUpdateTasks_Publish(t *testing.T) {
 					assert.Equal(t, `{"website":{"uuid":"some uuid","url":"https://example.com","title":"","raw_content":"","update_time":"0001-01-01T00:00:00Z"},"trace_id":"00000000000000000000000000000000","span_id":"0000000000000000","trace_flags":0}`, string(msg.Data))
 				})
 				assert.NoError(t, err)
-				time.Sleep(time.Millisecond)
+				time.Sleep(20 * time.Millisecond)
 				sub.Unsubscribe()
 				assert.NotNil(t, gotMsg, "no message received")
 			},
