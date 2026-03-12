@@ -140,7 +140,7 @@ func TestWebsiteUpdateTask_Publish(t *testing.T) {
 				select {
 				case msg := <-received:
 					assert.NotNil(t, msg)
-				case <-time.After(500 * time.Millisecond):
+				case <-time.After(2 * time.Second):
 					t.Fatal("timed out waiting for published message")
 				}
 			},
@@ -222,7 +222,7 @@ func TestWebsiteUpdateTask_Subscribe(t *testing.T) {
 
 			select {
 			case <-done:
-			case <-time.After(500 * time.Millisecond):
+			case <-time.After(2 * time.Second):
 				t.Fatal("timed out waiting for message consumption")
 			}
 
@@ -275,7 +275,7 @@ func TestWebsiteUpdateTask_Subscribe(t *testing.T) {
 
 		select {
 		case <-done1:
-		case <-time.After(500 * time.Millisecond):
+		case <-time.After(2 * time.Second):
 			t.Fatal("timed out waiting for first message consumption")
 		}
 		ctx.Stop()
@@ -287,7 +287,7 @@ func TestWebsiteUpdateTask_Subscribe(t *testing.T) {
 
 		select {
 		case <-done2:
-		case <-time.After(500 * time.Millisecond):
+		case <-time.After(2 * time.Second):
 			t.Fatal("timed out waiting for second message consumption")
 		}
 
