@@ -90,7 +90,6 @@ func AuthenticateMiddleware(conf *config.UserServiceConfig) func(next http.Handl
 					Str("user_uuid", userUUID).
 					Msg("set params")
 				ctx := context.WithValue(req.Context(), ContextKeyUserUUID, userUUID)
-				authSpan.End()
 
 				next.ServeHTTP(res, req.WithContext(ctx))
 			},
@@ -136,7 +135,6 @@ func WebsiteParams(next http.Handler) http.Handler {
 				Str("web url", url).
 				Msg("set params")
 			ctx := context.WithValue(req.Context(), ContextKeyWebURL, url)
-			paramsSpan.End()
 
 			next.ServeHTTP(res, req.WithContext(ctx))
 		},
@@ -161,8 +159,6 @@ func QueryUserWebsite(r repository.Repository) func(http.Handler) http.Handler {
 					writeError(res, http.StatusBadRequest, err)
 					return
 				}
-
-				dbSpan.End()
 
 				zerolog.Ctx(req.Context()).Debug().
 					Str("website uuid", web.WebsiteUUID).
@@ -196,7 +192,6 @@ func GroupNameParams(next http.Handler) http.Handler {
 				Str("group name", groupName).
 				Msg("set params")
 			ctx := context.WithValue(req.Context(), ContextKeyGroup, groupName)
-			paramsSpan.End()
 
 			next.ServeHTTP(res, req.WithContext(ctx))
 		},

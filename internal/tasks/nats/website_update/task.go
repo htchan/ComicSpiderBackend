@@ -25,6 +25,7 @@ type WebsiteUpdateTask struct {
 	Service     vendors.VendorService
 	rpo         repository.Repository
 	websiteConf *config.WebsiteConfig
+	ctx         context.Context
 }
 
 func getTracer() trace.Tracer {
@@ -71,6 +72,8 @@ func (task *WebsiteUpdateTask) Publish(
 }
 
 func (task *WebsiteUpdateTask) Subscribe(ctx context.Context) (jetstream.ConsumeContext, error) {
+	task.ctx = ctx
+
 	js, err := jetstream.New(task.nc)
 	if err != nil {
 		return nil, fmt.Errorf("init jetstream fail: %v", err)
@@ -122,7 +125,7 @@ func (task *WebsiteUpdateTask) handler(msg jetstream.Msg) {
 	ctx := log.With().
 		Str("task", "website-update").
 		Str("vendor", task.Service.Name()).
-		Logger().WithContext(context.Background())
+		Logger().WithContext(task.ctx)
 
 	defer func() {
 		ackErr := msg.Ack()
@@ -176,6 +179,4 @@ func (task *WebsiteUpdateTask) handler(msg jetstream.Msg) {
 
 		return
 	}
-
-	updateSpan.End()
 }

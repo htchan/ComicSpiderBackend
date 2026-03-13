@@ -24,6 +24,7 @@ type WebsiteBatchUpdateTask struct {
 	nc                 *nats.Conn
 	websiteUpdateTasks websiteupdate.WebsiteUpdateTasks
 	rpo                repository.Repository
+	ctx                context.Context
 }
 
 func getTracer() trace.Tracer {
@@ -47,6 +48,8 @@ func (task WebsiteBatchUpdateTask) subject() string {
 }
 
 func (task *WebsiteBatchUpdateTask) Subscribe(ctx context.Context) (jetstream.ConsumeContext, error) {
+	task.ctx = ctx
+
 	js, err := jetstream.New(task.nc)
 	if err != nil {
 		return nil, err
@@ -78,7 +81,7 @@ func (task *WebsiteBatchUpdateTask) handler(msg jetstream.Msg) {
 	ctx := log.With().
 		Str("task", "website-batch-update").
 		Str("task_id", hashData(msg.Data())).
-		Logger().WithContext(context.Background())
+		Logger().WithContext(task.ctx)
 
 	defer func() {
 		ackErr := msg.Ack()
@@ -102,8 +105,6 @@ func (task *WebsiteBatchUpdateTask) handler(msg jetstream.Msg) {
 
 		return
 	}
-
-	dbSpan.End()
 
 	// publish update job for all website
 	iterateCtx, iterateSpan := getTracer().Start(ctx, "Iterate Websites")

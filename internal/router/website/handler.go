@@ -124,12 +124,12 @@ func createWebsiteHandler(r repository.Repository, conf *config.WebsiteConfig, t
 		// only publish job it website is updated more than 24 hr ago
 		if time.Since(web.UpdateTime) > 24*time.Hour {
 			jobCtx, jobSpan := getTracer().Start(req.Context(), "Website Update Job Creation")
-			defer jobSpan.End()
 
 			supportedList, err := tasks.Publish(jobCtx, &web)
 			if err != nil {
 				jobSpan.SetStatus(codes.Error, err.Error())
 				jobSpan.RecordError(err)
+				jobSpan.End()
 
 				zerolog.Ctx(jobCtx).Error().Err(err).
 					Msg("publish website update task failed")
@@ -139,6 +139,7 @@ func createWebsiteHandler(r repository.Repository, conf *config.WebsiteConfig, t
 			} else if len(supportedList) == 0 {
 				jobSpan.SetStatus(codes.Error, "unsupported website")
 				jobSpan.RecordError(errors.New("unsupported website"))
+				jobSpan.End()
 
 				zerolog.Ctx(jobCtx).Error().Err(err).
 					Msg("unsupported website")

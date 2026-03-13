@@ -3,9 +3,7 @@ package website
 import (
 	"encoding/json"
 	"errors"
-	"fmt"
 	"net/http"
-	"os"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/cors"
@@ -23,12 +21,6 @@ var ErrRecordNotFound = errors.New("record not found")
 func writeError(res http.ResponseWriter, statusCode int, err error) {
 	res.WriteHeader(statusCode)
 	json.NewEncoder(res).Encode(errResp{err.Error()})
-}
-
-func redirectLogin(res http.ResponseWriter, req *http.Request) {
-	loginURL := os.Getenv("LOGIN_URL")
-	serviceUUID := os.Getenv("SERVICE_UUID")
-	http.Redirect(res, req, fmt.Sprintf("%v?service=%v", loginURL, serviceUUID), 302)
 }
 
 func AddRoutes(router chi.Router, r repository.Repository, tasks websiteupdate.WebsiteUpdateTasks, conf *config.APIConfig) {

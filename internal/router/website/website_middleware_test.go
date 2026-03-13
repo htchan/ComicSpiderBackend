@@ -6,10 +6,6 @@ func Test_writeError(t *testing.T) {
 
 }
 
-func Test_redirectLogin(t *testing.T) {
-
-}
-
 func Test_Authenticate(t *testing.T) {
 
 }
