@@ -8,15 +8,15 @@ import (
 	"time"
 
 	"github.com/go-chi/chi/v5"
-	shutdown "github.com/htchan/goshutdown"
-	"github.com/rs/zerolog"
-	"github.com/rs/zerolog/log"
 	"github.com/htchan/WebHistory/internal/config"
 	"github.com/htchan/WebHistory/internal/repository/sqlc"
 	"github.com/htchan/WebHistory/internal/router/website"
 	websiteupdate "github.com/htchan/WebHistory/internal/tasks/nats/website_update"
 	"github.com/htchan/WebHistory/internal/utils"
 	vendorhelper "github.com/htchan/WebHistory/internal/vendors/helpers"
+	shutdown "github.com/htchan/goshutdown"
+	"github.com/rs/zerolog"
+	"github.com/rs/zerolog/log"
 )
 
 func main() {
