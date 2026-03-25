@@ -38,7 +38,6 @@ func TestNewRepo(t *testing.T) {
 		},
 	}
 	for _, test := range tests {
-		test := test
 		t.Run(test.name, func(t *testing.T) {
 			t.Parallel()
 
@@ -116,7 +115,6 @@ func TestSqlcRepo_CreateWebsite(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		test := test
 		t.Run(test.name, func(t *testing.T) {
 			t.Parallel()
 
@@ -189,7 +187,6 @@ func TestSqlcRepo_UpdateWebsite(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		test := test
 		t.Run(test.name, func(t *testing.T) {
 			t.Parallel()
 
@@ -240,7 +237,6 @@ func TestSqlcRepo_DeleteWebsite(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		test := test
 		t.Run(test.name, func(t *testing.T) {
 			t.Parallel()
 
@@ -324,7 +320,6 @@ func TestSqlcRepo_FindWebsites(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		test := test
 		t.Run(test.name, func(t *testing.T) {
 			t.Parallel()
 
@@ -414,7 +409,6 @@ func TestSqlcRepo_FindWebsite(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		test := test
 		t.Run(test.name, func(t *testing.T) {
 			t.Parallel()
 
@@ -518,7 +512,6 @@ func TestSqlcRepo_CreateUserWebsite(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		test := test
 		t.Run(test.name, func(t *testing.T) {
 			t.Parallel()
 
@@ -590,7 +583,6 @@ func TestSqlcRepo_UpdateUserWebsite(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		test := test
 		t.Run(test.name, func(t *testing.T) {
 			err := r.UpdateUserWebsite(context.Background(), &test.web)
 			assert.ErrorIs(t, err, test.expectError)
@@ -642,7 +634,6 @@ func TestSqlcRepo_DeleteUserWebsite(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		test := test
 		t.Run(test.name, func(t *testing.T) {
 			err := r.DeleteUserWebsite(context.Background(), &model.UserWebsite{
 				UserUUID:    test.userUUID,
@@ -731,7 +722,6 @@ func TestSqlcRepo_FindUserWebsites(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		test := test
 		t.Run(test.name, func(t *testing.T) {
 			result, err := r.FindUserWebsites(context.Background(), test.userUUID)
 			assert.ErrorIs(t, err, test.expectError)
@@ -839,7 +829,6 @@ func TestSqlcRepo_FindUserWebsitesByGroup(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		test := test
 		t.Run(test.name, func(t *testing.T) {
 			result, err := r.FindUserWebsitesByGroup(context.Background(), test.userUUID, test.group)
 			assert.ErrorIs(t, err, test.expectError)
@@ -943,7 +932,6 @@ func TestSqlcRepo_FindUserWebsite(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		test := test
 		t.Run(test.name, func(t *testing.T) {
 			result, err := r.FindUserWebsite(context.Background(), test.userUUID, test.webUUID)
 			assert.ErrorIs(t, err, test.expectError)

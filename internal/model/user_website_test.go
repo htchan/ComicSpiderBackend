@@ -27,7 +27,6 @@ func Test_NewUserWebsite(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		test := test
 		t.Run(test.name, func(t *testing.T) {
 			t.Parallel()
 
@@ -64,7 +63,6 @@ func TestUserWebsite_MarshalJSON(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		test := test
 		t.Run(test.name, func(t *testing.T) {
 			result, err := json.Marshal(test.web)
 			assert.NoError(t, err, nil)
@@ -99,7 +97,6 @@ func TestUserWebsites_WebsiteGroups(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		test := test
 		t.Run(test.name, func(t *testing.T) {
 			groups := test.webs.WebsiteGroups()
 			assert.Equal(t, test.expectGroups, groups)

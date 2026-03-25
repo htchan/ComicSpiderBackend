@@ -153,8 +153,6 @@ func Test_LoadAPIConfig(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		test := test
-
 		t.Run(test.name, func(t *testing.T) {
 			// populate env
 			for key, value := range test.envMap {
@@ -289,8 +287,6 @@ func Test_LoadWorkerConfig(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		test := test
-
 		t.Run(test.name, func(t *testing.T) {
 			// populate env
 			for key, value := range test.envMap {

@@ -23,7 +23,6 @@ func NewServiceSet(cli *http.Client, rpo repository.Repository, cfgs map[string]
 	var services []vendors.VendorService
 	var err error
 	for key, cfg := range cfgs {
-		cfg := cfg
 		factory := vendors.GetFactory(key)
 		if factory != nil {
 			services = append(services, factory(cli, rpo, &cfg))

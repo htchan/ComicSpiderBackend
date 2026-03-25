@@ -228,7 +228,7 @@ func deleteWebsiteHandler(r repository.Repository) http.HandlerFunc {
 }
 
 func validGroupName(web model.UserWebsite, groupName string) bool {
-	for _, char := range strings.Split(groupName, "") {
+	for char := range strings.SplitSeq(groupName, "") {
 		if strings.Contains(web.Website.Title, char) {
 			return true
 		}

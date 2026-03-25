@@ -99,7 +99,6 @@ func Test_getAllWebsiteGroupsHandler(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		test := test
 		t.Run(test.name, func(t *testing.T) {
 			t.Parallel()
 			ctrl := gomock.NewController(t)
@@ -201,7 +200,6 @@ func Test_getWebsiteGroupHandler(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		test := test
 		t.Run(test.name, func(t *testing.T) {
 			t.Parallel()
 
@@ -451,15 +449,12 @@ func Test_createWebsiteHandler(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		test := test
 		t.Run(test.name, func(t *testing.T) {
 			ctrl := gomock.NewController(t)
 			defer ctrl.Finish()
 
 			var wg sync.WaitGroup
-			wg.Add(1)
-			go func() {
-				defer wg.Done()
+			wg.Go(func() {
 				req, err := http.NewRequest("POST", "/websites/", nil)
 				assert.NoError(t, err, "create request")
 
@@ -472,7 +467,7 @@ func Test_createWebsiteHandler(t *testing.T) {
 
 				assert.Equal(t, test.expectStatus, rr.Code)
 				assert.Equal(t, test.expectRes, strings.Trim(rr.Body.String(), "\n"))
-			}()
+			})
 
 			test.expectSubscribe(t, nc)
 
@@ -509,7 +504,6 @@ func Test_getWebsiteHandler(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		test := test
 		t.Run(test.name, func(t *testing.T) {
 			t.Parallel()
 
@@ -576,7 +570,6 @@ func Test_refreshWebsiteHandler(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		test := test
 		t.Run(test.name, func(t *testing.T) {
 			t.Parallel()
 
@@ -645,7 +638,6 @@ func Test_deleteWebsiteHandler(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		test := test
 		t.Run(test.name, func(t *testing.T) {
 			t.Parallel()
 
@@ -717,7 +709,6 @@ func Test_changeWebsiteGroupHandler(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		test := test
 		t.Run(test.name, func(t *testing.T) {
 			t.Parallel()
 

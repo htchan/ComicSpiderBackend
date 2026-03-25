@@ -32,10 +32,7 @@ func (setting *WebsiteSetting) Parse(response string) (string, []string) {
 
 	fromN, toN := setting.FocusIndexFrom, setting.FocusIndexTo
 	if fromN < 0 {
-		fromN = len(dates) + fromN
-		if fromN < 0 {
-			fromN = 0
-		}
+		fromN = max(len(dates)+fromN, 0)
 	} else if fromN > len(dates) {
 		fromN = len(dates) - 1
 	}

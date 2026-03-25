@@ -30,7 +30,6 @@ func Test_NewWebsite(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		test := test
 		t.Run(test.name, func(t *testing.T) {
 			t.Parallel()
 			web := NewWebsite(test.url, test.conf)
@@ -48,7 +47,7 @@ func TestWebsite_Map(t *testing.T) {
 	tests := []struct {
 		name   string
 		web    Website
-		expect map[string]interface{}
+		expect map[string]any
 	}{
 		{
 			name: "happy flow",
@@ -58,7 +57,7 @@ func TestWebsite_Map(t *testing.T) {
 				Title:      "title",
 				UpdateTime: time.Date(2020, 1, 2, 0, 0, 0, 0, time.Local),
 			},
-			expect: map[string]interface{}{
+			expect: map[string]any{
 				"uuid":       "uuid",
 				"url":        "http://example.com",
 				"title":      "title",
@@ -68,7 +67,6 @@ func TestWebsite_Map(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		test := test
 		t.Run(test.name, func(t *testing.T) {
 			result := test.web.Map()
 			assert.Equal(t, test.expect, result)
@@ -96,7 +94,6 @@ func TestWebsite_MarshalJSON(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		test := test
 		t.Run(test.name, func(t *testing.T) {
 			result, err := json.Marshal(test.web)
 			assert.NoError(t, err)
@@ -129,7 +126,6 @@ func TestWebsite_FullHost(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		test := test
 		t.Run(test.name, func(t *testing.T) {
 			result := test.web.FullHost()
 			assert.Equal(t, test.expect, result)
@@ -156,7 +152,6 @@ func TestWebsite_Host(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		test := test
 		t.Run(test.name, func(t *testing.T) {
 			result := test.web.Host()
 			assert.Equal(t, test.expect, result)
@@ -181,7 +176,6 @@ func TestWebsite_Content(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		test := test
 		t.Run(test.name, func(t *testing.T) {
 			result := test.web.Content()
 			assert.Equal(t, test.expect, result)

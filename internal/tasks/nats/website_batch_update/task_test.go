@@ -247,11 +247,9 @@ func TestWebsiteBatchUpdateTask_handler(t *testing.T) {
 
 			task := NewTask(nc, test.getTasks(ctrl), test.getRpo(ctrl))
 			var wg sync.WaitGroup
-			wg.Add(1)
-			go func() {
-				defer wg.Done()
+			wg.Go(func() {
 				task.handler(test.getMsg(ctrl))
-			}()
+			})
 
 			test.expectSubscribe(t, nc)
 

@@ -30,8 +30,8 @@ func NewWebsite(url string, conf *config.WebsiteConfig) Website {
 	return web
 }
 
-func (web Website) Map() map[string]interface{} {
-	return map[string]interface{}{
+func (web Website) Map() map[string]any {
+	return map[string]any{
 		"uuid":       web.UUID,
 		"url":        web.URL,
 		"title":      web.Title,
