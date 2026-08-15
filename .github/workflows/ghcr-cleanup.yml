@@ -1,0 +1,21 @@
+name: Monthly GHCR Cleanup
+on:
+  schedule:
+    - cron: "0 0 1 * *"
+  pull_request:
+    branches:
+      - target
+jobs:
+  cleanup-ghcr:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: snok/container-retention-policy@v3.1.0
+        with:
+          account: htchan
+          image-names:
+            - ghcr.io/htchan/web-history-api
+            - ghcr.io/htchan/web-history-worker
+          token: ${{ secrets.GITHUB_TOKEN }}
+          cut-off: 6M
+          keep-n-most-recent: 5
+          dry-run: true
