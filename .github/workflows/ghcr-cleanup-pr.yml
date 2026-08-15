@@ -1,0 +1,19 @@
+name: PR GHCR Cleanup Dry Run
+run-name: Monthly container registry cleanup
+
+on:
+  schedule:
+    - cron: "0 0 1 * *" # Runs at 00:00 on the first day of every month
+
+jobs:
+  cleanup-ghcr:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: snok/container-retention-policy@v3.1.0
+        with:
+          account: user
+          image-names: "web-history-api web-history-worker"
+          token: ${{ secrets.GITHUB_TOKEN }}
+          cut-off: 6M
+          keep-n-most-recent: 5
+          dry-run: false
