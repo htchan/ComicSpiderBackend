@@ -11,7 +11,7 @@ jobs:
     steps:
       - uses: snok/container-retention-policy@v3.1.0
         with:
-          account: htchan
+          account: user
           image-names: "web-history-api web-history-worker"
           token: ${{ secrets.GITHUB_TOKEN }}
           cut-off: 6M
