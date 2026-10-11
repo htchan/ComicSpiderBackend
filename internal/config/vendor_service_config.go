@@ -24,8 +24,7 @@ func LoadBaozimhConfig() *BaozimhConfig {
 	}
 
 	cookieMap := make(map[string]string)
-	pairs := strings.Split(cookieStr, ";")
-	for _, pair := range pairs {
+	for pair := range strings.SplitSeq(cookieStr, ";") {
 		pair = strings.TrimSpace(pair)
 		if pair == "" {
 			continue
