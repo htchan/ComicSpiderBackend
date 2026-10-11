@@ -153,8 +153,8 @@ func TestVendorService_fetchWebsite(t *testing.T) {
 						vendors.RaiseStatusCodeErrorMiddleware,
 					),
 				),
-				repo:      nil,
-				lock:      semaphore.NewWeighted(1),
+				repo: nil,
+				lock: semaphore.NewWeighted(1),
 				cfg: &config.VendorServiceConfig{
 					MaxConcurrency: 1,
 					FetchInterval:  10 * time.Millisecond,
@@ -184,8 +184,8 @@ func TestVendorService_fetchWebsite(t *testing.T) {
 						vendors.RaiseStatusCodeErrorMiddleware,
 					),
 				),
-				repo:      nil,
-				lock:      semaphore.NewWeighted(1),
+				repo: nil,
+				lock: semaphore.NewWeighted(1),
 				cfg: &config.VendorServiceConfig{
 					MaxConcurrency: 1,
 					FetchInterval:  5 * time.Millisecond,
@@ -216,8 +216,8 @@ func TestVendorService_fetchWebsite(t *testing.T) {
 						vendors.RaiseStatusCodeErrorMiddleware,
 					),
 				),
-				repo:      nil,
-				lock:      semaphore.NewWeighted(1),
+				repo: nil,
+				lock: semaphore.NewWeighted(1),
 				cfg: &config.VendorServiceConfig{
 					MaxConcurrency: 1,
 					FetchInterval:  10 * time.Millisecond,
@@ -250,8 +250,8 @@ func TestVendorService_fetchWebsite(t *testing.T) {
 						vendors.RaiseStatusCodeErrorMiddleware,
 					),
 				),
-				repo:      nil,
-				lock:      semaphore.NewWeighted(1),
+				repo: nil,
+				lock: semaphore.NewWeighted(1),
 				cfg: &config.VendorServiceConfig{
 					MaxConcurrency: 1,
 					FetchInterval:  10 * time.Millisecond,
@@ -284,8 +284,8 @@ func TestVendorService_fetchWebsite(t *testing.T) {
 						vendors.RaiseStatusCodeErrorMiddleware,
 					),
 				),
-				repo:      nil,
-				lock:      semaphore.NewWeighted(1),
+				repo: nil,
+				lock: semaphore.NewWeighted(1),
 				cfg: &config.VendorServiceConfig{
 					MaxConcurrency: 1,
 					FetchInterval:  10 * time.Millisecond,
@@ -543,8 +543,8 @@ func TestVendorService_Update(t *testing.T) {
 		{
 			name: "update web successfully",
 			serv: &VendorService{
-				cli:      testClient,
-				lock:     semaphore.NewWeighted(1),
+				cli:  testClient,
+				lock: semaphore.NewWeighted(1),
 				cfg: &config.VendorServiceConfig{
 					MaxConcurrency: 1,
 					MaxRetry:       1,
@@ -580,8 +580,8 @@ func TestVendorService_Update(t *testing.T) {
 		{
 			name: "fetch info but not update web",
 			serv: &VendorService{
-				cli:      testClient,
-				lock:     semaphore.NewWeighted(1),
+				cli:  testClient,
+				lock: semaphore.NewWeighted(1),
 				cfg: &config.VendorServiceConfig{
 					MaxConcurrency: 1,
 					MaxRetry:       1,
@@ -611,8 +611,8 @@ func TestVendorService_Update(t *testing.T) {
 		{
 			name: "repo returning error",
 			serv: &VendorService{
-				cli:      testClient,
-				lock:     semaphore.NewWeighted(1),
+				cli:  testClient,
+				lock: semaphore.NewWeighted(1),
 				cfg: &config.VendorServiceConfig{
 					MaxConcurrency: 1,
 					MaxRetry:       1,
@@ -648,8 +648,8 @@ func TestVendorService_Update(t *testing.T) {
 		{
 			name: "send request returning error",
 			serv: &VendorService{
-				cli:      testClient,
-				lock:     semaphore.NewWeighted(1),
+				cli:  testClient,
+				lock: semaphore.NewWeighted(1),
 				cfg: &config.VendorServiceConfig{
 					MaxConcurrency: 1,
 					MaxRetry:       1,
@@ -675,8 +675,8 @@ func TestVendorService_Update(t *testing.T) {
 		{
 			name: "context was cancelled",
 			serv: &VendorService{
-				cli:      testClient,
-				lock:     semaphore.NewWeighted(1),
+				cli:  testClient,
+				lock: semaphore.NewWeighted(1),
 				cfg: &config.VendorServiceConfig{
 					MaxConcurrency: 1,
 					MaxRetry:       1,
