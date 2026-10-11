@@ -28,10 +28,11 @@ import (
 )
 
 type VendorService struct {
-	cli  *goclient.Client
-	repo repository.Repository
-	lock *semaphore.Weighted
-	cfg  *config.VendorServiceConfig
+	cli       *goclient.Client
+	repo      repository.Repository
+	lock      *semaphore.Weighted
+	cfg       *config.VendorServiceConfig
+	vendorCfg *config.BaozimhConfig
 }
 
 var _ vendors.VendorService = (*VendorService)(nil)
@@ -68,9 +69,10 @@ func NewVendorService(
 			),
 			goclient.WithRequester(cli.Do),
 		),
-		repo: repo,
-		lock: semaphore.NewWeighted(cfg.MaxConcurrency),
-		cfg:  cfg,
+		repo:      repo,
+		lock:      semaphore.NewWeighted(cfg.MaxConcurrency),
+		cfg:       cfg,
+		vendorCfg: config.LoadBaozimhConfig(),
 	}
 }
 
@@ -92,6 +94,10 @@ func (serv *VendorService) fetchWebsite(ctx context.Context, web *model.Website)
 	req, reqErr := http.NewRequest("GET", url, nil)
 	if reqErr != nil {
 		return "", reqErr
+	}
+
+	for name, value := range serv.vendorCfg.Cookie {
+		req.AddCookie(&http.Cookie{Name: name, Value: value})
 	}
 
 	// send request with basic retry

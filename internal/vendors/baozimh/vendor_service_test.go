@@ -5,6 +5,9 @@ import (
 	"fmt"
 	"net/http"
 	"net/http/httptest"
+	"os"
+	"sort"
+	"strings"
 	"testing"
 	"time"
 
@@ -21,12 +24,11 @@ import (
 )
 
 func TestNewVendorService(t *testing.T) {
-	t.Parallel()
-
 	type params struct {
-		cli  *http.Client
-		repo repository.Repository
-		cfg  *config.VendorServiceConfig
+		cli      *http.Client
+		repo     repository.Repository
+		cfg      *config.VendorServiceConfig
+		setupEnv func()
 	}
 
 	tests := []struct {
@@ -43,6 +45,9 @@ func TestNewVendorService(t *testing.T) {
 					MaxConcurrency: 10,
 					FetchInterval:  10 * time.Second,
 				},
+				setupEnv: func() {
+					os.Unsetenv("BAOZIMH_COOKIES")
+				},
 			},
 			want: &VendorService{
 				cli:  nil,
@@ -52,18 +57,48 @@ func TestNewVendorService(t *testing.T) {
 					MaxConcurrency: 10,
 					FetchInterval:  10 * time.Second,
 				},
+				vendorCfg: &config.BaozimhConfig{},
+			},
+		},
+		{
+			name: "load cookies from env",
+			params: params{
+				cli:  nil,
+				repo: nil,
+				cfg: &config.VendorServiceConfig{
+					MaxConcurrency: 10,
+					FetchInterval:  10 * time.Second,
+				},
+				setupEnv: func() {
+					os.Setenv("BAOZIMH_COOKIES", "key1=value1; key2=value2")
+				},
+			},
+			want: &VendorService{
+				cli:  nil,
+				repo: nil,
+				lock: semaphore.NewWeighted(10),
+				cfg: &config.VendorServiceConfig{
+					MaxConcurrency: 10,
+					FetchInterval:  10 * time.Second,
+				},
+				vendorCfg: &config.BaozimhConfig{Cookie: map[string]string{
+					"key1": "value1",
+					"key2": "value2",
+				}},
 			},
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			t.Parallel()
+			tt.params.setupEnv()
+			defer os.Unsetenv("BAOZIMH_COOKIES")
 
 			get := NewVendorService(tt.params.cli, tt.params.repo, tt.params.cfg)
 			assert.Equal(t, tt.want.repo, get.repo)
 			assert.Equal(t, tt.want.lock, get.lock)
 			assert.Equal(t, tt.want.cfg, get.cfg)
+			assert.Equal(t, tt.want.vendorCfg, get.vendorCfg)
 		})
 	}
 }
@@ -77,6 +112,16 @@ func TestVendorService_fetchWebsite(t *testing.T) {
 			w.Write([]byte("failed"))
 		} else if r.URL.Path == "/success" {
 			w.Write([]byte("success"))
+		} else if r.URL.Path == "/cookie" {
+			cookies := r.Cookies()
+			sort.Slice(cookies, func(i, j int) bool {
+				return cookies[i].Name < cookies[j].Name
+			})
+			pairs := make([]string, 0, len(cookies))
+			for _, cookie := range cookies {
+				pairs = append(pairs, cookie.Name+"="+cookie.Value)
+			}
+			w.Write([]byte(strings.Join(pairs, ";")))
 		} else {
 			w.Write([]byte("unknown"))
 		}
@@ -108,13 +153,14 @@ func TestVendorService_fetchWebsite(t *testing.T) {
 						vendors.RaiseStatusCodeErrorMiddleware,
 					),
 				),
-				repo: nil,
-				lock: semaphore.NewWeighted(1),
+				repo:      nil,
+				lock:      semaphore.NewWeighted(1),
 				cfg: &config.VendorServiceConfig{
 					MaxConcurrency: 1,
 					FetchInterval:  10 * time.Millisecond,
 					MaxRetry:       1,
 				},
+				vendorCfg: &config.BaozimhConfig{},
 			},
 			getCtx: func() context.Context {
 				return context.Background()
@@ -138,14 +184,15 @@ func TestVendorService_fetchWebsite(t *testing.T) {
 						vendors.RaiseStatusCodeErrorMiddleware,
 					),
 				),
-				repo: nil,
-				lock: semaphore.NewWeighted(1),
+				repo:      nil,
+				lock:      semaphore.NewWeighted(1),
 				cfg: &config.VendorServiceConfig{
 					MaxConcurrency: 1,
 					FetchInterval:  5 * time.Millisecond,
 					MaxRetry:       2,
 					RetryInterval:  5 * time.Millisecond,
 				},
+				vendorCfg: &config.BaozimhConfig{},
 			},
 			getCtx: func() context.Context {
 				return context.Background()
@@ -169,13 +216,14 @@ func TestVendorService_fetchWebsite(t *testing.T) {
 						vendors.RaiseStatusCodeErrorMiddleware,
 					),
 				),
-				repo: nil,
-				lock: semaphore.NewWeighted(1),
+				repo:      nil,
+				lock:      semaphore.NewWeighted(1),
 				cfg: &config.VendorServiceConfig{
 					MaxConcurrency: 1,
 					FetchInterval:  10 * time.Millisecond,
 					MaxRetry:       1,
 				},
+				vendorCfg: &config.BaozimhConfig{},
 			},
 			getCtx: func() context.Context {
 				ctx, cancel := context.WithCancel(context.Background())
@@ -188,6 +236,71 @@ func TestVendorService_fetchWebsite(t *testing.T) {
 			},
 			wantError:       context.Canceled,
 			expectTimeTaken: 0,
+		},
+		{
+			name: "send request with cookies",
+			serv: &VendorService{
+				cli: goclient.NewClient(
+					goclient.WithMiddlewares(
+						retry.NewRetryMiddleware(
+							1,
+							retry.RetryForError,
+							retry.StaticRetryInterval(0),
+						),
+						vendors.RaiseStatusCodeErrorMiddleware,
+					),
+				),
+				repo:      nil,
+				lock:      semaphore.NewWeighted(1),
+				cfg: &config.VendorServiceConfig{
+					MaxConcurrency: 1,
+					FetchInterval:  10 * time.Millisecond,
+					MaxRetry:       1,
+				},
+				vendorCfg: &config.BaozimhConfig{Cookie: map[string]string{
+					"key1": "value1",
+					"key2": "value2",
+				}},
+			},
+			getCtx: func() context.Context {
+				return context.Background()
+			},
+			web: &model.Website{
+				URL: serv.URL + "/cookie",
+			},
+			wantBody:        "key1=value1;key2=value2",
+			expectTimeTaken: unitDuration,
+		},
+		{
+			name: "send request without cookies",
+			serv: &VendorService{
+				cli: goclient.NewClient(
+					goclient.WithMiddlewares(
+						retry.NewRetryMiddleware(
+							1,
+							retry.RetryForError,
+							retry.StaticRetryInterval(0),
+						),
+						vendors.RaiseStatusCodeErrorMiddleware,
+					),
+				),
+				repo:      nil,
+				lock:      semaphore.NewWeighted(1),
+				cfg: &config.VendorServiceConfig{
+					MaxConcurrency: 1,
+					FetchInterval:  10 * time.Millisecond,
+					MaxRetry:       1,
+				},
+				vendorCfg: &config.BaozimhConfig{},
+			},
+			getCtx: func() context.Context {
+				return context.Background()
+			},
+			web: &model.Website{
+				URL: serv.URL + "/cookie",
+			},
+			wantBody:        "",
+			expectTimeTaken: unitDuration,
 		},
 	}
 
@@ -430,12 +543,13 @@ func TestVendorService_Update(t *testing.T) {
 		{
 			name: "update web successfully",
 			serv: &VendorService{
-				cli:  testClient,
-				lock: semaphore.NewWeighted(1),
+				cli:      testClient,
+				lock:     semaphore.NewWeighted(1),
 				cfg: &config.VendorServiceConfig{
 					MaxConcurrency: 1,
 					MaxRetry:       1,
 				},
+				vendorCfg: &config.BaozimhConfig{},
 			},
 			getCtx: func() context.Context {
 				return context.Background()
@@ -466,12 +580,13 @@ func TestVendorService_Update(t *testing.T) {
 		{
 			name: "fetch info but not update web",
 			serv: &VendorService{
-				cli:  testClient,
-				lock: semaphore.NewWeighted(1),
+				cli:      testClient,
+				lock:     semaphore.NewWeighted(1),
 				cfg: &config.VendorServiceConfig{
 					MaxConcurrency: 1,
 					MaxRetry:       1,
 				},
+				vendorCfg: &config.BaozimhConfig{},
 			},
 			getCtx: func() context.Context {
 				return context.Background()
@@ -496,12 +611,13 @@ func TestVendorService_Update(t *testing.T) {
 		{
 			name: "repo returning error",
 			serv: &VendorService{
-				cli:  testClient,
-				lock: semaphore.NewWeighted(1),
+				cli:      testClient,
+				lock:     semaphore.NewWeighted(1),
 				cfg: &config.VendorServiceConfig{
 					MaxConcurrency: 1,
 					MaxRetry:       1,
 				},
+				vendorCfg: &config.BaozimhConfig{},
 			},
 			getCtx: func() context.Context {
 				return context.Background()
@@ -532,12 +648,13 @@ func TestVendorService_Update(t *testing.T) {
 		{
 			name: "send request returning error",
 			serv: &VendorService{
-				cli:  testClient,
-				lock: semaphore.NewWeighted(1),
+				cli:      testClient,
+				lock:     semaphore.NewWeighted(1),
 				cfg: &config.VendorServiceConfig{
 					MaxConcurrency: 1,
 					MaxRetry:       1,
 				},
+				vendorCfg: &config.BaozimhConfig{},
 			},
 			getCtx: func() context.Context {
 				return context.Background()
@@ -558,12 +675,13 @@ func TestVendorService_Update(t *testing.T) {
 		{
 			name: "context was cancelled",
 			serv: &VendorService{
-				cli:  testClient,
-				lock: semaphore.NewWeighted(1),
+				cli:      testClient,
+				lock:     semaphore.NewWeighted(1),
 				cfg: &config.VendorServiceConfig{
 					MaxConcurrency: 1,
 					MaxRetry:       1,
 				},
+				vendorCfg: &config.BaozimhConfig{},
 			},
 			getCtx: func() context.Context {
 				ctx, cancel := context.WithCancel(context.Background())
