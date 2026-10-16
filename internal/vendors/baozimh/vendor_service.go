@@ -17,6 +17,8 @@ import (
 	"github.com/htchan/WebHistory/internal/repository"
 	"github.com/htchan/WebHistory/internal/vendors"
 
+	"github.com/chromedp/chromedp"
+	"github.com/chromedp/chromedp/remote"
 	"github.com/htchan/goclient"
 	"github.com/htchan/goclient/middlewares/retry"
 	"github.com/rs/zerolog"
@@ -117,6 +119,43 @@ func (serv *VendorService) fetchWebsite(ctx context.Context, web *model.Website)
 	}
 
 	return string(data), nil
+}
+
+func (serv *VendorService) fetchWebsiteV2(ctx context.Context, web *model.Website) (string, error) {
+	if serv.lock.Acquire(ctx, 1) == nil {
+		defer func() {
+			time.Sleep(serv.cfg.FetchInterval)
+			serv.lock.Release(1)
+		}()
+	}
+
+	url := regexp.MustCompile(fmt.Sprintf("^(http.*?)://.*?%s(.*)$", Host)).
+		ReplaceAllString(web.URL, fmt.Sprintf("$1://www.%s$2", Host))
+
+	if serv.vendorCfg.BrowserCdpUrl == "" {
+		return "", errors.New("browser cdp url is not configured")
+	}
+
+	allocatorCtx, allocatorCancel := remote.NewAllocator(ctx, serv.vendorCfg.BrowserCdpUrl)
+	defer allocatorCancel()
+
+	tabCtx, tabCancel := chromedp.NewContext(allocatorCtx)
+	defer tabCancel()
+
+	err := chromedp.Do(tabCtx,
+		chromedp.Navigate(url),
+		chromedp.Sleep(serv.vendorCfg.BrowserWaitDuration),
+	)
+	if err != nil {
+		return "", err
+	}
+
+	pageHTML, err := chromedp.Run(tabCtx, chromedp.OuterHTML(chromedp.CSS("html")))
+	if err != nil {
+		return "", err
+	}
+
+	return pageHTML, nil
 }
 
 func (serv *VendorService) isUpdated(ctx context.Context, web *model.Website, body string) bool {
@@ -231,7 +270,15 @@ func (serv *VendorService) Update(ctx context.Context, web *model.Website) error
 		)...,
 	)
 
-	body, fetchErr := serv.fetchWebsite(ctx, web)
+	var (
+		body     string
+		fetchErr error
+	)
+	if serv.vendorCfg.BrowserCdpUrl != "" {
+		body, fetchErr = serv.fetchWebsiteV2(ctx, web)
+	} else {
+		body, fetchErr = serv.fetchWebsite(ctx, web)
+	}
 	if fetchErr != nil {
 		fetchWebSpan.SetStatus(codes.Error, fetchErr.Error())
 		fetchWebSpan.RecordError(fetchErr)

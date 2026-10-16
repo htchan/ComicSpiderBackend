@@ -5,10 +5,12 @@ go 1.26.9
 require (
 	github.com/PuerkitoBio/goquery v1.8.0
 	github.com/caarlos0/env/v10 v10.0.0
+	github.com/chromedp/chromedp v0.21.0
 	github.com/go-chi/chi/v5 v5.2.2
 	github.com/go-chi/cors v1.2.1
 	github.com/golang-migrate/migrate/v4 v4.15.2
 	github.com/google/uuid v1.6.0
+	github.com/gorilla/websocket v1.4.2
 	github.com/htchan/goclient v0.0.8
 	github.com/htchan/goshutdown v0.0.1
 	github.com/lib/pq v1.10.9
@@ -41,6 +43,7 @@ require (
 	github.com/cenkalti/backoff/v4 v4.2.0 // indirect
 	github.com/cenkalti/backoff/v5 v5.0.3 // indirect
 	github.com/cespare/xxhash/v2 v2.3.0 // indirect
+	github.com/chromedp/cdproto v0.157.8 // indirect
 	github.com/containerd/continuity v0.3.0 // indirect
 	github.com/cpuguy83/go-md2man/v2 v2.0.6 // indirect
 	github.com/cubicdaiya/gonp v1.0.4 // indirect
@@ -51,6 +54,7 @@ require (
 	github.com/docker/go-units v0.5.0 // indirect
 	github.com/dustin/go-humanize v1.0.1 // indirect
 	github.com/fatih/structtag v1.2.0 // indirect
+	github.com/go-json-experiment/json v0.0.0-20260213210345-44df1a37e875 // indirect
 	github.com/go-logr/logr v1.4.4 // indirect
 	github.com/go-logr/stdr v1.2.2 // indirect
 	github.com/go-openapi/jsonpointer v0.19.6 // indirect

@@ -57,7 +57,9 @@ func TestNewVendorService(t *testing.T) {
 					MaxConcurrency: 10,
 					FetchInterval:  10 * time.Second,
 				},
-				vendorCfg: &config.BaozimhConfig{},
+				vendorCfg: &config.BaozimhConfig{
+					BrowserWaitDuration: 10 * time.Second,
+				},
 			},
 		},
 		{
@@ -81,10 +83,13 @@ func TestNewVendorService(t *testing.T) {
 					MaxConcurrency: 10,
 					FetchInterval:  10 * time.Second,
 				},
-				vendorCfg: &config.BaozimhConfig{Cookie: map[string]string{
-					"key1": "value1",
-					"key2": "value2",
-				}},
+				vendorCfg: &config.BaozimhConfig{
+					Cookie: map[string]string{
+						"key1": "value1",
+						"key2": "value2",
+					},
+					BrowserWaitDuration: 10 * time.Second,
+				},
 			},
 		},
 	}
@@ -719,4 +724,79 @@ func TestVendorService_Update(t *testing.T) {
 		})
 	}
 
+}
+
+func TestVendorService_fetchWebsiteV2(t *testing.T) {
+	t.Parallel()
+
+	const pageHTML = `<html><head><title>title</title></head></html>`
+
+	cdpServer := newFakeCDPServer(t, pageHTML)
+
+	unreachable := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {}))
+	unreachableCDPUrl := unreachable.URL
+	unreachable.Close()
+
+	tests := []struct {
+		name       string
+		vendorCfg  *config.BaozimhConfig
+		web        *model.Website
+		wantBody   string
+		wantErrMsg string
+		wantAnyErr bool
+		wantNavURL string
+	}{
+		{
+			name: "fetch page with browser",
+			vendorCfg: &config.BaozimhConfig{
+				BrowserCdpUrl:       cdpServer.URL,
+				BrowserWaitDuration: 50 * time.Millisecond,
+			},
+			web:        &model.Website{URL: "https://baozimh.com/comic"},
+			wantBody:   pageHTML,
+			wantNavURL: "https://www.baozimh.com/comic",
+		},
+		{
+			name:       "browser cdp url is not configured",
+			vendorCfg:  &config.BaozimhConfig{},
+			web:        &model.Website{URL: "https://baozimh.com/comic"},
+			wantErrMsg: "browser cdp url is not configured",
+		},
+		{
+			name: "browser is unreachable",
+			vendorCfg: &config.BaozimhConfig{
+				BrowserCdpUrl:       unreachableCDPUrl,
+				BrowserWaitDuration: time.Millisecond,
+			},
+			web:        &model.Website{URL: "https://baozimh.com/comic"},
+			wantAnyErr: true,
+		},
+	}
+
+	for _, tt := range tests {
+		serv := &VendorService{
+			lock: semaphore.NewWeighted(1),
+			cfg: &config.VendorServiceConfig{
+				MaxConcurrency: 1,
+				FetchInterval:  time.Millisecond,
+			},
+			vendorCfg: tt.vendorCfg,
+		}
+
+		body, err := serv.fetchWebsiteV2(context.Background(), tt.web)
+
+		if tt.wantErrMsg != "" {
+			assert.EqualError(t, err, tt.wantErrMsg)
+		} else if tt.wantAnyErr {
+			assert.Error(t, err)
+		} else {
+			assert.NoError(t, err)
+		}
+		assert.Equal(t, tt.wantBody, body)
+		assert.Equal(t, true, serv.lock.TryAcquire(1))
+
+		if tt.wantNavURL != "" {
+			assert.Equal(t, tt.wantNavURL, cdpServer.navigatedURL())
+		}
+	}
 }
