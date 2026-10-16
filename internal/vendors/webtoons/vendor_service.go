@@ -35,7 +35,7 @@ var _ vendors.VendorService = (*VendorService)(nil)
 
 const (
 	titleGoQuery = "head>title"
-	dateGoQuery  = "div.detail_lst>ul#_listUl>li._episodeItem>a>span.date"
+	dateGoQuery  = "div.detail_list_area>ul#_listUl>li._episodeItem>a>span.date"
 	// contentGoQuery = "div.detail_lst>ul#_listUl>li._episodeItem>a>span.date"
 	// fromIndex      = 0
 	// toIndex        = 2

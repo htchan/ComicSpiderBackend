@@ -227,7 +227,7 @@ func TestVendorService_isUpdated(t *testing.T) {
 			web: &model.Website{Conf: &config.WebsiteConfig{Separator: "\n"}},
 			body: `<html>
 				<title>title</title>
-				<body><div class="detail_lst"><ul id="_listUl">
+				<body><div class="detail_list_area"><ul id="_listUl">
 					<li class="_episodeItem"><a><span class="date">2021年07月30日</span></a></li>
 					<li class="_episodeItem"><a><span class="date">2021年07月23日</span></a></li>
 					<li class="_episodeItem"><a><span class="date">2021年07月17日</span></a></li>
@@ -253,7 +253,7 @@ func TestVendorService_isUpdated(t *testing.T) {
 			},
 			body: `<html>
 				<title>title</title>
-				<body><div class="detail_lst"><ul id="_listUl">
+				<body><div class="detail_list_area"><ul id="_listUl">
 					<li class="_episodeItem"><a><span class="date">2021年07月30日</span></a></li>
 					<li class="_episodeItem"><a><span class="date">2021年07月23日</span></a></li>
 					<li class="_episodeItem"><a><span class="date">2021年07月17日</span></a></li>
@@ -274,7 +274,7 @@ func TestVendorService_isUpdated(t *testing.T) {
 			},
 			web: &model.Website{Conf: &config.WebsiteConfig{Separator: "\n"}},
 			body: `<html>
-				<body><div class="detail_lst"><ul id="_listUl">
+				<body><div class="detail_list_area"><ul id="_listUl">
 					<li class="_episodeItem"><a><span class="date">2021年07月30日</span></a></li>
 					<li class="_episodeItem"><a><span class="date">2021年07月23日</span></a></li>
 					<li class="_episodeItem"><a><span class="date">2021年07月17日</span></a></li>
@@ -297,7 +297,7 @@ func TestVendorService_isUpdated(t *testing.T) {
 				Conf:       &config.WebsiteConfig{Separator: "\n"},
 			},
 			body: `<html>
-				<body><div class="detail_lst"><ul id="_listUl">
+				<body><div class="detail_list_area"><ul id="_listUl">
 					<li class="_episodeItem"><a><span class="date">2021年07月30日</span></a></li>
 					<li class="_episodeItem"><a><span class="date">2021年07月23日</span></a></li>
 					<li class="_episodeItem"><a><span class="date">2021年07月17日</span></a></li>
@@ -389,7 +389,7 @@ func TestVendorService_Update(t *testing.T) {
 		} else if r.URL.Path == "/success" {
 			w.Write([]byte(`<html>
 				<title>title</title>
-				<body><div class="detail_lst"><ul id="_listUl">
+				<body><div class="detail_list_area"><ul id="_listUl">
 					<li class="_episodeItem"><a><span class="date">2021年07月30日</span></a></li>
 					<li class="_episodeItem"><a><span class="date">2021年07月23日</span></a></li>
 					<li class="_episodeItem"><a><span class="date">2021年07月17日</span></a></li>
