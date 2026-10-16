@@ -5,9 +5,6 @@ import (
 	"fmt"
 	"net/http"
 	"net/http/httptest"
-	"os"
-	"sort"
-	"strings"
 	"testing"
 	"time"
 
@@ -25,10 +22,9 @@ import (
 
 func TestNewVendorService(t *testing.T) {
 	type params struct {
-		cli      *http.Client
-		repo     repository.Repository
-		cfg      *config.VendorServiceConfig
-		setupEnv func()
+		cli  *http.Client
+		repo repository.Repository
+		cfg  *config.VendorServiceConfig
 	}
 
 	tests := []struct {
@@ -45,9 +41,6 @@ func TestNewVendorService(t *testing.T) {
 					MaxConcurrency: 10,
 					FetchInterval:  10 * time.Second,
 				},
-				setupEnv: func() {
-					os.Unsetenv("BAOZIMH_COOKIES")
-				},
 			},
 			want: &VendorService{
 				cli:  nil,
@@ -58,36 +51,6 @@ func TestNewVendorService(t *testing.T) {
 					FetchInterval:  10 * time.Second,
 				},
 				vendorCfg: &config.BaozimhConfig{
-					BrowserWaitDuration: 10 * time.Second,
-				},
-			},
-		},
-		{
-			name: "load cookies from env",
-			params: params{
-				cli:  nil,
-				repo: nil,
-				cfg: &config.VendorServiceConfig{
-					MaxConcurrency: 10,
-					FetchInterval:  10 * time.Second,
-				},
-				setupEnv: func() {
-					os.Setenv("BAOZIMH_COOKIES", "key1=value1; key2=value2")
-				},
-			},
-			want: &VendorService{
-				cli:  nil,
-				repo: nil,
-				lock: semaphore.NewWeighted(10),
-				cfg: &config.VendorServiceConfig{
-					MaxConcurrency: 10,
-					FetchInterval:  10 * time.Second,
-				},
-				vendorCfg: &config.BaozimhConfig{
-					Cookie: map[string]string{
-						"key1": "value1",
-						"key2": "value2",
-					},
 					BrowserWaitDuration: 10 * time.Second,
 				},
 			},
@@ -96,9 +59,6 @@ func TestNewVendorService(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			tt.params.setupEnv()
-			defer os.Unsetenv("BAOZIMH_COOKIES")
-
 			get := NewVendorService(tt.params.cli, tt.params.repo, tt.params.cfg)
 			assert.Equal(t, tt.want.repo, get.repo)
 			assert.Equal(t, tt.want.lock, get.lock)
@@ -117,16 +77,6 @@ func TestVendorService_fetchWebsite(t *testing.T) {
 			w.Write([]byte("failed"))
 		} else if r.URL.Path == "/success" {
 			w.Write([]byte("success"))
-		} else if r.URL.Path == "/cookie" {
-			cookies := r.Cookies()
-			sort.Slice(cookies, func(i, j int) bool {
-				return cookies[i].Name < cookies[j].Name
-			})
-			pairs := make([]string, 0, len(cookies))
-			for _, cookie := range cookies {
-				pairs = append(pairs, cookie.Name+"="+cookie.Value)
-			}
-			w.Write([]byte(strings.Join(pairs, ";")))
 		} else {
 			w.Write([]byte("unknown"))
 		}
@@ -241,71 +191,6 @@ func TestVendorService_fetchWebsite(t *testing.T) {
 			},
 			wantError:       context.Canceled,
 			expectTimeTaken: 0,
-		},
-		{
-			name: "send request with cookies",
-			serv: &VendorService{
-				cli: goclient.NewClient(
-					goclient.WithMiddlewares(
-						retry.NewRetryMiddleware(
-							1,
-							retry.RetryForError,
-							retry.StaticRetryInterval(0),
-						),
-						vendors.RaiseStatusCodeErrorMiddleware,
-					),
-				),
-				repo: nil,
-				lock: semaphore.NewWeighted(1),
-				cfg: &config.VendorServiceConfig{
-					MaxConcurrency: 1,
-					FetchInterval:  10 * time.Millisecond,
-					MaxRetry:       1,
-				},
-				vendorCfg: &config.BaozimhConfig{Cookie: map[string]string{
-					"key1": "value1",
-					"key2": "value2",
-				}},
-			},
-			getCtx: func() context.Context {
-				return context.Background()
-			},
-			web: &model.Website{
-				URL: serv.URL + "/cookie",
-			},
-			wantBody:        "key1=value1;key2=value2",
-			expectTimeTaken: unitDuration,
-		},
-		{
-			name: "send request without cookies",
-			serv: &VendorService{
-				cli: goclient.NewClient(
-					goclient.WithMiddlewares(
-						retry.NewRetryMiddleware(
-							1,
-							retry.RetryForError,
-							retry.StaticRetryInterval(0),
-						),
-						vendors.RaiseStatusCodeErrorMiddleware,
-					),
-				),
-				repo: nil,
-				lock: semaphore.NewWeighted(1),
-				cfg: &config.VendorServiceConfig{
-					MaxConcurrency: 1,
-					FetchInterval:  10 * time.Millisecond,
-					MaxRetry:       1,
-				},
-				vendorCfg: &config.BaozimhConfig{},
-			},
-			getCtx: func() context.Context {
-				return context.Background()
-			},
-			web: &model.Website{
-				URL: serv.URL + "/cookie",
-			},
-			wantBody:        "",
-			expectTimeTaken: unitDuration,
 		},
 	}
 

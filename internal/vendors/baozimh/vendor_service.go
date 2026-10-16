@@ -98,10 +98,6 @@ func (serv *VendorService) fetchWebsite(ctx context.Context, web *model.Website)
 		return "", reqErr
 	}
 
-	for name, value := range serv.vendorCfg.Cookie {
-		req.AddCookie(&http.Cookie{Name: name, Value: value})
-	}
-
 	// send request with basic retry
 	resp, respErr := serv.cli.Do(req.WithContext(ctx))
 	defer func(resp *http.Response) {
