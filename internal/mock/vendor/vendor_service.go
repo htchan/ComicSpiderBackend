@@ -12,6 +12,7 @@ package mockvendor
 import (
 	context "context"
 	reflect "reflect"
+	time "time"
 
 	model "github.com/htchan/WebHistory/internal/model"
 	gomock "go.uber.org/mock/gomock"
@@ -39,6 +40,20 @@ func NewMockVendorService(ctrl *gomock.Controller) *MockVendorService {
 // EXPECT returns an object that allows the caller to indicate expected use.
 func (m *MockVendorService) EXPECT() *MockVendorServiceMockRecorder {
 	return m.recorder
+}
+
+// ConsumeInterval mocks base method.
+func (m *MockVendorService) ConsumeInterval() time.Duration {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ConsumeInterval")
+	ret0, _ := ret[0].(time.Duration)
+	return ret0
+}
+
+// ConsumeInterval indicates an expected call of ConsumeInterval.
+func (mr *MockVendorServiceMockRecorder) ConsumeInterval() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ConsumeInterval", reflect.TypeOf((*MockVendorService)(nil).ConsumeInterval))
 }
 
 // Name mocks base method.

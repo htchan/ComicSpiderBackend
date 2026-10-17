@@ -195,6 +195,7 @@ func TestWebsiteUpdateTask_Subscribe(t *testing.T) {
 					close(done)
 					return nil
 				})
+				serv.EXPECT().ConsumeInterval().Return(time.Millisecond)
 
 				return serv
 			},
@@ -265,6 +266,7 @@ func TestWebsiteUpdateTask_Subscribe(t *testing.T) {
 			close(done2)
 			return nil
 		}).Times(1)
+		serv.EXPECT().ConsumeInterval().Return(time.Millisecond).AnyTimes()
 
 		task := NewTask(nc, serv, nil, nil)
 
@@ -354,9 +356,10 @@ func TestWebsiteUpdateTask_Validate(t *testing.T) {
 
 func TestWebsiteUpdateTask_handler(t *testing.T) {
 	tests := []struct {
-		name    string
-		getServ func(*gomock.Controller) vendors.VendorService
-		getMsg  func(*gomock.Controller) jetstream.Msg
+		name         string
+		getServ      func(*gomock.Controller) vendors.VendorService
+		getMsg       func(*gomock.Controller) jetstream.Msg
+		wantDuration time.Duration
 	}{
 		{
 			name: "happy flow",
@@ -372,6 +375,7 @@ func TestWebsiteUpdateTask_handler(t *testing.T) {
 				serv.EXPECT().Name().Return("happy_flow").AnyTimes()
 				serv.EXPECT().Support(web).Return(true)
 				serv.EXPECT().Update(gomock.Any(), web).Return(nil)
+				serv.EXPECT().ConsumeInterval().Return(200 * time.Millisecond)
 
 				return serv
 			},
@@ -382,6 +386,7 @@ func TestWebsiteUpdateTask_handler(t *testing.T) {
 
 				return msg
 			},
+			wantDuration: 200 * time.Millisecond,
 		},
 		{
 			name: "error/not supported web",
@@ -436,6 +441,7 @@ func TestWebsiteUpdateTask_handler(t *testing.T) {
 				serv.EXPECT().Name().Return("happy_flow").AnyTimes()
 				serv.EXPECT().Support(web).Return(true)
 				serv.EXPECT().Update(gomock.Any(), web).Return(nil)
+				serv.EXPECT().ConsumeInterval().Return(time.Millisecond)
 
 				return serv
 			},
@@ -458,7 +464,9 @@ func TestWebsiteUpdateTask_handler(t *testing.T) {
 
 			task := NewTask(nil, test.getServ(ctrl), nil, nil)
 
+			start := time.Now()
 			task.handler(test.getMsg(ctrl))
+			assert.InDelta(t, float64(test.wantDuration), float64(time.Since(start)), float64(50*time.Millisecond))
 		})
 	}
 }

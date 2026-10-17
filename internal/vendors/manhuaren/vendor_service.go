@@ -75,6 +75,10 @@ func (serv *VendorService) Name() string {
 	return Host
 }
 
+func (serv *VendorService) ConsumeInterval() time.Duration {
+	return serv.cfg.ConsumeInterval
+}
+
 func (serv *VendorService) fetchWebsite(ctx context.Context, web *model.Website) (string, error) {
 	if serv.lock.Acquire(ctx, 1) == nil {
 		defer func() {

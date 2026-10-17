@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"time"
 
 	"github.com/htchan/WebHistory/internal/model"
 	"github.com/htchan/goclient"
@@ -17,6 +18,7 @@ type VendorService interface {
 	Support(*model.Website) bool
 	Update(context.Context, *model.Website) error
 	Name() string
+	ConsumeInterval() time.Duration
 	// Download(context.Context, *model.Website) error
 }
 

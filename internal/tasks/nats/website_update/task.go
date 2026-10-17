@@ -161,7 +161,7 @@ func (task *WebsiteUpdateTask) handler(msg jetstream.Msg) {
 
 	// sleep after update
 	defer func() {
-		time.Sleep(time.Second)
+		time.Sleep(task.Service.ConsumeInterval())
 	}()
 
 	// call vendor service to update website

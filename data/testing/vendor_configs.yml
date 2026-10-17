@@ -1,5 +1,6 @@
 testing:
   max_concurrency: 10
-  fetch_interval: 1s
+  fetch_interval: 3s
   max_retry: 10
   retry_interval: 1s
+  consume_interval: 2s

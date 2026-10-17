@@ -51,10 +51,11 @@ func Test_LoadAPIConfig(t *testing.T) {
 					APIRoutePrefix: "/api/web-watcher",
 					VendorServiceConfigs: map[string]VendorServiceConfig{
 						"testing": {
-							MaxConcurrency: 10,
-							FetchInterval:  time.Second,
-							MaxRetry:       10,
-							RetryInterval:  time.Second,
+							MaxConcurrency:  10,
+							FetchInterval:   3 * time.Second,
+							MaxRetry:        10,
+							RetryInterval:   time.Second,
+							ConsumeInterval: 2 * time.Second,
 						},
 					},
 				},
@@ -112,10 +113,11 @@ func Test_LoadAPIConfig(t *testing.T) {
 					APIRoutePrefix: "prefix",
 					VendorServiceConfigs: map[string]VendorServiceConfig{
 						"testing": {
-							MaxConcurrency: 10,
-							FetchInterval:  time.Second,
-							MaxRetry:       10,
-							RetryInterval:  time.Second,
+							MaxConcurrency:  10,
+							FetchInterval:   3 * time.Second,
+							MaxRetry:        10,
+							RetryInterval:   time.Second,
+							ConsumeInterval: 2 * time.Second,
 						},
 					},
 				},
@@ -197,10 +199,11 @@ func Test_LoadWorkerConfig(t *testing.T) {
 					ClientTimeout:              30 * time.Second,
 					VendorServiceConfigs: map[string]VendorServiceConfig{
 						"testing": {
-							MaxConcurrency: 10,
-							FetchInterval:  time.Second,
-							MaxRetry:       10,
-							RetryInterval:  time.Second,
+							MaxConcurrency:  10,
+							FetchInterval:   3 * time.Second,
+							MaxRetry:        10,
+							RetryInterval:   time.Second,
+							ConsumeInterval: 2 * time.Second,
 						},
 					},
 				},
@@ -249,10 +252,11 @@ func Test_LoadWorkerConfig(t *testing.T) {
 					ClientTimeout:              1 * time.Second,
 					VendorServiceConfigs: map[string]VendorServiceConfig{
 						"testing": {
-							MaxConcurrency: 10,
-							FetchInterval:  time.Second,
-							MaxRetry:       10,
-							RetryInterval:  time.Second,
+							MaxConcurrency:  10,
+							FetchInterval:   3 * time.Second,
+							MaxRetry:        10,
+							RetryInterval:   time.Second,
+							ConsumeInterval: 2 * time.Second,
 						},
 					},
 				},

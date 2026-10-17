@@ -115,6 +115,27 @@ func TestNewServiceSet(t *testing.T) {
 			want:    []vendors.VendorService{},
 			wantErr: vendors.ErrUnknownHost,
 		},
+		{
+			name: "set consume interval",
+			params: params{
+				cli:  nil,
+				repo: nil,
+				cfg: map[string]config.VendorServiceConfig{
+					baozimh.Host: {
+						MaxConcurrency: 1,
+						FetchInterval:  1 * time.Second,
+						ConsumeInterval: 10 * time.Minute,
+					},
+				},
+			},
+			want: []vendors.VendorService{
+				baozimh.NewVendorService(nil, nil, &config.VendorServiceConfig{
+					MaxConcurrency: 1,
+					FetchInterval:  1 * time.Second,
+					ConsumeInterval: 10 * time.Minute,
+				}),
+			},
+		},
 	}
 
 	for _, tt := range tests {
@@ -126,9 +147,66 @@ func TestNewServiceSet(t *testing.T) {
 			assert.Equal(t, len(tt.want), len(get))
 			for _, item := range get {
 				assert.Contains(t, get, item)
+				
+				assert.Equal(t, tt.params.cfg[item.Name()].ConsumeInterval, item.ConsumeInterval())
 			}
 
 			assert.ErrorIs(t, err, tt.wantErr)
+		})
+	}
+}
+
+func TestVendorService_ConsumeInterval(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name     string
+		vendor   vendors.VendorService
+		expected time.Duration
+	}{
+		{
+			name:     "baozimh consume interval",
+			vendor:   baozimh.NewVendorService(nil, nil, &config.VendorServiceConfig{ConsumeInterval: 15 * time.Minute}),
+			expected: 15 * time.Minute,
+		},
+		{
+			name:     "kuaikanmanhua consume interval",
+			vendor:   kuaikanmanhua.NewVendorService(nil, nil, &config.VendorServiceConfig{ConsumeInterval: 30 * time.Minute}),
+			expected: 30 * time.Minute,
+		},
+		{
+			name:     "manhuagui consume interval",
+			vendor:   manhuagui.NewVendorService(nil, nil, &config.VendorServiceConfig{ConsumeInterval: 45 * time.Minute}),
+			expected: 45 * time.Minute,
+		},
+		{
+			name:     "manhuaren consume interval",
+			vendor:   manhuaren.NewVendorService(nil, nil, &config.VendorServiceConfig{ConsumeInterval: 60 * time.Minute}),
+			expected: 60 * time.Minute,
+		},
+		{
+			name:     "qiman6 consume interval",
+			vendor:   qiman6.NewVendorService(nil, nil, &config.VendorServiceConfig{ConsumeInterval: 90 * time.Minute}),
+			expected: 90 * time.Minute,
+		},
+		{
+			name:     "u17 consume interval",
+			vendor:   u17.NewVendorService(nil, nil, &config.VendorServiceConfig{ConsumeInterval: 120 * time.Minute}),
+			expected: 120 * time.Minute,
+		},
+		{
+			name:     "webtoons consume interval",
+			vendor:   webtoons.NewVendorService(nil, nil, &config.VendorServiceConfig{ConsumeInterval: 180 * time.Minute}),
+			expected: 180 * time.Minute,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			actual := tt.vendor.ConsumeInterval()
+			assert.Equal(t, tt.expected, actual)
 		})
 	}
 }
