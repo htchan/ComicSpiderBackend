@@ -122,16 +122,16 @@ func TestNewServiceSet(t *testing.T) {
 				repo: nil,
 				cfg: map[string]config.VendorServiceConfig{
 					baozimh.Host: {
-						MaxConcurrency: 1,
-						FetchInterval:  1 * time.Second,
+						MaxConcurrency:  1,
+						FetchInterval:   1 * time.Second,
 						ConsumeInterval: 10 * time.Minute,
 					},
 				},
 			},
 			want: []vendors.VendorService{
 				baozimh.NewVendorService(nil, nil, &config.VendorServiceConfig{
-					MaxConcurrency: 1,
-					FetchInterval:  1 * time.Second,
+					MaxConcurrency:  1,
+					FetchInterval:   1 * time.Second,
 					ConsumeInterval: 10 * time.Minute,
 				}),
 			},
@@ -147,7 +147,7 @@ func TestNewServiceSet(t *testing.T) {
 			assert.Equal(t, len(tt.want), len(get))
 			for _, item := range get {
 				assert.Contains(t, get, item)
-				
+
 				assert.Equal(t, tt.params.cfg[item.Name()].ConsumeInterval, item.ConsumeInterval())
 			}
 
