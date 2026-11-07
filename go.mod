@@ -14,6 +14,7 @@ require (
 	github.com/htchan/goclient v0.0.8
 	github.com/htchan/goshutdown v0.0.1
 	github.com/lib/pq v1.10.9
+	github.com/mxschmitt/playwright-go v0.6201.1
 	github.com/nats-io/nats.go v1.39.1
 	github.com/ory/dockertest/v3 v3.10.0
 	github.com/rs/zerolog v1.29.0
@@ -48,6 +49,7 @@ require (
 	github.com/cpuguy83/go-md2man/v2 v2.0.6 // indirect
 	github.com/cubicdaiya/gonp v1.0.4 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
+	github.com/deckarep/golang-set/v2 v2.8.0 // indirect
 	github.com/docker/cli v23.0.1+incompatible // indirect
 	github.com/docker/docker v23.0.15+incompatible // indirect
 	github.com/docker/go-connections v0.4.0 // indirect
@@ -62,6 +64,7 @@ require (
 	github.com/go-openapi/spec v0.20.9 // indirect
 	github.com/go-openapi/swag v0.22.3 // indirect
 	github.com/go-sql-driver/mysql v1.9.2 // indirect
+	github.com/go-stack/stack v1.8.1 // indirect
 	github.com/gogo/protobuf v1.3.2 // indirect
 	github.com/google/cel-go v0.24.1 // indirect
 	github.com/google/shlex v0.0.0-20191202100458-e7afc7fbc510 // indirect
