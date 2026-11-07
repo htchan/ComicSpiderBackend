@@ -175,6 +175,13 @@ func (serv *VendorService) fetchWebsiteV3(ctx context.Context, web *model.Websit
 		return "", errors.New("browser websocket url is not configured")
 	}
 
+	err := playwright.Install(&playwright.RunOptions{
+		SkipInstallBrowsers: true,
+	})
+	if err != nil {
+		return "", fmt.Errorf("could not install playwright driver: %w", err)
+	}
+
 	// Initialize the Playwright driver
 	pw, err := playwright.Run()
 	if err != nil {

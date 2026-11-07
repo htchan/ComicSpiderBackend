@@ -12,12 +12,6 @@ RUN --mount=type=bind,source=go.mod,target=go.mod \
     --mount=type=bind,source=go.sum,target=go.sum \
     --mount=type=cache,target=/root/.cache/go-build \
     go mod download -x
-# Dynamically extract the exact version from go.mod and install the driver
-RUN --mount=type=bind,source=go.mod,target=go.mod \
-    --mount=type=bind,source=go.sum,target=go.sum \
-    --mount=type=cache,target=/root/.cache/go-build \
-    PW_VERSION=$(go list -m -f '{{.Version}}' github.com/mxschmitt/playwright-go) && \
-    go run github.com/mxschmitt/playwright-go/cmd/playwright@${PW_VERSION} install --skip-browsers
 
 RUN --mount=type=bind,source=go.mod,target=go.mod \
     --mount=type=bind,source=go.sum,target=go.sum \
