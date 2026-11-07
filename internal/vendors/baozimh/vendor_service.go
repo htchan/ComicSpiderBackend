@@ -348,8 +348,11 @@ func (serv *VendorService) Update(ctx context.Context, web *model.Website) error
 		body     string
 		fetchErr error
 	)
-	if serv.vendorCfg.BrowserCdpUrl != "" {
+
+	if serv.vendorCfg.BrowserWsUrl != "" {
 		body, fetchErr = serv.fetchWebsiteV3(ctx, web)
+	} else if serv.vendorCfg.BrowserCdpUrl != "" {
+		body, fetchErr = serv.fetchWebsiteV2(ctx, web)
 	} else {
 		body, fetchErr = serv.fetchWebsite(ctx, web)
 	}
