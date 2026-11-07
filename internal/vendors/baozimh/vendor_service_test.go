@@ -685,3 +685,61 @@ func TestVendorService_fetchWebsiteV2(t *testing.T) {
 		}
 	}
 }
+
+func TestVendorService_fetchWebsiteV3(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name       string
+		vendorCfg  *config.BaozimhConfig
+		web        *model.Website
+		wantErrMsg string
+		wantAnyErr bool
+	}{
+		{
+			name: "browser websocket url is not configured",
+			vendorCfg: &config.BaozimhConfig{
+				BrowserWsUrl: "",
+			},
+			web:        &model.Website{URL: "https://baozimh.com/comic"},
+			wantErrMsg: "browser websocket url is not configured",
+		},
+		{
+			name: "browser ws url is invalid",
+			vendorCfg: &config.BaozimhConfig{
+				BrowserWsUrl:        "ws://invalid-url:9000",
+				BrowserWaitDuration: 50 * time.Millisecond,
+			},
+			web:        &model.Website{URL: "https://baozimh.com/comic"},
+			wantAnyErr: true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			serv := &VendorService{
+				lock: semaphore.NewWeighted(1),
+				cfg: &config.VendorServiceConfig{
+					MaxConcurrency: 1,
+					FetchInterval:  time.Millisecond,
+				},
+				vendorCfg: tt.vendorCfg,
+			}
+
+			body, err := serv.fetchWebsiteV3(context.Background(), tt.web)
+
+			if tt.wantErrMsg != "" {
+				assert.EqualError(t, err, tt.wantErrMsg)
+			} else if tt.wantAnyErr {
+				assert.Error(t, err)
+			} else {
+				assert.NoError(t, err)
+				assert.NotEmpty(t, body)
+			}
+
+			assert.Equal(t, true, serv.lock.TryAcquire(1))
+		})
+	}
+}

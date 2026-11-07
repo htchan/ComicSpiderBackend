@@ -16,6 +16,7 @@ import (
 	"github.com/htchan/WebHistory/internal/model"
 	"github.com/htchan/WebHistory/internal/repository"
 	"github.com/htchan/WebHistory/internal/vendors"
+	"github.com/mxschmitt/playwright-go"
 
 	"github.com/chromedp/chromedp"
 	"github.com/chromedp/chromedp/remote"
@@ -158,6 +159,72 @@ func (serv *VendorService) fetchWebsiteV2(ctx context.Context, web *model.Websit
 	return pageHTML, nil
 }
 
+func (serv *VendorService) fetchWebsiteV3(ctx context.Context, web *model.Website) (string, error) {
+	if serv.lock.Acquire(ctx, 1) == nil {
+		defer func() {
+			time.Sleep(serv.cfg.FetchInterval)
+			serv.lock.Release(1)
+		}()
+	}
+
+	url := regexp.MustCompile(fmt.Sprintf("^(http.*?)://.*?%s(.*)$", Host)).
+		ReplaceAllString(web.URL, fmt.Sprintf("$1://www.%s$2", Host))
+
+	// Camoufox uses Playwright's native WS protocol, so we check for a WebSocket URL instead of a CDP URL
+	if serv.vendorCfg.BrowserWsUrl == "" {
+		return "", errors.New("browser websocket url is not configured")
+	}
+
+	// Initialize the Playwright driver
+	pw, err := playwright.Run()
+	if err != nil {
+		return "", fmt.Errorf("could not start playwright: %w", err)
+	}
+	defer pw.Stop()
+
+	// Connect to the remote containerized Camoufox server (Firefox-based)
+	browser, err := pw.Firefox.Connect(serv.vendorCfg.BrowserWsUrl)
+	if err != nil {
+		return "", fmt.Errorf("could not connect to camoufox server: %w", err)
+	}
+	defer browser.Close()
+
+	// Create a new browser context
+	browserContext, err := browser.NewContext()
+	if err != nil {
+		return "", fmt.Errorf("could not create browser context: %w", err)
+	}
+	defer browserContext.Close()
+
+	// Create a new page tab
+	page, err := browserContext.NewPage()
+	if err != nil {
+		return "", fmt.Errorf("could not create page: %w", err)
+	}
+	defer page.Close()
+
+	// Navigate to the target URL
+	_, err = page.Goto(url, playwright.PageGotoOptions{
+		WaitUntil: playwright.WaitUntilStateDomcontentloaded,
+	})
+	if err != nil {
+		return "", fmt.Errorf("could not navigate to url: %w", err)
+	}
+
+	// Optional wait duration (equivalent to your previous chromedp.Sleep)
+	if serv.vendorCfg.BrowserWaitDuration > 0 {
+		time.Sleep(serv.vendorCfg.BrowserWaitDuration)
+	}
+
+	// Retrieve the full HTML content of the page
+	pageHTML, err := page.Content()
+	if err != nil {
+		return "", fmt.Errorf("could not get page content: %w", err)
+	}
+
+	return pageHTML, nil
+}
+
 func (serv *VendorService) isUpdated(ctx context.Context, web *model.Website, body string) bool {
 	_, checkUpdateSpan := getTracer().Start(ctx, "check update")
 	defer checkUpdateSpan.End()
@@ -275,7 +342,7 @@ func (serv *VendorService) Update(ctx context.Context, web *model.Website) error
 		fetchErr error
 	)
 	if serv.vendorCfg.BrowserCdpUrl != "" {
-		body, fetchErr = serv.fetchWebsiteV2(ctx, web)
+		body, fetchErr = serv.fetchWebsiteV3(ctx, web)
 	} else {
 		body, fetchErr = serv.fetchWebsite(ctx, web)
 	}

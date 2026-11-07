@@ -16,6 +16,7 @@ type VendorServiceConfig struct {
 
 type BaozimhConfig struct {
 	BrowserCdpUrl       string        `env:"BROWSER_CDP_URL"`
+	BrowserWsUrl        string        `env:"BROWSER_WS_URL"`
 	BrowserWaitDuration time.Duration `env:"BROWSER_WAIT_DURATION" envDefault:"10s"`
 }
 
