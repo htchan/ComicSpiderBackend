@@ -719,6 +719,10 @@ func TestVendorService_fetchWebsiteV3(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 
+			t.Cleanup(func() {
+				http.DefaultClient.CloseIdleConnections()
+			})
+
 			serv := &VendorService{
 				lock: semaphore.NewWeighted(1),
 				cfg: &config.VendorServiceConfig{
