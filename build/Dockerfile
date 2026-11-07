@@ -31,6 +31,4 @@ WORKDIR /usr/src/app
 
 COPY --from=builder --chmod=755 /go/src/github.com/htchan/WebHistory/${SERVICE} ./app
 
-COPY --from=builder /root/.cache/ms-playwright /root/.cache/ms-playwright
-
 ENTRYPOINT ["/usr/src/app/app"]
