@@ -161,7 +161,7 @@ func TestWebsiteBatchUpdateTask_handler(t *testing.T) {
 					)
 				})
 				assert.NoError(t, err)
-				time.Sleep(10 * time.Millisecond)
+				time.Sleep(100 * time.Millisecond)
 				sub.Unsubscribe()
 
 				assert.NotNil(t, gotMsg)
@@ -230,7 +230,7 @@ func TestWebsiteBatchUpdateTask_handler(t *testing.T) {
 					)
 				})
 				assert.NoError(t, err)
-				time.Sleep(10 * time.Millisecond)
+				time.Sleep(100 * time.Millisecond)
 				sub.Unsubscribe()
 
 				assert.NotNil(t, gotMsg)
@@ -299,7 +299,7 @@ func TestWebsiteBatchUpdateTask_publishWebsiteUpdateTask(t *testing.T) {
 					)
 				})
 				assert.NoError(t, err)
-				time.Sleep(10 * time.Millisecond)
+				time.Sleep(100 * time.Millisecond)
 				sub.Unsubscribe()
 
 				assert.NotNil(t, gotMsg)
@@ -329,7 +329,7 @@ func TestWebsiteBatchUpdateTask_publishWebsiteUpdateTask(t *testing.T) {
 					assert.Nil(t, gotMsg)
 				})
 				assert.NoError(t, err)
-				time.Sleep(10 * time.Millisecond)
+				time.Sleep(100 * time.Millisecond)
 				sub.Unsubscribe()
 
 				assert.Nil(t, gotMsg)
