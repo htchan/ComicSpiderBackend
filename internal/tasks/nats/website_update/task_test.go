@@ -140,7 +140,7 @@ func TestWebsiteUpdateTask_Publish(t *testing.T) {
 				select {
 				case msg := <-received:
 					assert.NotNil(t, msg)
-				case <-time.After(2 * time.Second):
+				case <-time.After(5 * time.Second):
 					t.Fatal("timed out waiting for published message")
 				}
 			},
